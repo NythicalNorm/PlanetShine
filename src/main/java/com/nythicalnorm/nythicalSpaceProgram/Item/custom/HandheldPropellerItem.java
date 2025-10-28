@@ -1,6 +1,8 @@
 package com.nythicalnorm.nythicalSpaceProgram.Item.custom;
 
 import com.nythicalnorm.nythicalSpaceProgram.Item.ModItems;
+import com.nythicalnorm.nythicalSpaceProgram.sound.ModSounds;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -19,6 +21,8 @@ public class HandheldPropellerItem extends Item {
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level pLevel, Player pPlayer, @NotNull InteractionHand pUsedHand) {
         ItemStack itemstack = pPlayer.getItemInHand(pUsedHand);
         pPlayer.startUsingItem(pUsedHand);
+        pLevel.playSeededSound(null, pPlayer.getX(), pPlayer.getY(), pPlayer.getZ(),
+                ModSounds.HANDHELD_PROPELLER_START.get(), SoundSource.AMBIENT, 1f, 1f,0);
        return InteractionResultHolder.sidedSuccess(itemstack, false);
     }
 

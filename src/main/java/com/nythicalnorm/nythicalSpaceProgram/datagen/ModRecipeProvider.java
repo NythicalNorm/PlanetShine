@@ -1,5 +1,6 @@
 package com.nythicalnorm.nythicalSpaceProgram.datagen;
 
+import com.nythicalnorm.nythicalSpaceProgram.Item.ModItems;
 import com.nythicalnorm.nythicalSpaceProgram.block.ModBlocks;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.FinishedRecipe;
@@ -27,6 +28,16 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
                 .define('X', Items.IRON_INGOT)
                 .define('R', Items.COPPER_INGOT)
                 .unlockedBy(getHasName(Items.COPPER_INGOT), has(Items.COPPER_INGOT))
+                .save(pWriter);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.HANDHELD_PROPELLER.get())
+                .pattern("XRX")
+                .pattern("R#R")
+                .pattern("XRX")
+                .define('#', Items.IRON_BLOCK)
+                .define('X', Items.REDSTONE)
+                .define('R', Items.IRON_BARS)
+                .unlockedBy(getHasName(Items.IRON_BLOCK), has(Items.IRON_BLOCK))
                 .save(pWriter);
     }
 }

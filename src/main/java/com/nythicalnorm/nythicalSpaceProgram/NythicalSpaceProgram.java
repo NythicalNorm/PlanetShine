@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.nythicalnorm.nythicalSpaceProgram.Item.ModCreativeModeTab;
 import com.nythicalnorm.nythicalSpaceProgram.Item.ModItems;
 import com.nythicalnorm.nythicalSpaceProgram.block.ModBlocks;
+import com.nythicalnorm.nythicalSpaceProgram.sound.ModSounds;
 import com.nythicalnorm.nythicalSpaceProgram.util.ModItemProperties;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,15 +33,12 @@ public class NythicalSpaceProgram
         IEventBus modEventBus = context.getModEventBus();
 
         ModItems.register(modEventBus);
-        ModCreativeModeTab.register(modEventBus);
         ModBlocks.register(modEventBus);
-        // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
-
-        // Register ourselves for server and other game events we are interested in
+        ModSounds.register(modEventBus);
         MinecraftForge.EVENT_BUS.register(this);
 
-        // Register the item to a creative tab
+        modEventBus.addListener(this::commonSetup);
+        ModCreativeModeTab.register(modEventBus);
         //modEventBus.addListener(this::addCreative);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
