@@ -30,8 +30,8 @@ public class ModArmorItem extends ArmorItem {
                     ((ServerPlayer) player).connection.send(new ClientboundSetEntityMotionPacket(player));
                 }
             }
-            super.onInventoryTick(stack, level, player, slotIndex, selectedIndex);
         }
+        super.onInventoryTick(stack, level, player, slotIndex, selectedIndex);
     }
 
     private boolean isBlockMagneticClose(Vec3 playerpos, BlockPos playerBlockpos, Level level) {

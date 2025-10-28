@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.nythicalnorm.nythicalSpaceProgram.Item.ModCreativeModeTab;
 import com.nythicalnorm.nythicalSpaceProgram.Item.ModItems;
 import com.nythicalnorm.nythicalSpaceProgram.block.ModBlocks;
+import com.nythicalnorm.nythicalSpaceProgram.util.ModItemProperties;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -76,7 +77,7 @@ public class NythicalSpaceProgram
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             // Some client setup code
-
+            ModItemProperties.addCustomItemProperties();
         }
     }
 }
