@@ -24,6 +24,5 @@ public class ModItemEvents {
                 ((ServerPlayer) event.getEntity()).connection.send(new ClientboundSetEntityMotionPacket(event.getEntity()));
             }
         }
-
     }
 }
