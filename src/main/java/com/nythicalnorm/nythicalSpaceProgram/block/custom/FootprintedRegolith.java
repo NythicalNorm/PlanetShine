@@ -1,6 +1,6 @@
 package com.nythicalnorm.nythicalSpaceProgram.block.custom;
 
-import com.nythicalnorm.nythicalSpaceProgram.common.FootprintedType;
+import com.nythicalnorm.nythicalSpaceProgram.util.FootprintedType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;

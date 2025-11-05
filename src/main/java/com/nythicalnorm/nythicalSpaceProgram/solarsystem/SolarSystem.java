@@ -1,5 +1,4 @@
 package com.nythicalnorm.nythicalSpaceProgram.solarsystem;
-import com.nythicalnorm.nythicalSpaceProgram.common.Planets;
 import com.nythicalnorm.nythicalSpaceProgram.network.ClientBoundSpaceShipsPosUpdate;
 import com.nythicalnorm.nythicalSpaceProgram.network.PacketHandler;
 import net.minecraft.network.chat.Component;

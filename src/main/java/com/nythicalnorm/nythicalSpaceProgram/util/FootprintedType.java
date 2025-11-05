@@ -1,4 +1,4 @@
-package com.nythicalnorm.nythicalSpaceProgram.common;
+package com.nythicalnorm.nythicalSpaceProgram.util;
 
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;

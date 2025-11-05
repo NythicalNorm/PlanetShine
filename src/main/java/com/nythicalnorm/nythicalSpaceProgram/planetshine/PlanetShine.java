@@ -6,7 +6,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -33,7 +32,7 @@ public class PlanetShine {
         FogRenderer.levelFogColor();
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         RenderSystem.depthMask(false);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1.0F);
+        //RenderSystem.setShaderColor(1f, 1f, 1f, 1.0F);
 
         Star_Buffer.bind();
         Star_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
@@ -55,7 +54,7 @@ public class PlanetShine {
         VertexBuffer.unbind();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.depthMask(true);
-        PlanetRenderer.renderPlanet(poseStack, mc, camera, projectionMatrix, matrix4f1);
+        PlanetRenderer.renderPlanet(poseStack, mc, camera, projectionMatrix);
     }
 
 //    private static BufferBuilder.RenderedBuffer buildSkyDisc(BufferBuilder pBuilder, float pY) {
@@ -104,7 +103,7 @@ public class PlanetShine {
                 float redness = 1f ;
                 float blueness = 1f;
                 float greenness = 1f;
-                float alpha = 0.4f + (randomsource.nextFloat() * 0.6f);
+                float alpha = 0.0f + (randomsource.nextFloat() * 0.4f);
                 if (starColor < 0.25f) {
                     greenness = greenness - starColor;
                     blueness = blueness - starColor;

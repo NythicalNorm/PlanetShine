@@ -17,7 +17,7 @@ public class SphereModelGenerator {
     private static final float textureboundingboxV1 = 0;
     private static final float textureboundingboxV2 = 1;
     private static final float radius = 0.5f;
-    private static final Vec3 modelOffset = new Vec3(0.5,0.5,0.5);
+    private static final Vec3 modelOffset = new Vec3(0.0,0.0,0.0);
 
     public static List<BakedQuad> getsphereQuads() {
         List<BakedQuad> quads = new ArrayList<>();
