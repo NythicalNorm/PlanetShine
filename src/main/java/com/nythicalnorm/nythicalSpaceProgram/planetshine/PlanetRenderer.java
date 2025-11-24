@@ -9,7 +9,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.*;
@@ -19,7 +18,6 @@ import java.util.List;
 @OnlyIn(Dist.CLIENT)
 public class PlanetRenderer {
     private static final VertexBuffer planetvertex = new VertexBuffer(VertexBuffer.Usage.STATIC);
-    private static final ResourceLocation Nila_texture =  ResourceLocation.parse("nythicalspaceprogram:textures/planets/moon_axis.png");
     private static final float InWorldPlanetsDistance = 64f;
 
     public static void setupModels() {
@@ -41,21 +39,20 @@ public class PlanetRenderer {
         double currentTimeElapsed = CelestialStateSupplier.getCurrentTimeElapsed();
 
         poseStack.pushPose();
-        PlanetaryBody renderPlanet = Planets.getPlanet("nila");
+        PlanetaryBody renderPlanet = Planets.getPlanet("bumi");
 
         Vector3d PlanetPos = renderPlanet.CalculateCartesianPosition(currentTimeElapsed);
         Quaternionf PlanetRot = renderPlanet.getRotationAt(currentTimeElapsed);
 
-        //PerspectiveShift(PlanetPos.distance(new Vector3d()), PlanetPos, renderPlanet.getRadius(), poseStack);
-        //poseStack.mulPose(PlanetRot);
-        poseStack.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
-        RenderSystem.enableDepthTest();
+        PerspectiveShift(PlanetPos.distance(new Vector3d()), PlanetPos, PlanetRot, renderPlanet.getRadius(), poseStack);
+//        poseStack.translate(-camera.getPosition().x, -camera.getPosition().y, -camera.getPosition().z);
+//        RenderSystem.enableDepthTest();
 
         planetvertex.bind();
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderTexture(0, Nila_texture);
+        RenderSystem.setShaderTexture(0, renderPlanet.texture);
 
-        Vector3f lights0 = new Vector3f(0f,0f,-1f);
+        Vector3f lights0 = new Vector3f(0f,0f,1f);
         lights0.rotate(PlanetRot.invert());
         lights0.normalize();
 
@@ -65,16 +62,17 @@ public class PlanetRenderer {
         planetvertex.drawWithShader(poseStack.last().pose(), projectionMatrix, shad);
         VertexBuffer.unbind();
         poseStack.popPose();
-        RenderSystem.disableDepthTest();
+        //RenderSystem.disableDepthTest();
     }
 
-    private static void PerspectiveShift(double PlanetDistance, Vector3d PlanetPos, double bodyRadius,PoseStack poseStack){
+    private static void PerspectiveShift(double PlanetDistance, Vector3d PlanetPos, Quaternionf planetRot, double bodyRadius,PoseStack poseStack){
         //tan amd atan cancel each other out.
         float planetApparentSize = (float) (InWorldPlanetsDistance * 2 * bodyRadius/PlanetDistance);
         PlanetPos.normalize();
         PlanetPos.mul(InWorldPlanetsDistance);
         poseStack.translate(PlanetPos.x,PlanetPos.y, PlanetPos.z);
         poseStack.scale(planetApparentSize, planetApparentSize, planetApparentSize);
+        poseStack.mulPose(planetRot);
     }
 
 //    private static void PerspectiveShiftZscaleSeparate(double PlanetDistance, Vector3d PlanetPos, double bodyRadius,PoseStack poseStack){
