@@ -1,7 +1,10 @@
 package com.nythicalnorm.nythicalSpaceProgram.planetshine.generators;
 
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3f;
 
+@OnlyIn(Dist.CLIENT)
 public class SkyboxCubeGen {
     private static final float size = 1.0f;
 

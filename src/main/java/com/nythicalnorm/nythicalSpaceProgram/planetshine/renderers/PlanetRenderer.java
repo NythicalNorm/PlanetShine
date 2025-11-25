@@ -9,6 +9,8 @@ import com.nythicalnorm.nythicalSpaceProgram.planet.Planets;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.generators.QuadSphereModelGenerator;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.shaders.ModShaders;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -16,6 +18,7 @@ import org.joml.Vector3f;
 
 import java.util.function.Supplier;
 
+@OnlyIn(Dist.CLIENT)
 public class PlanetRenderer {
     private static Supplier<ShaderInstance> planetShader;
     private static Uniform sunDirUniform;

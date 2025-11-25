@@ -1,10 +1,11 @@
 package com.nythicalnorm.nythicalSpaceProgram.planetshine.shaders;
 
 import net.minecraft.client.renderer.ShaderInstance;
-
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import java.util.function.Supplier;
 
-// function is from  @gigaherz on github
+@OnlyIn(Dist.CLIENT)
 public class ModShaders {
     private static ShaderInstance PLANETSHADER;
     private static ShaderInstance SKYBOXSHADER;
