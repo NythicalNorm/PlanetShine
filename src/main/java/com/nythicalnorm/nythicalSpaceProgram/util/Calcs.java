@@ -6,36 +6,21 @@ import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 public class Calcs {
-    public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, PlanetaryBody planet, boolean isNormalized) {
-        double cellSize = 100; //Math.PI*planet.getRadius()*0.5d;
+    public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, double planetRadius, boolean isNormalized) {
+        double cellSize = 100; //Math.PI*planetRadius*0.5d;
         double halfCellSize = cellSize*0.5d;
 
         int xCell = (int)Math.floor((pos.x + halfCellSize) / cellSize);
         int zCell = (int)Math.floor((pos.z + halfCellSize) / cellSize);
 
-        double xWithinCell = (pos.x + halfCellSize) % cellSize;
-        double zWithinCell = (pos.z + halfCellSize) % cellSize;
+        xCell = clamp(-1, 2, xCell);
+        zCell = clamp(-1, 1, zCell);
 
-        if (xCell > 2) {
-            xCell = 2;
-            xWithinCell = cellSize;
-        }
-        else if (xCell < -1) {
-            xCell = -1;
-            xWithinCell = -cellSize;
-        }
+        double xWithinCell = pos.x - xCell*cellSize;
+        double zWithinCell = pos.z - zCell*cellSize;
 
-        if (zCell > 1) {
-            zCell = 1;
-            zWithinCell = cellSize;
-        }
-        else if (zCell < -1) {
-            zCell = -1;
-            zWithinCell = -cellSize;
-        }
-
-        xCell = clamp(-1,2, xCell);
-        zCell = clamp(-1,1, zCell);
+        xWithinCell = clamp(-halfCellSize, halfCellSize, xWithinCell);
+        zWithinCell = clamp(-halfCellSize, halfCellSize, zWithinCell);
 
         int QuadId = xCell + 1;
         if (xCell == 0) {
@@ -48,26 +33,27 @@ public class Calcs {
         }
         double radius = 1;
         if (!isNormalized) {
-            radius = planet.getRadius() + 10000000 + pos.y;
+            radius = planetRadius + 10000000 + pos.y;
         }
 
-        return getQuadPlanettoSquarePos(zWithinCell, xWithinCell, cellSize, QuadId, radius);
+        return getQuadPlanettoSquarePos(zWithinCell, xWithinCell, halfCellSize, QuadId, radius);
     }
 
     public static Vector3d getQuadPlanettoSquarePos(double sidesUpIter, double sidesRightIter, double MaxPerSide, int squareSide, double radius) {
         double sidesrightP = (sidesRightIter)/MaxPerSide;
+        //negative correction because the order to build it was based on quad model and texture requirements
         double sidesupP = (sidesUpIter)/MaxPerSide;
         Vector3d squarePos = new Vector3d();
-        sidesupP = (sidesupP - 0.5f)*2f;
-        sidesrightP = (sidesrightP - 0.5f)*2f;
+//        sidesupP = (sidesupP - 0.5f)*2f;
+//        sidesrightP = (sidesrightP - 0.5f)*2f;
 
         squarePos = switch (squareSide) {
             case 0 -> new Vector3d(sidesrightP, sidesupP, 1f);
             case 1 -> new Vector3d(1f, sidesupP, -sidesrightP);
             case 2 -> new Vector3d(-sidesrightP, sidesupP, -1);
             case 3 -> new Vector3d(-1f, sidesupP, sidesrightP);
-            case 4 -> new Vector3d(1f+sidesupP, 1f, -sidesrightP);
-            case 5 -> new Vector3d(1f+sidesupP, -1f, -sidesrightP);
+            case 4 -> new Vector3d(-sidesupP, 1f, -sidesrightP);
+            case 5 -> new Vector3d(sidesupP, -1f, -sidesrightP);
             default -> squarePos;
         };
 
@@ -99,11 +85,13 @@ public class Calcs {
         if (val > max) {
             return max;
         }
-        else if (val < min) {
+        else return Math.max(val, min);
+    }
+
+    private static double clamp (double min, double max, double val) {
+        if (val > max) {
             return max;
         }
-        else {
-            return val;
-        }
+        else return Math.max(val, min);
     }
 }

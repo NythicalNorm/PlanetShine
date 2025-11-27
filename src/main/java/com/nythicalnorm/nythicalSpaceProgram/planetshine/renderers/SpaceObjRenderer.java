@@ -33,11 +33,10 @@ public class SpaceObjRenderer {
     }
 
     public static void renderPlanetaryBodies(PoseStack poseStack, Minecraft mc, CelestialStateSupplier css, Camera camera, Matrix4f projectionMatrix, float partialTick) {
-        double currentTimeElapsed = css.UpdatePlanetaryBodies();
         poseStack.pushPose();
 
         for (RenderableObjects obj : renderPlanets) {
-            Vector3d differenceVector = new Vector3d(obj.getBody().getPlanetAbsolutePos());
+            Vector3d differenceVector = obj.getBody().getPlanetAbsolutePos();
             differenceVector.sub(css.getPlayerAbsolutePositon());
             obj.setDifferenceVector(differenceVector);
             obj.setDistanceSquared(css.getPlayerAbsolutePositon().distanceSquared(obj.getBody().getPlanetAbsolutePos()));
@@ -46,7 +45,7 @@ public class SpaceObjRenderer {
         Arrays.sort(renderPlanets, Comparator.comparingDouble(RenderableObjects::getDistanceSquared).reversed());
 
         for (RenderableObjects plnt : renderPlanets) {
-            PlanetRenderer.render(plnt, css, poseStack, projectionMatrix, currentTimeElapsed);
+            PlanetRenderer.render(plnt, css, poseStack, projectionMatrix, partialTick);
         }
 
         poseStack.popPose();

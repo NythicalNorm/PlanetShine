@@ -154,11 +154,18 @@ dependencies {
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
     // at runtime, use the full JEI jar for Forge
     runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
-}
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0' // Use the latest stable version
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0' // Use the latest stable version
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// For more info:
+// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+// http://www.gradle.org/docs/current/userguide/dependency_management.html
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 // When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.

@@ -1,6 +1,7 @@
 package com.nythicalnorm.nythicalSpaceProgram.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetDimensions;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.PlanetShine;
 import net.minecraft.client.Camera;
@@ -30,7 +31,7 @@ public class LevelRendererMixin {
         if (mc.level == null) {
             return;
         }
-        if (PlanetDimensions.isDimensionPlanet(mc.level.dimension()) || PlanetDimensions.isDimensionSpace(mc.level.dimension())) {
+        if (NythicalSpaceProgram.getCelestialStateSupplier().doRender()) {
             pSkyFogSetup.run();
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();

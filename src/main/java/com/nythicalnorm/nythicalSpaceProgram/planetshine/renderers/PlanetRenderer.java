@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
+import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetAtmosphere;
 import com.nythicalnorm.nythicalSpaceProgram.planet.Star;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.CelestialStateSupplier;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.RenderableObjects;
@@ -36,17 +37,26 @@ public class PlanetRenderer {
         }
     }
 
-    public static void render(RenderableObjects obj, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, double currentTimeElapsed) {
+    public static void render(RenderableObjects obj, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
         poseStack.pushPose();
         Quaternionf planetRot =  obj.getBody().getPlanetRotation();
+        double distance = obj.getDistance();
 
-        SpaceObjRenderer.PerspectiveShift(obj.getDistance(), obj.getDifferenceVector(), planetRot,
+        PlanetAtmosphere atmosphere = obj.getBody().getAtmoshpere();
+
+        if (atmosphere != null) {
+            if (distance < obj.getBody().getSphereOfInfluence()) {//&& distance < obj.getBody().getAtmosphereRadius()) {
+                AtmosphereRenderer.render(atmosphere, poseStack, projectionMatrix, partialTick);
+            }
+        }
+
+        SpaceObjRenderer.PerspectiveShift(distance, obj.getDifferenceVector(), planetRot,
                 obj.getBody().getRadius(), poseStack);
 
         QuadSphereModelGenerator.getSphereBuffer().bind();
         RenderSystem.setShaderTexture(0, obj.getBody().texture);
 
-        Vector3d absoluteDir = new Vector3d(obj.getBody().getPlanetAbsolutePos()).normalize();
+        Vector3d absoluteDir = obj.getBody().getPlanetAbsolutePos().normalize();
         Vector3f lightDir = new Vector3f((float) absoluteDir.x,(float) absoluteDir.y,(float) absoluteDir.z);
         lightDir.rotate(planetRot.invert());
         lightDir.normalize();

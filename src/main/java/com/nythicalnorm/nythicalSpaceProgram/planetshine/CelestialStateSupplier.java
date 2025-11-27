@@ -11,7 +11,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.Vector3d;
+import org.joml.*;
+
+import java.lang.Math;
 
 @OnlyIn(Dist.CLIENT)
 public class CelestialStateSupplier {
@@ -23,6 +25,7 @@ public class CelestialStateSupplier {
 
     private Vector3d playerAbsolutePositon;
     private Vector3d playerRelativePositon;
+    private Vector3f playerRotation;
     private PlanetaryBody currentPlanet;
 
     public CelestialStateSupplier() {
@@ -58,9 +61,10 @@ public class CelestialStateSupplier {
         LocalPlayer plr = Minecraft.getInstance().player;
         if (PlanetDimensions.isDimensionPlanet(plr.level().dimension())) {
             currentPlanet = PlanetDimensions.getDimPlanet(plr.level().dimension());
-            playerRelativePositon = Calcs.planetDimPosToNormalizedVector(plr.position(), currentPlanet, false);
-            Vector3d newAbs = new Vector3d(currentPlanet.getPlanetAbsolutePos());
+            playerRelativePositon = Calcs.planetDimPosToNormalizedVector(plr.position(), currentPlanet.getRadius(),false);
+            Vector3d newAbs = currentPlanet.getPlanetAbsolutePos();
             playerAbsolutePositon = newAbs.add(playerRelativePositon);
+
         }
     }
 
@@ -69,7 +73,17 @@ public class CelestialStateSupplier {
     }
 
     public Vector3d getPlayerRelativePositon() {
-        return playerRelativePositon;
+        return new Vector3d(playerRelativePositon);
+    }
+
+    public Quaternionf getPlayerRotation() {
+        playerRotation = new Vector3f((float) playerRelativePositon.x,(float) playerRelativePositon.y,(float) playerRelativePositon.z);
+        playerRotation.normalize();
+        Quaternionf rotation = new Quaternionf();
+        Vector3f newVector = new Vector3f(playerRotation.x, playerRotation.y, playerRotation.z);
+        rotation.rotateX((float) Math.PI/2f);
+        rotation.lookAlong(newVector, new Vector3f(0f,0f, 1f).normalize());
+        return rotation;
     }
 
     public double getLastUpdatedTimeWarpPerSec() {
@@ -84,9 +98,14 @@ public class CelestialStateSupplier {
         PacketHandler.sendToServer(new ServerBoundTimeWarpChange(sign * lastUpdatedTimeWarpPerSec));
     }
 
+    public boolean doRender() {
+        Minecraft mc = Minecraft.getInstance();
+        return PlanetDimensions.isDimensionPlanet(mc.level.dimension()) || PlanetDimensions.isDimensionSpace(mc.level.dimension());
+    }
+
     public boolean isOnPlanet()
     {
-        return currentPlanet != null;
+        return PlanetDimensions.isDimensionPlanet(Minecraft.getInstance().level.dimension());
     }
 
     public PlanetaryBody getDimPlanet() {

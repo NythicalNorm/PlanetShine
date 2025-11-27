@@ -3,6 +3,7 @@ package com.nythicalnorm.nythicalSpaceProgram.planetshine;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
+import com.nythicalnorm.nythicalSpaceProgram.planet.Planets;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.generators.SkyboxCubeGen;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.AtmosphereRenderer;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.PlanetRenderer;
@@ -39,8 +40,9 @@ public class PlanetShine {
 
     private static void setupShaders() {
         PlanetRenderer.setupShader();
-        AtmosphereRenderer.setupShader();
+        AtmosphereRenderer.setupShader(Skybox_Buffer);
         SpaceObjRenderer.PopulateRenderPlanets();
+        Planets.planetInit();
     }
 
     public static void renderSkybox(Minecraft mc, LevelRenderer levelRenderer, PoseStack poseStack,
@@ -57,19 +59,17 @@ public class PlanetShine {
 
         RenderSystem.depthMask(false);
         poseStack.pushPose();
-
+        CelestialStateSupplier css = NythicalSpaceProgram.getCelestialStateSupplier();
         //Vector3d PlanetSurfaceDir = Calcs.planetDimPosToNormalizedVector(Minecraft.getInstance().player.position(), NythicalSpaceProgram.getCelestialStateSupplier().getCurrentPlanetWithinSOI());
-
-        //poseStack.mulPose(Planets.getPlanet("bumi").getRotationAt(CelestialStateSupplier.getCurrentTimeElapsed()));
-
-        AtmosphereRenderer.render(Skybox_Buffer, poseStack, projectionMatrix);
+        css.UpdatePlanetaryBodies();
+        //poseStack.mulPose(NythicalSpaceProgram.getCelestialStateSupplier().getPlayerRotation());
 
         Star_Buffer.bind();
         Star_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
         VertexBuffer.unbind();
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        SpaceObjRenderer.renderPlanetaryBodies(poseStack, mc, NythicalSpaceProgram.getCelestialStateSupplier(), camera, projectionMatrix, partialTick);
+        SpaceObjRenderer.renderPlanetaryBodies(poseStack, mc,css , camera, projectionMatrix, partialTick);
         RenderSystem.depthMask(true);
         poseStack.popPose();
     }
@@ -88,6 +88,11 @@ public class PlanetShine {
     private static BufferBuilder.RenderedBuffer drawStars(BufferBuilder pBuilder) {
         RandomSource randomsource = RandomSource.create(1000L);
         pBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+
+//        Vector3f[] cubeVertecies = SkyboxCubeGen.getCubeVertexes();
+//        for (Vector3f vertex : cubeVertecies) {
+//            pBuilder.vertex(vertex.x, vertex.y, vertex.z).color(10, 11, 20, 255).endVertex();
+//        }
 
         for(int i = 0; i < 700; ++i) {
             double d0 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);

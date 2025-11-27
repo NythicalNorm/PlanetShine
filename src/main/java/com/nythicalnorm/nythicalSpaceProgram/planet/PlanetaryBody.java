@@ -22,6 +22,7 @@ public class PlanetaryBody {
     private Vector3d planetRelativePos;
     private Vector3d planetAbsolutePos;
     private Quaternionf planetRotation;
+    private double SOI;
 
     public PlanetaryBody (@Nullable OrbitalElements orbitalElements, PlanetAtmosphere effects, @Nullable String[] childBody, double radius, double mass, Vector3fc normalizedNorthPoleDir, float startingRot, float rotationPeriod, ResourceLocation texture) {
         this.orbitalElements = orbitalElements;
@@ -57,8 +58,23 @@ public class PlanetaryBody {
         }
     }
 
+    public void UpdateSOIs() {
+        if (childBodies != null) {
+            for (String bodyname : childBodies) {
+                PlanetaryBody body =  Planets.PLANETARY_BODIES.get(bodyname);
+                double soi = Math.pow(body.mass/this.mass, 0.4d);
+                soi = soi * body.orbitalElements.SemiMajorAxis;
+                body.setSphereOfInfluence(soi);
+            }
+        }
+    }
+
     public double getRadius(){
         return radius;
+    }
+
+    public Quaternionf getPlanetRotation() {
+        return planetRotation;
     }
 
     public PlanetAtmosphere getAtmoshpere() {
@@ -71,14 +87,25 @@ public class PlanetaryBody {
     }
 
     public Vector3d getPlanetRelativePos() {
-        return planetRelativePos;
+        return new Vector3d(planetRelativePos);
     }
 
     public Vector3d getPlanetAbsolutePos() {
-        return planetAbsolutePos;
+        return new Vector3d(planetAbsolutePos);
     }
 
-    public Quaternionf getPlanetRotation() {
-        return planetRotation;
+    public double getSphereOfInfluence() {
+        return SOI;
+    }
+
+    public void setSphereOfInfluence(double SOI) {
+        this.SOI = SOI;
+    }
+
+    public double getAtmosphereRadius() {
+        if (!this.atmoshpericEffects.hasAtmosphere()) {
+            return 0;
+        }
+        return this.atmoshpericEffects.getAtmosphereHeight() + this.radius;
     }
 }
