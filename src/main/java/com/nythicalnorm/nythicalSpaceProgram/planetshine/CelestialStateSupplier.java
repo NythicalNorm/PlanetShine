@@ -31,6 +31,7 @@ public class CelestialStateSupplier {
     public CelestialStateSupplier() {
         playerAbsolutePositon = new Vector3d();
         playerRelativePositon = new Vector3d();
+        playerRotation = new Quaternionf();
     }
 
     public void UpdateState(double currentTime, double TimePassedPerSec){
@@ -55,6 +56,7 @@ public class CelestialStateSupplier {
         Planets.UpdatePlanets(clientSideSolarSystemTime);
         updatePlayerPos();
         updatePlayerRot();
+        getSunAngle();
     }
 
     private void updatePlayerPos() {
@@ -114,7 +116,10 @@ public class CelestialStateSupplier {
 
     public boolean isOnPlanet()
     {
-        return PlanetDimensions.isDimensionPlanet(Minecraft.getInstance().level.dimension());
+        if (Minecraft.getInstance().level != null) {
+            return PlanetDimensions.isDimensionPlanet(Minecraft.getInstance().level.dimension());
+        }
+        return false;
     }
 
     public PlanetaryBody getDimPlanet() {
@@ -123,5 +128,16 @@ public class CelestialStateSupplier {
 
     public PlanetaryBody getCurrentPlanet() {
         return currentPlanet;
+    }
+
+    public float getSunAngle() {
+        Vector3f sunDir = new Vector3f();
+        playerAbsolutePositon.get(sunDir);
+        sunDir.normalize();
+        Vector3f planetDir = new Vector3f();
+        playerRelativePositon.get(planetDir);
+        planetDir.normalize();
+        float diff = sunDir.dot(planetDir);
+        return Calcs.clamp(-1,1,diff);
     }
 }

@@ -1,20 +1,18 @@
 package com.nythicalnorm.nythicalSpaceProgram.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.PlanetShine;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.material.FogType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,6 +20,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @OnlyIn(Dist.CLIENT)
 @Mixin(LevelRenderer.class)
 public class LevelRendererMixin {
+    @Shadow
+    private VertexBuffer skyBuffer;
+
+    boolean doesMobEffectBlockSky(Camera pCamera) {
+        return false;
+    }
+
     @Inject(method = "renderSky", at = @At("HEAD"), cancellable = true)
     public void renderSky(PoseStack pPoseStack, Matrix4f pProjectionMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
         LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
@@ -34,21 +39,11 @@ public class LevelRendererMixin {
             pSkyFogSetup.run();
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();
-                if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !nythicalspaceprogram$doesMobEffectBlockSky(pCamera)) {
-                    PlanetShine.renderSkybox(mc, levelRenderer, pPoseStack, pProjectionMatrix, pPartialTick, pCamera);
+                if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !this.doesMobEffectBlockSky(pCamera)) {
+                    PlanetShine.renderSkybox(mc, levelRenderer, pPoseStack, pProjectionMatrix, pPartialTick, pCamera, skyBuffer);
                 }
             }
             ci.cancel();
-        }
-    }
-
-    @Unique
-    private boolean nythicalspaceprogram$doesMobEffectBlockSky(Camera pCamera) {
-        Entity entity = pCamera.getEntity();
-        if (!(entity instanceof LivingEntity livingentity)) {
-            return false;
-        } else {
-            return livingentity.hasEffect(MobEffects.BLINDNESS) || livingentity.hasEffect(MobEffects.DARKNESS);
         }
     }
 }

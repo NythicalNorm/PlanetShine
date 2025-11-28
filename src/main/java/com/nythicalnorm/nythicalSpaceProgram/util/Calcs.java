@@ -11,7 +11,7 @@ public class Calcs {
     public static final float hPI = 1.57079632679f;
 
     public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, double planetRadius, Quaternionf planetRot, boolean isNormalized) {
-        double cellSize = 100; //Math.PI*planetRadius*0.5d;
+        double cellSize = Math.PI*planetRadius*0.5d;
         double halfCellSize = cellSize*0.5d;
 
         int xCell = (int)Math.floor((pos.x + halfCellSize) / cellSize);
@@ -42,7 +42,7 @@ public class Calcs {
         }
         double radius = 1d;
         if (!isNormalized) {
-            radius = planetRadius + 10000000 + pos.y;
+            radius = planetRadius + pos.y; // + 10000000
         }
         Vector3d quadSpherePos =  getQuadPlanettoSquarePos(zWithinCell, xWithinCell, halfCellSize, QuadId, radius);
 
@@ -92,19 +92,7 @@ public class Calcs {
         return squarePos;
     }
 
-    private static int clamp (int min, int max, int val) {
-        if (val > max) {
-            return max;
-        }
-        else return Math.max(val, min);
-    }
 
-    private static double clamp (double min, double max, double val) {
-        if (val > max) {
-            return max;
-        }
-        else return Math.max(val, min);
-    }
 
     public static Vector3f getUpVectorForPlanetRot(Vector3f playerRelativePos) {
         Vector3f upDir = new Vector3f(0f,-1f,0f);
@@ -123,5 +111,26 @@ public class Calcs {
                 Double.isNaN(q.x()) ||
                 Double.isNaN(q.y()) ||
                 Double.isNaN(q.z());
+    }
+
+    public static int clamp (int min, int max, int val) {
+        if (val > max) {
+            return max;
+        }
+        else return Math.max(val, min);
+    }
+
+    public static double clamp (double min, double max, double val) {
+        if (val > max) {
+            return max;
+        }
+        else return Math.max(val, min);
+    }
+
+    public static float clamp (float min, float max, float val) {
+        if (val > max) {
+            return max;
+        }
+        else return Math.max(val, min);
     }
 }

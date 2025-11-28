@@ -52,9 +52,9 @@ public class AtmosphereRenderer {
         TopColor.set(atmosphere.getColorTransitionTwo());
         TransitionPoint.set(0.52777777777f);
         Opacity.set(0.5f*rainAlpha);
-        skyboxBuffer.bind();
-        skyboxBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, skyboxShader.get());
-        VertexBuffer.unbind();
+//        skyboxBuffer.bind();
+//        skyboxBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, skyboxShader.get());
+//        VertexBuffer.unbind();
         RenderSystem.disableBlend();
         poseStack.popPose();
     }

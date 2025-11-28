@@ -8,6 +8,7 @@
   },
   "client": [
     "LevelRendererMixin",
-    "DimensionSpecialEffectsMixin"
+    "DimensionSpecialEffectsMixin",
+    "LevelTimeAccessMixin"
   ]
 }

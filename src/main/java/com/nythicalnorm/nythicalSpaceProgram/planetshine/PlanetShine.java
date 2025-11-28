@@ -12,6 +12,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
@@ -21,6 +22,8 @@ import org.joml.Vector3f;
 public class PlanetShine {
     private static VertexBuffer Star_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private static VertexBuffer Skybox_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+
+
     private static boolean isFirstTime = true;
 
     public static void setupBuffers() {
@@ -46,7 +49,7 @@ public class PlanetShine {
     }
 
     public static void renderSkybox(Minecraft mc, LevelRenderer levelRenderer, PoseStack poseStack,
-                                      Matrix4f projectionMatrix, float partialTick, Camera camera)
+                                      Matrix4f projectionMatrix, float partialTick, Camera camera, VertexBuffer sky_Buffer)
     {
         if (isFirstTime) {
             setupShaders();
@@ -57,6 +60,14 @@ public class PlanetShine {
             return;
         }
 
+        Vec3 skyColor = Minecraft.getInstance().level.getSkyColor(camera.getPosition(), partialTick);
+
+        RenderSystem.setShaderColor((float) skyColor.x,(float) skyColor.y,(float) skyColor.z, 1.0F);
+        ShaderInstance posShad = RenderSystem.getShader();
+        sky_Buffer.bind();
+        sky_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, posShad);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+
         RenderSystem.depthMask(false);
         poseStack.pushPose();
         CelestialStateSupplier css = NythicalSpaceProgram.getCelestialStateSupplier();
@@ -64,6 +75,13 @@ public class PlanetShine {
         css.UpdatePlanetaryBodies();
         poseStack.mulPose(NythicalSpaceProgram.getCelestialStateSupplier().getPlayerRotation());
 
+        float alpha = 0f;
+        float sunAngle = Math.abs(css.getSunAngle());
+        if (sunAngle > 0.5f) {
+            //alpha = (sunAngle - 0.4f) * 1.666666f;
+        }
+
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
         Star_Buffer.bind();
         Star_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
         VertexBuffer.unbind();
