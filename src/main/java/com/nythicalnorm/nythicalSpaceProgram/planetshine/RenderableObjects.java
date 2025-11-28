@@ -2,6 +2,7 @@ package com.nythicalnorm.nythicalSpaceProgram.planetshine;
 
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetaryBody;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 public class RenderableObjects {
     private final PlanetaryBody body;
@@ -11,6 +12,7 @@ public class RenderableObjects {
     public RenderableObjects(PlanetaryBody body) {
         this.body = body;
         this.distanceSquared = Double.POSITIVE_INFINITY;
+        differenceVector = new Vector3d();
     }
 
     public PlanetaryBody getBody() {
@@ -35,5 +37,9 @@ public class RenderableObjects {
 
     public void setDifferenceVector(Vector3d differenceVector) {
         this.differenceVector = differenceVector;
+    }
+
+    public Vector3f getNormalizedDiffVectorf() {
+        return new Vector3f((float) differenceVector.x, (float)differenceVector.y, (float) differenceVector.z).normalize();
     }
 }

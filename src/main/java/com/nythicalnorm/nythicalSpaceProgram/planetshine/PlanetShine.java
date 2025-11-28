@@ -62,14 +62,14 @@ public class PlanetShine {
         CelestialStateSupplier css = NythicalSpaceProgram.getCelestialStateSupplier();
         //Vector3d PlanetSurfaceDir = Calcs.planetDimPosToNormalizedVector(Minecraft.getInstance().player.position(), NythicalSpaceProgram.getCelestialStateSupplier().getCurrentPlanetWithinSOI());
         css.UpdatePlanetaryBodies();
-        //poseStack.mulPose(NythicalSpaceProgram.getCelestialStateSupplier().getPlayerRotation());
+        poseStack.mulPose(NythicalSpaceProgram.getCelestialStateSupplier().getPlayerRotation());
 
         Star_Buffer.bind();
         Star_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
         VertexBuffer.unbind();
 
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        SpaceObjRenderer.renderPlanetaryBodies(poseStack, mc,css , camera, projectionMatrix, partialTick);
+        SpaceObjRenderer.renderPlanetaryBodies(poseStack, mc, css, camera, projectionMatrix, partialTick);
         RenderSystem.depthMask(true);
         poseStack.popPose();
     }

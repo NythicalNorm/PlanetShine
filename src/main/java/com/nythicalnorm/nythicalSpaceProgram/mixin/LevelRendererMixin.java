@@ -2,7 +2,6 @@ package com.nythicalnorm.nythicalSpaceProgram.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
-import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetDimensions;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.PlanetShine;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;

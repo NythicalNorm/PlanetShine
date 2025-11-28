@@ -6,12 +6,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetAtmosphere;
+import com.nythicalnorm.nythicalSpaceProgram.planetshine.RenderableObjects;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.shaders.ModShaders;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 
 import java.util.function.Supplier;
 
@@ -37,12 +36,18 @@ public class AtmosphereRenderer {
         }
     }
 
-    public static void render(PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix, float pPartialTick) {
+    public static void render(RenderableObjects renBody, PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix, float pPartialTick) {
+        poseStack.pushPose();
+
         RenderSystem.enableBlend();
         float rainAlpha = 1.0f;
         if (NythicalSpaceProgram.getCelestialStateSupplier().isOnPlanet()) {
             rainAlpha = 1.0F - Minecraft.getInstance().level.getRainLevel(pPartialTick);
         }
+        Vector3f relativeDir = renBody.getNormalizedDiffVectorf();
+
+        poseStack.mulPose(new Quaternionf().rotateTo(new Vector3f(0f,-1f,0f), relativeDir));
+
         BottomColor.set(atmosphere.getColorTransitionOne());
         TopColor.set(atmosphere.getColorTransitionTwo());
         TransitionPoint.set(0.52777777777f);
@@ -51,5 +56,6 @@ public class AtmosphereRenderer {
         skyboxBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, skyboxShader.get());
         VertexBuffer.unbind();
         RenderSystem.disableBlend();
+        poseStack.popPose();
     }
 }

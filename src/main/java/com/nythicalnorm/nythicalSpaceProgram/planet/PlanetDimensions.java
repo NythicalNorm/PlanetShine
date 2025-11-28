@@ -21,7 +21,10 @@ public class PlanetDimensions {
     }
 
     public static PlanetaryBody getDimPlanet(ResourceKey<Level> dim) {
-        return Planets.PLANETARY_BODIES.get(planetDimensions.get(dim));
+        if (planetDimensions.containsKey(dim)) {
+            return Planets.PLANETARY_BODIES.get(planetDimensions.get(dim));
+        }
+        return null;
     }
 
     public static boolean isDimensionSpace(ResourceKey<Level> dim) {

@@ -44,9 +44,9 @@ public class PlanetRenderer {
 
         PlanetAtmosphere atmosphere = obj.getBody().getAtmoshpere();
 
-        if (atmosphere != null) {
+        if (atmosphere.hasAtmosphere()) {
             if (distance < obj.getBody().getSphereOfInfluence()) {//&& distance < obj.getBody().getAtmosphereRadius()) {
-                AtmosphereRenderer.render(atmosphere, poseStack, projectionMatrix, partialTick);
+                AtmosphereRenderer.render(obj,atmosphere, poseStack, projectionMatrix, partialTick);
             }
         }
 
@@ -63,7 +63,8 @@ public class PlanetRenderer {
 
         sunDirUniform.set(lightDir);
         ShaderInstance shad = planetShader.get();
-        if (obj.getBody() instanceof Star || obj.getBody() == css.getDimPlanet()) {
+
+        if (obj.getBody() instanceof Star) { // || obj.getBody() == css.getDimPlanet()) {
             shad = GameRenderer.getPositionTexShader();
         }
 

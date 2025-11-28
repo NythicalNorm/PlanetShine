@@ -4,10 +4,9 @@ package com.nythicalnorm.nythicalSpaceProgram.planet;
 import com.nythicalnorm.nythicalSpaceProgram.solarsystem.OrbitalElements;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
-import org.joml.Vector3fc;
+import org.joml.*;
+
+import java.lang.Math;
 
 public class PlanetaryBody {
     private final OrbitalElements orbitalElements;
@@ -24,15 +23,18 @@ public class PlanetaryBody {
     private Quaternionf planetRotation;
     private double SOI;
 
-    public PlanetaryBody (@Nullable OrbitalElements orbitalElements, PlanetAtmosphere effects, @Nullable String[] childBody, double radius, double mass, Vector3fc normalizedNorthPoleDir, float startingRot, float rotationPeriod, ResourceLocation texture) {
+    public PlanetaryBody (@Nullable OrbitalElements orbitalElements, PlanetAtmosphere effects, @Nullable String[] childBody,
+                          double radius, double mass, float inclinationAngle, float startingRot, float rotationPeriod, ResourceLocation texture) {
         this.orbitalElements = orbitalElements;
         this.radius = radius;
         this.texture = texture;
-        this.NorthPoleDir = new AxisAngle4f(startingRot, normalizedNorthPoleDir);
         this.RotationPeriod = rotationPeriod;
         this.atmoshpericEffects = effects;
         this.childBodies = childBody;
         this.mass = mass;
+
+        Vector3f normalizedNorthPoleDir = new Vector3f(0f, (float) Math.cos(inclinationAngle),(float) Math.sin(inclinationAngle));
+        this.NorthPoleDir = new AxisAngle4f(startingRot, normalizedNorthPoleDir);
         planetRelativePos = new Vector3d(0d, 0d, 0d);
         planetAbsolutePos = new Vector3d(0d, 0d, 0d);
         planetRotation = new Quaternionf();
@@ -43,8 +45,11 @@ public class PlanetaryBody {
             this.planetRelativePos = orbitalElements.ToCartesian(TimeElapsed);
             Vector3d newAbs = new Vector3d(parentPos);
             this.planetAbsolutePos = newAbs.add(planetRelativePos);
-            this.NorthPoleDir.angle = (float)((2*Math.PI/RotationPeriod)*TimeElapsed);
-            this.planetRotation = new Quaternionf(NorthPoleDir) ;
+
+            float rotationAngle = NorthPoleDir.angle + (float)((2*Math.PI/RotationPeriod)*TimeElapsed);
+            this.planetRotation = new Quaternionf().rotationTo(NorthPoleDir.x,NorthPoleDir.y,NorthPoleDir.z, 0f, 1f, 0f);
+            Quaternionf rotated = new Quaternionf(new AxisAngle4f(rotationAngle, 0f, 1f, 0f));
+            this.planetRotation.mul(rotated);
         }
     }
 
@@ -65,6 +70,7 @@ public class PlanetaryBody {
                 double soi = Math.pow(body.mass/this.mass, 0.4d);
                 soi = soi * body.orbitalElements.SemiMajorAxis;
                 body.setSphereOfInfluence(soi);
+                body.UpdateSOIs();
             }
         }
     }
@@ -81,8 +87,12 @@ public class PlanetaryBody {
         return atmoshpericEffects;
     }
 
+    public AxisAngle4f getNorthPoleDir() {
+        return new AxisAngle4f(NorthPoleDir);
+    }
+
     public double getAccelerationDueToGravity() {
-        double val = OrbitalElements.universalGravitationalConstant*this.mass;
+        double val = OrbitalElements.UniversalGravitationalConstant*this.mass;
         return val/(radius*radius);
     }
 
@@ -107,5 +117,17 @@ public class PlanetaryBody {
             return 0;
         }
         return this.atmoshpericEffects.getAtmosphereHeight() + this.radius;
+    }
+
+    protected void calculateOrbitalPeriod() {
+        if (childBodies != null) {
+            for (String bodyname : childBodies) {
+                PlanetaryBody body =  Planets.PLANETARY_BODIES.get(bodyname);
+                if (body.orbitalElements != null) {
+                    body.orbitalElements.setOrbitalPeriod(this.mass);
+                }
+                body.calculateOrbitalPeriod();
+            }
+        }
     }
 }
