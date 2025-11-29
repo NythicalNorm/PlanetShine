@@ -37,16 +37,14 @@ public class SpaceObjRenderer {
 
         for (RenderableObjects obj : renderPlanets) {
             Vector3d differenceVector = obj.getBody().getPlanetAbsolutePos();
-            differenceVector.sub(css.getPlayerAbsolutePositon());
+            differenceVector.sub(css.getPlayerData().getAbsolutePositon());
             obj.setDifferenceVector(differenceVector);
-            obj.setDistanceSquared(css.getPlayerAbsolutePositon().distanceSquared(obj.getBody().getPlanetAbsolutePos()));
+            obj.setDistanceSquared(css.getPlayerData().getAbsolutePositon().distanceSquared(obj.getBody().getPlanetAbsolutePos()));
         }
 
         Arrays.sort(renderPlanets, Comparator.comparingDouble(RenderableObjects::getDistanceSquared).reversed());
 
-        for (RenderableObjects plnt : renderPlanets) {
-            PlanetRenderer.render(plnt, css, poseStack, projectionMatrix, partialTick);
-        }
+        PlanetRenderer.renderPlanets(renderPlanets, css, poseStack, projectionMatrix, partialTick);
 
         poseStack.popPose();
     }

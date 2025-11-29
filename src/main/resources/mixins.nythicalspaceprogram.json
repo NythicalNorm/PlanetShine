@@ -10,5 +10,9 @@
     "LevelRendererMixin",
     "DimensionSpecialEffectsMixin",
     "LevelTimeAccessMixin"
+  ],
+
+  "server": [
+    "LevelTimeAccessMixin"
   ]
 }

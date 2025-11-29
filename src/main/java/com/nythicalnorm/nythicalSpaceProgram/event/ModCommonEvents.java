@@ -4,15 +4,20 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import com.nythicalnorm.nythicalSpaceProgram.commands.NSPTeleportCommand;
-import com.nythicalnorm.nythicalSpaceProgram.planet.Planets;
+import com.nythicalnorm.nythicalSpaceProgram.common.PlayerOrbitalData;
+import com.nythicalnorm.nythicalSpaceProgram.common.PlayerOrbitalDataProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
@@ -53,7 +58,32 @@ public class ModCommonEvents {
     }
 
     @SubscribeEvent
-    public static void serverStarted(ServerStartedEvent event) {
-        Planets.planetInit();
+    public static void onPlayerLoggedInEvent(PlayerEvent.PlayerLoggedInEvent event) {
+        NythicalSpaceProgram.getSolarSystem().playerJoined(event.getEntity());
     }
+
+    @SubscribeEvent
+    public static void onAttachCapabilitiesPlayer(AttachCapabilitiesEvent<Entity> event) {
+        if(event.getObject() instanceof Player) {
+            if(!event.getObject().getCapability(PlayerOrbitalDataProvider.ORBITAL_DATA).isPresent()) {
+                event.addCapability(ResourceLocation.fromNamespaceAndPath(NythicalSpaceProgram.MODID, "properties"), new PlayerOrbitalDataProvider());
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerCloned(PlayerEvent.Clone event) {
+        if(event.isWasDeath()) {
+            event.getOriginal().getCapability(PlayerOrbitalDataProvider.ORBITAL_DATA).ifPresent(newStore -> {
+                //need to change this to the orbital positon of the respawn point.
+                newStore.copyFrom(new PlayerOrbitalData(event.getEntity()));
+            });
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
+        event.register(PlayerOrbitalDataProvider.class);
+    }
+
 }

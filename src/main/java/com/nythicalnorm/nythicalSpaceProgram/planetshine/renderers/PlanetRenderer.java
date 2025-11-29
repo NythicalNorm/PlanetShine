@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetAtmosphere;
+import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetaryBody;
 import com.nythicalnorm.nythicalSpaceProgram.planet.Star;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.CelestialStateSupplier;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.RenderableObjects;
@@ -20,6 +21,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @OnlyIn(Dist.CLIENT)
@@ -37,17 +39,40 @@ public class PlanetRenderer {
         }
     }
 
-    public static void render(RenderableObjects obj, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
+    public static void renderPlanets(RenderableObjects[] renderPlanets, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
+        Optional<PlanetaryBody> planetOn = css.getPlayerData().getCurrentPlanet();
+        float currentAlbedo = 1.0f;
+        Optional<PlanetAtmosphere> atmosphere = Optional.empty();
+
+        if (planetOn.isPresent()) {
+            if (planetOn.get().getAtmoshpere().hasAtmosphere()) {
+                currentAlbedo = css.getPlayerData().getSunAngle() * 2;
+                atmosphere = Optional.of(planetOn.get().getAtmoshpere());
+            }
+        }
+
+        for (RenderableObjects plnt : renderPlanets) {
+            double distance = plnt.getDistance();
+
+            if (distance < (plnt.getBody().getRadius() + 320)) {
+                continue;
+            }
+
+            render(plnt, atmosphere, poseStack, projectionMatrix, distance, currentAlbedo);
+        }
+    }
+
+    public static void render(RenderableObjects obj, Optional<PlanetAtmosphere> atmosphere, PoseStack poseStack,
+                              Matrix4f projectionMatrix, double distance, float currentAlbedo) {
         poseStack.pushPose();
         Quaternionf planetRot =  obj.getBody().getPlanetRotation();
-        double distance = obj.getDistance();
+        RenderSystem.enableBlend();
 
-        PlanetAtmosphere atmosphere = obj.getBody().getAtmoshpere();
-
-        if (atmosphere.hasAtmosphere()) {
-            if (distance < obj.getBody().getSphereOfInfluence()) {//&& distance < obj.getBody().getAtmosphereRadius()) {
-                AtmosphereRenderer.render(obj,atmosphere, poseStack, projectionMatrix, partialTick);
-            }
+        if (atmosphere.isPresent()) {
+                //AtmosphereRenderer.render(obj,atmosphere, poseStack, projectionMatrix, partialTick);
+            PlanetAtmosphere bodyAtmos = obj.getBody().getAtmoshpere();
+            float renderOpacity = (currentAlbedo * (bodyAtmos.getExposureNight() - bodyAtmos.getExposureDay())) + bodyAtmos.getExposureDay();
+            RenderSystem.setShaderColor(1.0f,1.0f,1.0f,renderOpacity);
         }
 
         SpaceObjRenderer.PerspectiveShift(distance, obj.getDifferenceVector(), planetRot,
@@ -70,7 +95,8 @@ public class PlanetRenderer {
 
         QuadSphereModelGenerator.getSphereBuffer().drawWithShader(poseStack.last().pose(), projectionMatrix, shad);
         VertexBuffer.unbind();
-
+        RenderSystem.disableBlend();
+        RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
         poseStack.popPose();
     }
 }

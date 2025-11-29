@@ -41,7 +41,7 @@ public class AtmosphereRenderer {
 
         RenderSystem.enableBlend();
         float rainAlpha = 1.0f;
-        if (NythicalSpaceProgram.getCelestialStateSupplier().isOnPlanet()) {
+        if (NythicalSpaceProgram.getCelestialStateSupplier().getPlayerData().isOnPlanet()) {
             rainAlpha = 1.0F - Minecraft.getInstance().level.getRainLevel(pPartialTick);
         }
         Vector3f relativeDir = renBody.getNormalizedDiffVectorf();

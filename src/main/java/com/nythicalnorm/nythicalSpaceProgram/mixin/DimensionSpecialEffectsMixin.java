@@ -15,14 +15,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class DimensionSpecialEffectsMixin {
     @Inject(method ="getSunriseColor", at = @At("HEAD"), cancellable = true)
     public void getSunriseColor(float pTimeOfDay, float pPartialTicks, CallbackInfoReturnable<float[]> cir) {
-        if (NythicalSpaceProgram.getCelestialStateSupplier().doRender()) {
-            float[] sunriseCol = new float[4];
-            sunriseCol[0] = 0f;
-            sunriseCol[1] = 0f;
-            sunriseCol[2] = 0f;
-            sunriseCol[3] = 0f;
+        if (NythicalSpaceProgram.getCelestialStateSupplier() != null) {
+            if (NythicalSpaceProgram.getCelestialStateSupplier().doRender()) {
+                float[] sunriseCol = new float[4];
+                sunriseCol[0] = 0f;
+                sunriseCol[1] = 0f;
+                sunriseCol[2] = 0f;
+                sunriseCol[3] = 0f;
 
-            cir.setReturnValue(sunriseCol);
+                cir.setReturnValue(sunriseCol);
+            }
         }
     }
 }

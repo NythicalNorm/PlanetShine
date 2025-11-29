@@ -4,7 +4,9 @@ import com.mojang.logging.LogUtils;
 import com.nythicalnorm.nythicalSpaceProgram.Item.ModCreativeModeTab;
 import com.nythicalnorm.nythicalSpaceProgram.Item.ModItems;
 import com.nythicalnorm.nythicalSpaceProgram.block.ModBlocks;
+import com.nythicalnorm.nythicalSpaceProgram.common.PlayerOrbitalData;
 import com.nythicalnorm.nythicalSpaceProgram.network.PacketHandler;
+import com.nythicalnorm.nythicalSpaceProgram.planet.Planets;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.CelestialStateSupplier;
 import com.nythicalnorm.nythicalSpaceProgram.solarsystem.SolarSystem;
 import com.nythicalnorm.nythicalSpaceProgram.sound.ModSounds;
@@ -71,7 +73,8 @@ public class NythicalSpaceProgram
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
     {
-        solarSystem = new SolarSystem();
+        Planets.planetInit();
+        solarSystem = new SolarSystem(event.getServer());
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -82,9 +85,13 @@ public class NythicalSpaceProgram
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             // Some client setup code
-            celestialStateSupplier = new CelestialStateSupplier();
             ModItemProperties.addCustomItemProperties();
         }
+    }
+
+    public static void startClient(PlayerOrbitalData playerData) {
+        Planets.planetInit();
+        celestialStateSupplier = new CelestialStateSupplier(playerData);
     }
 
     public static SolarSystem getSolarSystem() {

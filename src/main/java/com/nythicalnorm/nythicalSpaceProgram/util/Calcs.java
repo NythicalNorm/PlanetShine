@@ -1,13 +1,13 @@
 package com.nythicalnorm.nythicalSpaceProgram.util;
 
-import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
+import com.nythicalnorm.nythicalSpaceProgram.common.OrbitalData;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.*;
 
 import java.lang.Math;
 
 public class Calcs {
-    public static final float PI = 3.14159265359f;
     public static final float hPI = 1.57079632679f;
 
     public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, double planetRadius, Quaternionf planetRot, boolean isNormalized) {
@@ -17,10 +17,10 @@ public class Calcs {
         int xCell = (int)Math.floor((pos.x + halfCellSize) / cellSize);
         int zCell = (int)Math.floor((pos.z + halfCellSize) / cellSize);
 
-        xCell = clamp(-1, 2, xCell);
+        xCell = Mth.clamp(xCell,-1, 2);
 
         if (xCell == 0) {
-            zCell = clamp(-1, 1, zCell);
+            zCell = Mth.clamp(zCell,-1, 1);
         }
         else {
             zCell = 0;
@@ -28,8 +28,8 @@ public class Calcs {
         double xWithinCell = pos.x - xCell*cellSize;
         double zWithinCell = pos.z - zCell*cellSize;
 
-        xWithinCell = clamp(-halfCellSize, halfCellSize, xWithinCell);
-        zWithinCell = clamp(-halfCellSize, halfCellSize, zWithinCell);
+        xWithinCell = Mth.clamp(xWithinCell, -halfCellSize, halfCellSize);
+        zWithinCell = Mth.clamp(zWithinCell, -halfCellSize, halfCellSize);
 
         int QuadId = xCell + 1;
         if (xCell == 0) {
@@ -94,10 +94,10 @@ public class Calcs {
 
 
 
-    public static Vector3f getUpVectorForPlanetRot(Vector3f playerRelativePos) {
+    public static Vector3f getUpVectorForPlanetRot(Vector3f playerRelativePos, OrbitalData data) {
         Vector3f upDir = new Vector3f(0f,-1f,0f);
-        if (NythicalSpaceProgram.getCelestialStateSupplier().isOnPlanet()) {
-            AxisAngle4f northPole = NythicalSpaceProgram.getCelestialStateSupplier().getCurrentPlanet().getNorthPoleDir();
+        if (data.getCurrentPlanet().isPresent()) {
+            AxisAngle4f northPole = data.getCurrentPlanet().get().getNorthPoleDir();
             upDir = new Vector3f(northPole.x, northPole.z, northPole.y);
             upDir.normalize();
         }
@@ -111,26 +111,5 @@ public class Calcs {
                 Double.isNaN(q.x()) ||
                 Double.isNaN(q.y()) ||
                 Double.isNaN(q.z());
-    }
-
-    public static int clamp (int min, int max, int val) {
-        if (val > max) {
-            return max;
-        }
-        else return Math.max(val, min);
-    }
-
-    public static double clamp (double min, double max, double val) {
-        if (val > max) {
-            return max;
-        }
-        else return Math.max(val, min);
-    }
-
-    public static float clamp (float min, float max, float val) {
-        if (val > max) {
-            return max;
-        }
-        else return Math.max(val, min);
     }
 }

@@ -31,8 +31,9 @@ public class LevelRendererMixin {
     public void renderSky(PoseStack pPoseStack, Matrix4f pProjectionMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
         LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
         Minecraft mc = Minecraft.getInstance();
+        //long beforeTimes = Util.getNanos();
 
-        if (mc.level == null) {
+        if (mc.level == null || NythicalSpaceProgram.getCelestialStateSupplier() == null) {
             return;
         }
         if (NythicalSpaceProgram.getCelestialStateSupplier().doRender()) {
@@ -45,5 +46,8 @@ public class LevelRendererMixin {
             }
             ci.cancel();
         }
+
+        //long diff = Util.getNanos() - beforeTimes;
+        //NythicalSpaceProgram.log("PlanetShine Time: " + diff);
     }
 }

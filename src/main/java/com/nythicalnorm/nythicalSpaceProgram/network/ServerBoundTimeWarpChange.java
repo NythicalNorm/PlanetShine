@@ -1,6 +1,6 @@
 package com.nythicalnorm.nythicalSpaceProgram.network;
 
-import com.nythicalnorm.nythicalSpaceProgram.solarsystem.SolarSystem;
+import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
@@ -25,7 +25,7 @@ public class ServerBoundTimeWarpChange {
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER ) {
             NetworkEvent.Context context = contextSupplier.get();
-            context.enqueueWork(() -> SolarSystem.ChangeTimeWarp(ProposedSetTimeWarpSpeed, contextSupplier.get().getSender()));
+            context.enqueueWork(() -> NythicalSpaceProgram.getSolarSystem().ChangeTimeWarp(ProposedSetTimeWarpSpeed, contextSupplier.get().getSender()));
             context.setPacketHandled(true);
         }
     }

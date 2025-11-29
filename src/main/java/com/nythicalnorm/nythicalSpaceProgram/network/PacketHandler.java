@@ -1,5 +1,6 @@
 package com.nythicalnorm.nythicalSpaceProgram.network;
 
+import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -10,13 +11,19 @@ import net.minecraftforge.network.simple.SimpleChannel;
 public class PacketHandler {
     private static final String PROTOCOL_VERSION = "1";
     private static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            ResourceLocation.fromNamespaceAndPath("mymodid", "main"),
+            ResourceLocation.fromNamespaceAndPath(NythicalSpaceProgram.MODID, "main"),
             () -> PROTOCOL_VERSION,
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
     );
 
     public static void register() {
+        INSTANCE.messageBuilder(ClientBoundLoginSolarSystemState.class, NetworkDirection.LOGIN_TO_CLIENT.ordinal())
+                .encoder(ClientBoundLoginSolarSystemState::encode)
+                .decoder(ClientBoundLoginSolarSystemState::new)
+                .consumerMainThread(ClientBoundLoginSolarSystemState::handle)
+                .add();
+
         INSTANCE.messageBuilder(ClientBoundSpaceShipsPosUpdate.class, NetworkDirection.PLAY_TO_CLIENT.ordinal())
                 .encoder(ClientBoundSpaceShipsPosUpdate::encode)
                 .decoder(ClientBoundSpaceShipsPosUpdate::new)

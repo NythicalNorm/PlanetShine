@@ -1,37 +1,26 @@
 package com.nythicalnorm.nythicalSpaceProgram.planetshine;
 
+import com.nythicalnorm.nythicalSpaceProgram.common.PlayerOrbitalData;
 import com.nythicalnorm.nythicalSpaceProgram.network.PacketHandler;
 import com.nythicalnorm.nythicalSpaceProgram.network.ServerBoundTimeWarpChange;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetDimensions;
-import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetaryBody;
 import com.nythicalnorm.nythicalSpaceProgram.planet.Planets;
-import com.nythicalnorm.nythicalSpaceProgram.util.Calcs;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.*;
 
 import java.lang.Math;
 
-@OnlyIn(Dist.CLIENT)
+//@OnlyIn(Dist.CLIENT)
 public class CelestialStateSupplier {
     private double serverSideSolarSystemTime = 0;
     private double clientSideSolarSystemTime = 0;
     private long clientSideTickTime = 0L;
-
     public double lastUpdatedTimeWarpPerSec = 0;
+    PlayerOrbitalData playerData;
 
-    private Vector3d playerAbsolutePositon;
-    private Vector3d playerRelativePositon;
-    private Quaternionf playerRotation;
-    private PlanetaryBody currentPlanet;
 
-    public CelestialStateSupplier() {
-        playerAbsolutePositon = new Vector3d();
-        playerRelativePositon = new Vector3d();
-        playerRotation = new Quaternionf();
+    public CelestialStateSupplier(PlayerOrbitalData playerDataFromServer) {
+        playerData = playerDataFromServer;
     }
 
     public void UpdateState(double currentTime, double TimePassedPerSec){
@@ -54,48 +43,19 @@ public class CelestialStateSupplier {
 
         clientSideTickTime = currentTime;
         Planets.UpdatePlanets(clientSideSolarSystemTime);
-        updatePlayerPos();
-        updatePlayerRot();
-        getSunAngle();
-    }
-
-    private void updatePlayerPos() {
-        LocalPlayer plr = Minecraft.getInstance().player;
-        if (isOnPlanet() && plr.level() != null) {
-            currentPlanet = PlanetDimensions.getDimPlanet(plr.level().dimension());
-            if (currentPlanet != null) {
-                playerRelativePositon = Calcs.planetDimPosToNormalizedVector(plr.position(), currentPlanet.getRadius(), currentPlanet.getPlanetRotation(), false);
-                Vector3d newAbs = currentPlanet.getPlanetAbsolutePos();
-                playerAbsolutePositon = newAbs.add(playerRelativePositon);
-            }
-        }
-    }
-
-    private void updatePlayerRot() {
-        if (isOnPlanet()) {
-            //quaternion to rotate the output of lookalong function to the correct -y direction.
-            this.playerRotation = new Quaternionf(new AxisAngle4f(Calcs.hPI,1f,0f,0f));
-            Vector3f playerRelativePos = new Vector3f((float) playerRelativePositon.x, (float) playerRelativePositon.y, (float) playerRelativePositon.z);
-            playerRelativePos.normalize();
-            Vector3f upVector = Calcs.getUpVectorForPlanetRot(new Vector3f(playerRelativePos));
-            this.playerRotation.lookAlong(playerRelativePos, upVector);
-        }
-    }
-
-    public Vector3d getPlayerAbsolutePositon() {
-        return playerAbsolutePositon;
-    }
-
-    public Vector3d getPlayerRelativePositon() {
-        return new Vector3d(playerRelativePositon);
-    }
-
-    public Quaternionf getPlayerRotation() {
-        return new Quaternionf(playerRotation);
+        playerData.updatePlayerPosRot(Minecraft.getInstance().player);
     }
 
     public double getLastUpdatedTimeWarpPerSec() {
         return lastUpdatedTimeWarpPerSec;
+    }
+
+    public PlayerOrbitalData getPlayerData() {
+        return playerData;
+    }
+
+    public void setPlayerData(PlayerOrbitalData playerData) {
+        this.playerData = playerData;
     }
 
     public void TryChangeTimeWarp(boolean DoInc) {
@@ -112,32 +72,5 @@ public class CelestialStateSupplier {
             return false;
         }
         return PlanetDimensions.isDimensionPlanet(mc.level.dimension()) || PlanetDimensions.isDimensionSpace(mc.level.dimension());
-    }
-
-    public boolean isOnPlanet()
-    {
-        if (Minecraft.getInstance().level != null) {
-            return PlanetDimensions.isDimensionPlanet(Minecraft.getInstance().level.dimension());
-        }
-        return false;
-    }
-
-    public PlanetaryBody getDimPlanet() {
-        return currentPlanet;
-    }
-
-    public PlanetaryBody getCurrentPlanet() {
-        return currentPlanet;
-    }
-
-    public float getSunAngle() {
-        Vector3f sunDir = new Vector3f();
-        playerAbsolutePositon.get(sunDir);
-        sunDir.normalize();
-        Vector3f planetDir = new Vector3f();
-        playerRelativePositon.get(planetDir);
-        planetDir.normalize();
-        float diff = sunDir.dot(planetDir);
-        return Calcs.clamp(-1,1,diff);
     }
 }
