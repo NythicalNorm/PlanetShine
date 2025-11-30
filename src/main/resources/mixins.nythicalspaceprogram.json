@@ -9,10 +9,12 @@
   "client": [
     "LevelRendererMixin",
     "DimensionSpecialEffectsMixin",
-    "LevelTimeAccessMixin"
+    "LevelTimeAccessMixin",
+    "LevelReaderMixin"
   ],
 
   "server": [
-    "LevelTimeAccessMixin"
+    "LevelTimeAccessMixin",
+    "LevelReaderMixin"
   ]
 }

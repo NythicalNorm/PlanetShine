@@ -25,8 +25,8 @@ public class SolarSystem {
         this.server = server;
     }
 
-    public MinecraftServer getServer() {
-        return server;
+    public Optional<MinecraftServer> getServer() {
+        return Optional.of(server);
     }
 
     public void OnTick() {

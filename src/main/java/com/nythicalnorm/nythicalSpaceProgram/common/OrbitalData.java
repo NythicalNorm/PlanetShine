@@ -19,7 +19,7 @@ public abstract class OrbitalData {
     public Vector3d absoluteOrbitalPosition;
     public Vector3d relativeOrbitalPosition;
     public Quaternionf Rotation;
-    public Optional<PlanetaryBody> currentPlanetOn = Optional.empty();
+    public PlanetaryBody currentPlanetOn;
 
     public void updatePlanetRot(Quaternionf existingRotation) {
         if (isOnPlanet()) {
@@ -33,24 +33,29 @@ public abstract class OrbitalData {
     }
 
     public void updatePlanetPos(Level level, Vec3 position) {
-        currentPlanetOn = PlanetDimensions.getDimPlanet(level.dimension());
-
-        if (isOnPlanet() && level != null) {
-            currentPlanetOn.ifPresent(currPlanet -> {
-                relativeOrbitalPosition = Calcs.planetDimPosToNormalizedVector(position, currPlanet.getRadius(), currPlanet.getPlanetRotation(), false);
-                Vector3d newAbs = currPlanet.getPlanetAbsolutePos();
+        Optional<PlanetaryBody> planetOptional = PlanetDimensions.getDimPlanet(level.dimension());
+        if (level != null) {
+            planetOptional.ifPresent(plnt -> {
+                currentPlanetOn = plnt;
+                relativeOrbitalPosition = Calcs.planetDimPosToNormalizedVector(position, plnt.getRadius(), plnt.getPlanetRotation(), false);
+                Vector3d newAbs = plnt.getPlanetAbsolutePos();
                 absoluteOrbitalPosition = newAbs.add(relativeOrbitalPosition);
             });
         }
     }
 
     public Optional<PlanetaryBody> getCurrentPlanet() {
-        return currentPlanetOn;
+        if (currentPlanetOn != null) {
+            return Optional.of(currentPlanetOn);
+        }
+        else  {
+            return Optional.empty();
+        }
     }
 
     public boolean isOnPlanet()
     {
-        return currentPlanetOn.isPresent();
+        return currentPlanetOn != null;
     }
 
     public Vector3d getAbsolutePositon() {

@@ -30,6 +30,7 @@ public class NythicalSpaceProgram
     public static final String MODID = "nythicalspaceprogram";
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
+
     //only use this in the Logical Server side
     private static SolarSystem solarSystem;
     private static CelestialStateSupplier celestialStateSupplier;

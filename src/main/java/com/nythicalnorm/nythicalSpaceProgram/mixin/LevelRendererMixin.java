@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.PlanetShine;
+import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -28,7 +29,7 @@ public class LevelRendererMixin {
     }
 
     @Inject(method = "renderSky", at = @At("HEAD"), cancellable = true)
-    public void renderSky(PoseStack pPoseStack, Matrix4f pProjectionMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
+    public void NSPrenderSky(PoseStack pPoseStack, Matrix4f pProjectionMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
         LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
         Minecraft mc = Minecraft.getInstance();
         //long beforeTimes = Util.getNanos();
@@ -46,7 +47,6 @@ public class LevelRendererMixin {
             }
             ci.cancel();
         }
-
         //long diff = Util.getNanos() - beforeTimes;
         //NythicalSpaceProgram.log("PlanetShine Time: " + diff);
     }
