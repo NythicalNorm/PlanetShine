@@ -15,5 +15,7 @@
   "key.nythicalspaceprogram.open_solar_system_map": "Open Solar System Map",
 
   "nythicalspaceprogram.commands.dimTeleport": "Teleported to the Space Dimension",
-  "nythicalspaceprogram.commands.planet_invalid": "Invalid Planet at: "
+  "nythicalspaceprogram.commands.planet_invalid": "Invalid Planet at: ",
+
+  "nythicalspaceprogram.mapscreen.time": "Year %1$s, Day %2$s, %3$s:%4$s"
 }

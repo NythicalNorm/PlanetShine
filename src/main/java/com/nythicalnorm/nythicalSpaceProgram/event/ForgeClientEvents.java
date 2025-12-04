@@ -10,7 +10,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.NetworkHooks;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = NythicalSpaceProgram.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
@@ -25,7 +24,7 @@ public class ForgeClientEvents {
                     celestialStateSupplier.TryChangeTimeWarp(false)));
         } else if (KeyBindings.OPEN_SOLAR_SYSTEM_MAP_KEY.consumeClick()) {
             NythicalSpaceProgram.getCelestialStateSupplier().ifPresent(celestialStateSupplier -> {
-                Minecraft.getInstance().setScreen(new MapSolarSystem(Component.translatable("key.nythicalspaceprogram.open_solar_system_map")));
+                Minecraft.getInstance().setScreen(new MapSolarSystem(Component.empty()));
             });
         }
     }

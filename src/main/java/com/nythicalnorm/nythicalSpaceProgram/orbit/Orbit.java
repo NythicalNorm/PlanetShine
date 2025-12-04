@@ -10,12 +10,12 @@ import java.util.HashMap;
 import java.util.Stack;
 
 public abstract class Orbit {
-    public Vector3d relativeOrbitalPos;
-    public Vector3d absoluteOrbitalPos;
-    public Quaternionf rotation;
-    public OrbitalElements orbitalElements;
-    public HashMap<String, Orbit> childElements;
-    public boolean isStableOrbit;
+    protected Vector3d relativeOrbitalPos;
+    protected Vector3d absoluteOrbitalPos;
+    protected Quaternionf rotation;
+    protected OrbitalElements orbitalElements;
+    protected HashMap<String, Orbit> childElements;
+    protected boolean isStableOrbit;
 
     public Vector3d getRelativePos() {
         return new Vector3d(relativeOrbitalPos);
@@ -52,6 +52,10 @@ public abstract class Orbit {
 
     public void setOrbitalElements(OrbitalElements orbitalElements) {
         this.orbitalElements = orbitalElements;
+    }
+
+    public OrbitalElements getOrbitalElements() {
+        return orbitalElements;
     }
 
     public CompoundTag saveNBT(CompoundTag nbt) {

@@ -23,6 +23,9 @@ public class CelestialStateSupplier {
     public double lastUpdatedTimeWarpPerSec = 0;
     private boolean isMapScreenOpen = false;
 
+    private static final int[] timeWarpSettings = new int[]{1,10,100,1000,10000,100000, 1000000};
+    private short currentTimeWarpSetting;
+
     private ClientPlayerSpacecraftBody playerData;
     private PlanetaryBody currentPlanetOn;
 
@@ -68,18 +71,39 @@ public class CelestialStateSupplier {
         return lastUpdatedTimeWarpPerSec;
     }
 
+    public double getClientSideSolarSystemTime() {
+        return clientSideSolarSystemTime;
+    }
+
     public ClientPlayerSpacecraftBody getPlayerData() {
         return playerData;
     }
 
-    public void TryChangeTimeWarp(boolean DoInc) {
-        double sign = 2;
-        if (!DoInc) {
-            sign = 0.5;
+    public void TryChangeTimeWarp(boolean doInc) {
+        short propesedSetIndex = currentTimeWarpSetting;
+        propesedSetIndex = doInc ? ++propesedSetIndex : --propesedSetIndex;
+
+        if (propesedSetIndex >= 0 && propesedSetIndex < timeWarpSettings.length) {
+            PacketHandler.sendToServer(new ServerBoundTimeWarpChange(timeWarpSettings[propesedSetIndex]));
         }
-        PacketHandler.sendToServer(new ServerBoundTimeWarpChange(sign * lastUpdatedTimeWarpPerSec));
     }
 
+
+    public void timeWarpSetFromServer(boolean successfullyChanged, int setTimeWarpSpeed) {
+        if (!successfullyChanged) {
+            return;
+        }
+
+        for (short i = 0; i<timeWarpSettings.length; i++) {
+            if (timeWarpSettings[i] == setTimeWarpSpeed) {
+                currentTimeWarpSetting = i;
+            }
+        }
+    }
+
+    public short getTimeWarpSetting() {
+        return this.currentTimeWarpSetting;
+    }
 
     public void trackedOrbitUpdate(int shipID, Stack<String> oldAddress, Stack<String> newAddress, OrbitalElements orbitalElements) {
         if (Minecraft.getInstance().player.getId() == shipID) {
@@ -131,4 +155,5 @@ public class CelestialStateSupplier {
     public boolean isMapScreenOpen() {
         return isMapScreenOpen;
     }
+
 }

@@ -1,0 +1,39 @@
+package com.nythicalnorm.nythicalSpaceProgram.network;
+
+import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+public class ClientBoundTimeWarpUpdate {
+    private final boolean successfullyChanged;
+    private final int setTimeWarpSpeed;
+
+    public ClientBoundTimeWarpUpdate(boolean successfullyChanged, int pSetTimeWarpSpeed)
+    {
+        this.successfullyChanged = successfullyChanged;
+        this.setTimeWarpSpeed = pSetTimeWarpSpeed;
+    }
+
+    public ClientBoundTimeWarpUpdate(FriendlyByteBuf friendlyByteBuf) {
+        this.successfullyChanged = friendlyByteBuf.readBoolean();
+        this.setTimeWarpSpeed = friendlyByteBuf.readInt();
+    }
+
+    public void encode(FriendlyByteBuf friendlyByteBuf) {
+        friendlyByteBuf.writeBoolean(this.successfullyChanged);
+        friendlyByteBuf.writeInt(this.setTimeWarpSpeed);
+    }
+
+    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
+        if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT ) {
+            NetworkEvent.Context context = contextSupplier.get();
+            NythicalSpaceProgram.getCelestialStateSupplier().ifPresent(celestialStateSupplier -> {
+                context.enqueueWork(() -> celestialStateSupplier.timeWarpSetFromServer(this.successfullyChanged, this.setTimeWarpSpeed) );
+            });
+            context.setPacketHandled(true);
+        }
+    }
+}

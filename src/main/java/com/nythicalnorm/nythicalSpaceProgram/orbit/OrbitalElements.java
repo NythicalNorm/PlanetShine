@@ -74,6 +74,6 @@ public class OrbitalElements {
     public void setOrbitalPeriod(double parentMass) {
         double GM = UniversalGravitationalConstant*parentMass;
         double orbitalPeriod = 2*Math.PI* Math.sqrt(SemiMajorAxis*SemiMajorAxis*SemiMajorAxis/GM);
-        this.MeanAngularMotion = 2*(2*Math.PI)/orbitalPeriod; //temp fix *2 because orbits are faster than expected
+        this.MeanAngularMotion = (2*Math.PI)/orbitalPeriod; //temp fix *2 because orbits are faster than expected
     }
 }

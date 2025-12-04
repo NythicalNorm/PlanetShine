@@ -1,4 +1,4 @@
-package com.nythicalnorm.nythicalSpaceProgram.planetshine;
+package com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers;
 
 import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
 import org.joml.Vector3d;
@@ -7,11 +7,11 @@ import org.joml.Vector3f;
 public class RenderableObjects {
     private final PlanetaryBody body;
     private Vector3d differenceVector;
-    private double distanceSquared;
+    private double distance;
 
     public RenderableObjects(PlanetaryBody body) {
         this.body = body;
-        this.distanceSquared = Double.POSITIVE_INFINITY;
+        this.distance = Double.POSITIVE_INFINITY;
         differenceVector = new Vector3d();
     }
 
@@ -19,16 +19,12 @@ public class RenderableObjects {
         return body;
     }
 
-    public double getDistanceSquared() {
-        return distanceSquared;
-    }
-
     public double getDistance() {
-        return Math.sqrt(distanceSquared);
+        return distance;
     }
 
-    public void setDistanceSquared(double distanceSquared) {
-        this.distanceSquared = distanceSquared;
+    public void setDistance(double dist) {
+        this.distance = dist;
     }
 
     public Vector3d getDifferenceVector() {

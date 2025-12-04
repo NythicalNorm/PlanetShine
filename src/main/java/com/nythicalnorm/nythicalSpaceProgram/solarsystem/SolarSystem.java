@@ -2,22 +2,19 @@ package com.nythicalnorm.nythicalSpaceProgram.solarsystem;
 
 import com.nythicalnorm.nythicalSpaceProgram.dimensions.DimensionTeleporter;
 import com.nythicalnorm.nythicalSpaceProgram.dimensions.SpaceDimension;
+import com.nythicalnorm.nythicalSpaceProgram.network.*;
 import com.nythicalnorm.nythicalSpaceProgram.orbit.*;
-import com.nythicalnorm.nythicalSpaceProgram.network.ClientBoundLoginSolarSystemState;
-import com.nythicalnorm.nythicalSpaceProgram.network.ClientBoundSpaceShipsPosUpdate;
-import com.nythicalnorm.nythicalSpaceProgram.network.ClientBoundTrackedOrbitUpdate;
-import com.nythicalnorm.nythicalSpaceProgram.network.PacketHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.Stack;
 
 public class SolarSystem {
@@ -56,12 +53,13 @@ public class SolarSystem {
         return currentTime;
     }
 
-    public void ChangeTimeWarp(double proposedSetTimeWarpSpeed, ServerPlayer player) {
+    public void ChangeTimeWarp(int proposedSetTimeWarpSpeed, ServerPlayer player) {
         if (player == null) {
             return;
         }
-        timePassPerSecond = proposedSetTimeWarpSpeed;
+        timePassPerSecond = (double) Mth.clamp(proposedSetTimeWarpSpeed, 0, 5000000);
         player.displayClientMessage(Component.translatable("nythicalspaceprogram.settimewarp").append(proposedSetTimeWarpSpeed + "x"), true);
+        PacketHandler.sendToAllClients(new ClientBoundTimeWarpUpdate(true, proposedSetTimeWarpSpeed));
     }
 
     public void playerJoined(Player entity) {

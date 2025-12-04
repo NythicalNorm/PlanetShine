@@ -37,6 +37,12 @@ public class PacketHandler {
                 .consumerMainThread(ClientBoundTrackedOrbitUpdate::handle)
                 .add();
 
+        INSTANCE.messageBuilder(ClientBoundTimeWarpUpdate.class, ++id)
+                .encoder(ClientBoundTimeWarpUpdate::encode)
+                .decoder(ClientBoundTimeWarpUpdate::new)
+                .consumerMainThread(ClientBoundTimeWarpUpdate::handle)
+                .add();
+
         INSTANCE.messageBuilder(ServerBoundTimeWarpChange.class, ++id)
                 .encoder(ServerBoundTimeWarpChange::encode)
                 .decoder(ServerBoundTimeWarpChange::new)

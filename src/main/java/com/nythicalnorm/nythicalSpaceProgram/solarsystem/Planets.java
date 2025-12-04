@@ -80,7 +80,7 @@ public class Planets {
             //copying the orbit so that new SOI has the same info
             oldPlanet = (PlanetaryBody) getOrbit(oldAddress);
             EntityOrbitalBody entitybody = (EntityOrbitalBody) oldPlanet.getChild(playerUUid);
-            entitybody.orbitalElements = orbitalElementsNew;
+            entitybody.setOrbitalElements(orbitalElementsNew);
 
             //removing the old reference to the object
             oldPlanet.removeChild(playerUUid);

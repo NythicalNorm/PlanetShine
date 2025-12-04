@@ -6,7 +6,6 @@ import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
 import com.nythicalnorm.nythicalSpaceProgram.solarsystem.Planets;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.CelestialStateSupplier;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.PlanetShine;
-import com.nythicalnorm.nythicalSpaceProgram.planetshine.RenderableObjects;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
@@ -41,10 +40,10 @@ public class SpaceObjRenderer {
             Vector3d differenceVector = obj.getBody().getAbsolutePos();
             differenceVector.sub(css.getPlayerData().getAbsolutePos());
             obj.setDifferenceVector(differenceVector);
-            obj.setDistanceSquared(css.getPlayerData().getAbsolutePos().distanceSquared(obj.getBody().getAbsolutePos()));
+            obj.setDistance(css.getPlayerData().getAbsolutePos().distance(obj.getBody().getAbsolutePos()));
         }
 
-        Arrays.sort(renderPlanets, Comparator.comparingDouble(RenderableObjects::getDistanceSquared).reversed());
+        Arrays.sort(renderPlanets, Comparator.comparingDouble(RenderableObjects::getDistance).reversed());
 
         renderPlanets(renderPlanets, css, poseStack, projectionMatrix, partialTick);
 
