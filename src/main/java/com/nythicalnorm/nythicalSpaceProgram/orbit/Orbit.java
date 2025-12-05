@@ -58,6 +58,10 @@ public abstract class Orbit {
         return orbitalElements;
     }
 
+    public boolean hasChild(PlanetaryBody body) {
+        return childElements.containsValue(body);
+    }
+
     public CompoundTag saveNBT(CompoundTag nbt) {
         nbt.putDouble("NSP.AbsoluteOrbitalPosX", this.absoluteOrbitalPos.x);
         nbt.putDouble("NSP.AbsoluteOrbitalPosY", this.absoluteOrbitalPos.y);

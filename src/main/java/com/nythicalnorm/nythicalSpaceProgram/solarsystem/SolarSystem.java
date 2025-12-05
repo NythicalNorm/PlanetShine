@@ -100,6 +100,4 @@ public class SolarSystem {
             PacketHandler.sendToPlayer(new ClientBoundTrackedOrbitUpdate(player, null, newAddress, elements), player);
         }
     }
-
-
 }

@@ -14,6 +14,7 @@ import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.*;
+import org.lwjgl.glfw.GLFW;
 
 import java.lang.Math;
 
@@ -54,11 +55,10 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
         PoseStack mapPosestack = new PoseStack();
         Matrix4f projectionMatrix = new Matrix4f().setPerspective(70, (float) graphics.guiWidth()/graphics.guiHeight(), 0.0000001f, 100.0f);;
 
-
         Quaternionf dragCameraRot = new Quaternionf().rotateYXZ(cameraYrot, cameraXrot, 0f); //.mul(yRotQuaternion);
         Vector3d relativeCameraPos = new Vector3d(0d, 0d, zoomLevel * currentFocusedBody.getRadius());
         relativeCameraPos.rotate(new Quaterniond(dragCameraRot.x, dragCameraRot.y,dragCameraRot.z,dragCameraRot.w));
-        Vector3d absoluteCameraPos = currentFocusedBody.getAbsolutePos().add(relativeCameraPos);
+        //Vector3d absoluteCameraPos = currentFocusedBody.getAbsolutePos().add(relativeCameraPos);
 
         mapPosestack.pushPose();
         mapPosestack.mulPose(dragCameraRot.conjugate());
@@ -67,7 +67,7 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();;
-        MapRenderer.renderMapObjects(mapPosestack, projectionMatrix, absoluteCameraPos);
+        MapRenderer.renderMapObjects(mapPosestack, projectionMatrix, relativeCameraPos, currentFocusedBody);
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
 
@@ -101,18 +101,20 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
             return true;
         }
 
-        if (KeyBindings.INC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
+        else if (KeyBindings.INC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
             NythicalSpaceProgram.getCelestialStateSupplier().ifPresent((celestialStateSupplier ->
                     celestialStateSupplier.TryChangeTimeWarp(true)));
             return true;
         }
 
-        if (KeyBindings.DEC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
+        else if (KeyBindings.DEC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
                 NythicalSpaceProgram.getCelestialStateSupplier().ifPresent((celestialStateSupplier ->
                         celestialStateSupplier.TryChangeTimeWarp(false)));
             return true;
         }
+        else if (GLFW.GLFW_KEY_TAB == pKeyCode){
 
+        }
         return super.keyPressed(pKeyCode, pScanCode, pModifiers);
     }
 

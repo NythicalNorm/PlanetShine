@@ -28,6 +28,7 @@ public class CelestialStateSupplier {
 
     private ClientPlayerSpacecraftBody playerData;
     private PlanetaryBody currentPlanetOn;
+    //private PlanetaryBody currentPlanetSOIOn;
 
     private Planets planets;
 
