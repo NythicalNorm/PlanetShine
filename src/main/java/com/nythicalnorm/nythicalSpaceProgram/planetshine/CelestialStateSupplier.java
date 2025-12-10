@@ -26,14 +26,14 @@ public class CelestialStateSupplier {
     private static final int[] timeWarpSettings = new int[]{1,10,100,1000,10000,100000, 1000000};
     private short currentTimeWarpSetting;
 
-    private ClientPlayerSpacecraftBody playerData;
+    private ClientPlayerSpacecraftBody playerOrbit;
     private PlanetaryBody currentPlanetOn;
     private PlanetaryBody currentPlanetSOIin;
 
     private final Planets planets;
 
     public CelestialStateSupplier(EntityOrbitalBody playerDataFromServer, Planets planets) {
-        playerData = new ClientPlayerSpacecraftBody(playerDataFromServer);
+        playerOrbit = new ClientPlayerSpacecraftBody(playerDataFromServer);
         this.planets = planets;
         SpaceObjRenderer.PopulateRenderPlanets(planets);
     }
@@ -66,7 +66,7 @@ public class CelestialStateSupplier {
         String planetName = planets.getDimensionPlanet(Minecraft.getInstance().level.dimension());
         if (planets.getAllPlanetNames().contains(planetName)) {
             currentPlanetOn = planets.getPlanet(planetName);
-            playerData.updatePlayerPosRot(Minecraft.getInstance().player, currentPlanetOn);
+            playerOrbit.updatePlayerPosRot(Minecraft.getInstance().player, currentPlanetOn);
         } else {
             currentPlanetOn = null;
         }
@@ -80,8 +80,8 @@ public class CelestialStateSupplier {
         return clientSideSolarSystemTime;
     }
 
-    public ClientPlayerSpacecraftBody getPlayerData() {
-        return playerData;
+    public ClientPlayerSpacecraftBody getPlayerOrbit() {
+        return playerOrbit;
     }
 
     public void TryChangeTimeWarp(boolean doInc) {
@@ -113,8 +113,8 @@ public class CelestialStateSupplier {
     public void trackedOrbitUpdate(int shipID, Stack<String> oldAddress, Stack<String> newAddress, OrbitalElements orbitalElements) {
         if (Minecraft.getInstance().player.getId() == shipID) {
             if (oldAddress == null) {
-                playerData.setOrbitalElements(orbitalElements);
-                currentPlanetSOIin = planets.playerJoinedOrbital(Minecraft.getInstance().player.getStringUUID(), newAddress, playerData);
+                playerOrbit.setOrbitalElements(orbitalElements);
+                currentPlanetSOIin = planets.playerJoinedOrbital(Minecraft.getInstance().player.getStringUUID(), newAddress, playerOrbit);
             }
             else {
                 currentPlanetSOIin = planets.playerChangeOrbitalSOIs(Minecraft.getInstance().player.getStringUUID(), oldAddress, newAddress, orbitalElements);

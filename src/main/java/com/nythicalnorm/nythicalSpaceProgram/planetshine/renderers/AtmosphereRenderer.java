@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetAtmosphere;
-import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
+import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderTypes.SpaceRenderable;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.shaders.ModShaders;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
@@ -38,7 +38,7 @@ public class AtmosphereRenderer {
         }
     }
 
-    public static void render(RenderableObjects renBody, double distance, PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix) {
+    public static void render(SpaceRenderable renBody, double distance, PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix) {
         poseStack.pushPose();
 
         RenderSystem.enableBlend();
@@ -75,18 +75,18 @@ public class AtmosphereRenderer {
         poseStack.popPose();
     }
 
-    public static void renderAtmospheres(RenderableObjects[] renBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+    public static void renderAtmospheres(SpaceRenderable[] renBody, PoseStack poseStack, Matrix4f projectionMatrix) {
         boolean alreadyRendered = false;
 
-        for (RenderableObjects ren : renBody) {
-            PlanetaryBody plnt = ren.getBody();
-            double distance = (ren.getDistance() - plnt.getRadius());
-
-            if (ren.getBody().getAtmoshpere().hasAtmosphere() && distance < plnt.getAtmoshpere().getAtmosphereHeight()) {
-                alreadyRendered = true;
-                render(ren, distance, plnt.getAtmoshpere(), poseStack, projectionMatrix);
-            }
-        }
+//        for (RenderableInSpace ren : renBody) {
+//            PlanetaryBody plnt = ren.getBody();
+//            double distance = (ren.getDistance() - plnt.getRadius());
+//
+//            if (ren.getBody().getAtmoshpere().hasAtmosphere() && distance < plnt.getAtmoshpere().getAtmosphereHeight()) {
+//                alreadyRendered = true;
+//                render(ren, distance, plnt.getAtmoshpere(), poseStack, projectionMatrix);
+//            }
+//        }
         if (!alreadyRendered) {
             renderSpaceSky(poseStack, projectionMatrix);
         }

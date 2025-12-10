@@ -8,8 +8,6 @@ import com.nythicalnorm.nythicalSpaceProgram.orbit.Orbit;
 import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.CelestialStateSupplier;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.gui.TimeWarpWidget;
-import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.RenderableObjects;
-import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.SpaceObjRenderer;
 import com.nythicalnorm.nythicalSpaceProgram.util.KeyBindings;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -22,7 +20,6 @@ import org.joml.*;
 import org.lwjgl.glfw.GLFW;
 
 import java.lang.Math;
-import java.util.ArrayList;
 
 @OnlyIn(Dist.CLIENT)
 public class MapSolarSystem extends Screen implements GuiEventListener {
@@ -34,7 +31,6 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
     private CelestialStateSupplier css;
     private Orbit[] FocusableBodies;
     private int currentFocusedBodyIndex;
-    private ArrayList<RenderableIcon> iconsToDraw;
 
     public MapSolarSystem(Component pTitle) {
         super(pTitle);
@@ -49,6 +45,7 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
         if (NythicalSpaceProgram.getCelestialStateSupplier().isPresent()) {
             populateFocusedBodiesList();
         }
+        MapRenderer.setScreen(this);
         this.addRenderableWidget(new TimeWarpWidget(0,0, width, height, Component.empty()));
         super.init();
     }
@@ -57,7 +54,6 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         RenderSystem.depthMask(false);
         PoseStack mapPosestack = new PoseStack();
-        iconsToDraw = new ArrayList<>();
         Matrix4f projectionMatrix = new Matrix4f().setPerspective(70, (float) graphics.guiWidth()/graphics.guiHeight(), 0.0000001f, 100.0f);
 
         Quaternionf dragCameraRot = new Quaternionf().rotateYXZ(cameraYrot, cameraXrot, 0f); //.mul(yRotQuaternion);
@@ -72,7 +68,7 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
-        MapRenderer.renderMapObjects(this, mapPosestack, projectionMatrix, relativeCameraPos, FocusableBodies[currentFocusedBodyIndex], css);
+        MapRenderer.renderMapObjects(graphics, mapPosestack, projectionMatrix, relativeCameraPos, FocusableBodies[currentFocusedBodyIndex], css);
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
         mapPosestack.popPose();
@@ -81,17 +77,7 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
             throw new IllegalStateException("popped poses are not closed properly.");
         }
 
-        renderOverlayGui(graphics);
-
         super.render(graphics, mouseX, mouseY, partialTick);
-    }
-
-    private void renderOverlayGui(GuiGraphics graphics) {
-        if (!iconsToDraw.isEmpty()) {
-            for (RenderableIcon icon : iconsToDraw) {
-                icon.render(graphics, 64);
-            }
-        }
     }
 
     @Override
@@ -108,8 +94,9 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
 
     @Override
     public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
-        zoomLevel =  zoomLevel * (float) Math.pow(1.075, -pDelta);
-        zoomLevel = Mth.clamp(zoomLevel, 1.00000001f, 1000);
+        zoomLevel =  zoomLevel * (float) Math.pow(1.1, -pDelta);
+        float maxDistanceZoom = 1424600000000f/((float) radiusZoomLevel);
+        zoomLevel = Mth.clamp(zoomLevel, 1.000001f, maxDistanceZoom);
         return true;
     }
 
@@ -145,6 +132,7 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
     @Override
     public void onClose() {
         super.onClose();
+        MapRenderer.setScreen(null);
         NythicalSpaceProgram.getCelestialStateSupplier().ifPresent (celestialStateSupplier -> {
             celestialStateSupplier.setMapScreenOpen(false);
         });
@@ -158,7 +146,7 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
         if (FocusableBodies[currentFocusedBodyIndex] instanceof PlanetaryBody) {
             if (css.getCurrentPlanet().isPresent()) {
                 if (css.getCurrentPlanet().get().equals(FocusableBodies[currentFocusedBodyIndex])) {
-                    Vector3d playerRelativePos = css.getPlayerData().getRelativePos();
+                    Vector3d playerRelativePos = css.getPlayerOrbit().getRelativePos();
                     playerRelativePos.normalize();
                     cameraYrot = (float) Math.atan2(playerRelativePos.x,playerRelativePos.z);
                     cameraXrot = (float) Math.asin(playerRelativePos.y);
@@ -169,39 +157,37 @@ public class MapSolarSystem extends Screen implements GuiEventListener {
             radiusZoomLevel = 1000000;
         }
 
+        MapRenderer.updateMapRenderables(css, FocusableBodies[currentFocusedBodyIndex]);
     }
 
     private void populateFocusedBodiesList() {
-        RenderableObjects[] renderPlanets = SpaceObjRenderer.getRenderPlanets();
         Orbit currentFocusedBody = null;
 
         if (css.isOnPlanet()) {
             currentFocusedBody = css.getCurrentPlanet().get();
 
-        } else if (css.getCurrentPlanetSOIin().isPresent() && css.getPlayerData() != null) {
-            currentFocusedBody = css.getPlayerData();
+        } else if (css.getCurrentPlanetSOIin().isPresent() && css.getPlayerOrbit() != null) {
+            currentFocusedBody = css.getPlayerOrbit();
         }
 
-        //setting the first element to the desired body and later filling in planets that aren't currentfocusedbody
-        int totalFocusAmount = renderPlanets.length;
-        int index = 0;
+        int totalFocusAmount = css.getPlanets().allPlanetsAddresses.size();
         if (currentFocusedBody instanceof EntityOrbitalBody) {
             totalFocusAmount += 1;
         }
+
+        //setting the first element to the desired body and later filling in planets that aren't currentfocusedbody
+        int index = 0;
+
         FocusableBodies = new Orbit[totalFocusAmount];
         FocusableBodies[index] = currentFocusedBody;
         currentFocusedBodyIndex = index;
 
-        for (RenderableObjects rnd : renderPlanets) {
-            index++;
-            if (rnd.getBody() != currentFocusedBody) {
-                FocusableBodies[index] = rnd.getBody();
+        for (PlanetaryBody plnt : css.getPlanets().getAllPlanetOrbits()) {
+            if (plnt != currentFocusedBody) {
+                index++;
+                FocusableBodies[index] = plnt;
             }
         }
         changeFocusBody(0);
-    }
-
-    public void addIconToRender(RenderableIcon icon) {
-        iconsToDraw.add(icon);
     }
 }

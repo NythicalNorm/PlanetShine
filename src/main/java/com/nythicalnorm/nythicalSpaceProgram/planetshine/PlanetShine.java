@@ -38,12 +38,13 @@ public class PlanetShine {
         Skybox_Buffer.bind();
         Skybox_Buffer.upload(skyboxRendered);
         VertexBuffer.unbind();
+
+        MapRenderer.setupBuffers();
     }
 
     private static void setupShaders() {
         PlanetRenderer.setupShader();
         AtmosphereRenderer.setupShader(Skybox_Buffer);
-        MapRenderer.init();
         //SpaceObjRenderer.PopulateRenderPlanets();
     }
 
@@ -82,7 +83,7 @@ public class PlanetShine {
         //Vector3d PlanetSurfaceDir = Calcs.planetDimPosToNormalizedVector(Minecraft.getInstance().player.position(), NythicalSpaceProgram.getCelestialStateSupplier().getCurrentPlanetWithinSOI());
         //temp check because space rotation isnt't calculated yet
         if (css.isOnPlanet()) {
-            poseStack.mulPose(css.getPlayerData().getRotation());
+            poseStack.mulPose(css.getPlayerOrbit().getRotation());
         }
 
         SpaceObjRenderer.renderPlanetaryBodies(poseStack, mc, css, camera, projectionMatrix, partialTick);

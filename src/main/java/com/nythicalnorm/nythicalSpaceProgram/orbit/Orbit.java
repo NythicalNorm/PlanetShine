@@ -57,8 +57,10 @@ public abstract class Orbit {
     }
 
     public Collection<Orbit> getChildren() {
-        if (!childElements.isEmpty()) {
-            return childElements.values();
+        if (childElements != null) {
+            if (!childElements.isEmpty()) {
+                return childElements.values();
+            }
         }
         return null;
     }
@@ -71,12 +73,13 @@ public abstract class Orbit {
         return orbitalElements;
     }
 
-    public boolean hasChild(PlanetaryBody body) {
-        if (!childElements.isEmpty()) {
-            return childElements.containsValue(body);
-        } else {
-            return false;
+    public boolean hasChild(Orbit body) {
+        if (childElements != null) {
+            if (!childElements.isEmpty()) {
+                return childElements.containsValue(body);
+            }
         }
+        return false;
     }
 
     public CompoundTag saveNBT(CompoundTag nbt) {

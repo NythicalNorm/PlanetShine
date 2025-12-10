@@ -1,37 +1,33 @@
 package com.nythicalnorm.nythicalSpaceProgram.planetshine.map;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
-import com.nythicalnorm.nythicalSpaceProgram.orbit.ClientPlayerSpacecraftBody;
-import com.nythicalnorm.nythicalSpaceProgram.orbit.EntityOrbitalBody;
-import com.nythicalnorm.nythicalSpaceProgram.orbit.Orbit;
-import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
+import com.nythicalnorm.nythicalSpaceProgram.orbit.*;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.CelestialStateSupplier;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.PlanetShine;
-import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.RenderableObjects;
+import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderTypes.*;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.AtmosphereRenderer;
-import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.PlanetRenderer;
-import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.SpaceObjRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.*;
 
-import java.lang.Math;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
 public class MapRenderer {
-    private static final float SCALE_FACTOR = 1/1000000000f;
-    private static VertexBuffer arrow = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
-    private static ResourceLocation playerHeadTexture;
+    public static final float SCALE_FACTOR = 1/1000000000f;
+    private static MapRenderable renderTree;
+    private static Orbit currentFocusedBody;
+    private static MapSolarSystem currentOpenScreen;
+    private static ArrayList<MapRenderableIcon> iconsList;
+    private static MapRenderableIcon homePlanetPlayerDisplay;
 
-    public static void init() {
-        playerHeadTexture = Minecraft.getInstance().player.getSkinTextureLocation();
+    public static void setupBuffers() {
         OrbitDrawer.generateCircle(2048);
         OrbitDrawer.generateHyperbola(2048);
     }
@@ -41,143 +37,111 @@ public class MapRenderer {
         PlanetShine.drawStarBuffer(mapPosestack, projectionMatrix, 1.0f);
     }
 
-    public static void renderMapObjects(MapSolarSystem solScreen, PoseStack poseStack, Matrix4f projectionMatrix, Vector3d cameraPos, Orbit currentFocus, CelestialStateSupplier css) {
-        RenderableObjects[] renderableObjects = SpaceObjRenderer.getRenderPlanets();
-
-        PlanetaryBody planetRelativeTo = null;
-        if (currentFocus instanceof PlanetaryBody) {
-            planetRelativeTo = (PlanetaryBody) currentFocus;
-        } else if (currentFocus instanceof ClientPlayerSpacecraftBody) {
-            planetRelativeTo = css.getCurrentPlanetSOIin().get();
-            cameraPos.add(currentFocus.getRelativePos());
-        }
-
-        if (planetRelativeTo == null) {
-            NythicalSpaceProgram.logError("Can't find valid planet to open focus on");
+    public static void renderMapObjects(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, Vector3d cameraPos, Orbit currentFocus, CelestialStateSupplier css) {
+        currentFocusedBody = currentFocus;
+        if (renderTree == null || currentFocusedBody == null) {
+            return;
         }
 
         Vector3f mapCameraPos = toMapCoordinate(cameraPos);
         poseStack.translate(-mapCameraPos.x, -mapCameraPos.y, -mapCameraPos.z);
+        renderTree.propagateRender(poseStack, projectionMatrix, null);
 
-        for (RenderableObjects plnt : renderableObjects) {
-            Vector3f renderPos;
+        for (MapRenderableIcon icon : iconsList) {
+            renderIcon(graphics, icon.getScreenPos(), icon.getPlayerTextureLoc(), 64);
+        }
+    }
 
-            if (plnt.getBody() == planetRelativeTo) {
-                renderPos = new Vector3f(0f,0f,0f);
-            } else if (planetRelativeTo.hasChild(plnt.getBody())) {
-                renderPos = toMapCoordinate(plnt.getBody().getRelativePos());
-            } else {
-                Vector3d differenceVector = plnt.getBody().getAbsolutePos();
-                differenceVector.sub(planetRelativeTo.getAbsolutePos());
-                renderPos = toMapCoordinate(differenceVector);
-            }
-            poseStack.pushPose();
-            poseStack.translate(renderPos.x, renderPos.y, renderPos.z);
-            // all drawing that is relative to a planet occurs here.
-            //test Velocity direction Lines
-            //drawDebugVelocityLines(plnt.getBody().getRelativeVelocity().normalize(), poseStack, projectionMatrix);
-            //draws the icon of all the child spacecraft
-            drawHomePlayerIcon(solScreen, css, plnt.getBody(), poseStack, projectionMatrix);
-            drawInPlanetChildren(solScreen, css, plnt.getBody(), poseStack, projectionMatrix);
-
-            renderPlanetAt(plnt, poseStack, projectionMatrix);
-            poseStack.popPose();
+    public static void updateMapRenderables(CelestialStateSupplier css, Orbit currentFocusedBody) {
+        PlanetaryBody rootStar = css.getPlanets().SURIYAN;
+        iconsList = new ArrayList<>();
+        MapRelativeState starMapState = MapRelativeState.AbsolutePos;
+        if (rootStar.hasChild(currentFocusedBody)) {
+            starMapState = MapRelativeState.FocusedBodyParent;
+        } else if (rootStar.equals(currentFocusedBody)) {
+            starMapState = MapRelativeState.FocusedBody;
         }
 
-    }
+        MapRenderable starRenderInMap = new MapRenderablePlanet(rootStar, starMapState, null);
 
-    private static void renderPlanetAt(RenderableObjects plnt, PoseStack poseStack, Matrix4f projectionMatrix) {
-        float PlanetSize = (float) (2f*SCALE_FACTOR*plnt.getBody().getRadius());
-        poseStack.scale(PlanetSize, PlanetSize, PlanetSize);
-        poseStack.mulPose(plnt.getBody().getRotation());
-
-        PlanetRenderer.render(plnt,false, Optional.empty(), poseStack, projectionMatrix, 0, 1.0f);
-    }
-
-    //draw test velocity lines
-    private static void drawDebugVelocityLines(Vector3d dir, PoseStack pose, Matrix4f projectionMatrix) {
-        Vector3f smallDir = new Vector3f((float) dir.x,(float) dir.y,(float) dir.z);
-        smallDir.mul(0.1f);
-
-        BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-        bufferbuilder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
-        bufferbuilder.vertex(0f,0f,0f).color(255,0,0,255).endVertex();
-        bufferbuilder.vertex(smallDir.x,smallDir.y,smallDir.z).color(255,0,0,255).endVertex();
-        arrow.bind();
-        arrow.upload(bufferbuilder.end());
-        arrow.drawWithShader(pose.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
-        VertexBuffer.unbind();
-    }
-
-    private static void drawInPlanetChildren(MapSolarSystem solscreen, CelestialStateSupplier css, PlanetaryBody planet, PoseStack poseStack, Matrix4f projectionMatrix) {
-        Collection<Orbit> childOrbits = planet.getChildren();
-        if (childOrbits == null) {
-            return;
+        Optional<PlanetaryBody> planetOn = css.getCurrentPlanet();
+        if (planetOn.isPresent()) {
+            homePlanetPlayerDisplay = new MapRenderableIcon(css.getPlayerOrbit(), Minecraft.getInstance().player.getSkinTextureLocation(),
+                    MapRelativeState.AlwaysParentRelative, planetOn.get());
+            iconsList.add(homePlanetPlayerDisplay);
         }
-        for (Orbit obt : childOrbits) {
-            if (obt.getOrbitalElements() != null) {
-                OrbitDrawer.drawOrbit(obt, SCALE_FACTOR, poseStack, projectionMatrix);
+
+        renderTree = traverseAndPopulateList(css.getPlanets().SURIYAN, currentFocusedBody, starRenderInMap);
+    }
+
+    private static MapRenderable traverseAndPopulateList(Orbit parentBody, Orbit currentFocusedBody, MapRenderable parentRenderableInMap) {
+        Collection<Orbit> OrbitChildren = parentBody.getChildren();
+
+        if (homePlanetPlayerDisplay != null) {
+            if (parentBody.equals(NythicalSpaceProgram.getCelestialStateSupplier().get().getCurrentPlanet().get())) {
+                parentRenderableInMap.addChildRenderable(homePlanetPlayerDisplay);
             }
-            if (obt instanceof EntityOrbitalBody) {
-                int[] pixelCoords = worldToScreenCoordinate(toMapCoordinate(obt.getRelativePos()), poseStack, projectionMatrix, solscreen.width, solscreen.height);
+        }
 
-                if (obt.equals(NythicalSpaceProgram.getCelestialStateSupplier().get().getPlayerData())) {
-                    RenderableIcon playerHead = new RenderableIcon(pixelCoords, playerHeadTexture);
-                    solscreen.addIconToRender(playerHead);
-                } else { //draw other spacecraft icons here
+        if (OrbitChildren != null) {
+            for (Orbit childBody : OrbitChildren) {
+                boolean isCurrentFocusedBody = childBody.equals(currentFocusedBody);
+                MapRelativeState mapState = MapRelativeState.AbsolutePos;
+                if (isCurrentFocusedBody) {
+                    mapState = MapRelativeState.FocusedBody;
+                } else if (currentFocusedBody.hasChild(childBody)) {
+                    mapState = MapRelativeState.RelativePos;
+                } else if (childBody.hasChild(currentFocusedBody)) {
+                    mapState = MapRelativeState.FocusedBodyParent;
+                }
+                MapRenderable renderInMap = null;
 
+                if (childBody.getOrbitalElements() != null) {
+                    parentRenderableInMap.addChildRenderable(new MapRenderableOrbit(MapRelativeState.AlwaysParentRelative, childBody, parentBody));
+                }
+
+                if (childBody instanceof PlanetaryBody planetaryBody) {
+                    renderInMap = new MapRenderablePlanet(planetaryBody, mapState, parentBody);
+                } else if (childBody instanceof EntityOrbitalBody clientBody) {
+                    ResourceLocation playerHeadTexture = Minecraft.getInstance().player.getSkinTextureLocation();
+                    MapRenderableIcon iconMap = new MapRenderableIcon(clientBody, playerHeadTexture, mapState, parentBody);
+                    iconsList.add(iconMap);
+                    renderInMap = iconMap;
+                }
+
+                if (renderInMap != null) {
+                    parentRenderableInMap.addChildRenderable(traverseAndPopulateList(childBody, currentFocusedBody, renderInMap));
                 }
             }
         }
+
+        return parentRenderableInMap;
     }
 
-    private static void drawHomePlayerIcon(MapSolarSystem solscreen, CelestialStateSupplier css, PlanetaryBody planet, PoseStack poseStack, Matrix4f projectionMatrix) {
-        if (css.getCurrentPlanet().isPresent()) {
-            if (css.getCurrentPlanet().get().equals(planet)) {
-                int[] pixelCoords = worldToScreenCoordinate(toMapCoordinate(css.getPlayerData().getRelativePos()), poseStack, projectionMatrix, solscreen.width, solscreen.height);
-                RenderableIcon playerHead = new RenderableIcon(pixelCoords, playerHeadTexture);
-                solscreen.addIconToRender(playerHead);
-            }
-        }
+    private static void renderIcon(GuiGraphics graphics, int[] screenPos, ResourceLocation TextureLoc, float size) {
+        float relativeHeadSize = size/8;
+        graphics.blit(TextureLoc, (int) (screenPos[0] - relativeHeadSize*0.5f), (int) (screenPos[1] - relativeHeadSize*0.5f), (int) relativeHeadSize,
+                (int) relativeHeadSize,(int) relativeHeadSize, (int) relativeHeadSize,  (int) size, (int) size);
     }
 
-    private static int[] worldToScreenCoordinate(Vector3f pos, PoseStack poseStack,
-                                                Matrix4f projectionMatrix, int width, int height) {
-        Matrix4f clip_Pos = new Matrix4f(projectionMatrix).mul(new Matrix4f(poseStack.last().pose()));
-        Vector4f clipVec = new Vector4f(pos.x, pos.y, pos.z, 1f).mul(clip_Pos);
-        float x = clipVec.x/ clipVec.w;
-        float y = -clipVec.y/ clipVec.w;
-        float z = clipVec.z/ clipVec.w;
-
-        int pixelX = (int) Math.round((x+1)*0.5f*width);
-        int pixelY = (int) Math.floor((y+1)*0.5f*height);
-
-        return new int[]{pixelX, pixelY};
+    public static Orbit getCurrentFocusedBody() {
+        return currentFocusedBody;
     }
-
-//    private static void renderPlayerHeadOnPlanet(Vector3f PlayerRelativePos, Vector3f cameraPos, PoseStack poseStack, Matrix4f projectionMatrix) {
-//        poseStack.pushPose();
-//        RenderSystem.disableDepthTest();
-//
-//        poseStack.translate(PlayerRelativePos.x, PlayerRelativePos.y, PlayerRelativePos.z);
-//        poseStack.scale(0.001f, 0.001f, 0.001f);
-//        poseStack.mulPose(new Quaternionf().lookAlong(cameraPos.x, cameraPos.y, cameraPos.z, 0f,1f,0f));
-//
-//        ResourceLocation playerTexture = Minecraft.getInstance().player.getSkinTextureLocation();
-//        RenderSystem.setShaderTexture(0, playerTexture);
-//        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-//
-//        playerHeadBillBoard.bind();
-//        playerHeadBillBoard.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionTexShader());
-//        VertexBuffer.unbind();
-//
-//        RenderSystem.enableDepthTest();
-//        poseStack.popPose();
-//    }
 
     public static Vector3f toMapCoordinate(Vector3d position) {
         position.mul(SCALE_FACTOR);
         return new Vector3f((float) position.x, (float) position.y, (float) position.z);
+    }
+
+    public static MapSolarSystem getCurrentOpenScreen() {
+        return currentOpenScreen;
+    }
+
+    public static void setScreen(MapSolarSystem mapSolarSystem) {
+        if (mapSolarSystem == null) {
+            homePlanetPlayerDisplay = null;
+            iconsList = new ArrayList<>();
+        }
+        currentOpenScreen = mapSolarSystem;
     }
 }

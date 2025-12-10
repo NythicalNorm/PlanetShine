@@ -12,10 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraftforge.common.util.LazyOptional;
 
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 public class Planets {
     //public HashMap<String, PlanetaryBody> planetaryBodies = new HashMap<>();
@@ -68,8 +65,7 @@ public class Planets {
     }
 
     public Orbit getOrbit(Stack<String> address) {
-        Orbit orb = SURIYAN.getOrbit((Stack<String>)address.clone());
-        return orb;
+        return SURIYAN.getOrbit((Stack<String>)address.clone());
     }
 
     public PlanetaryBody playerChangeOrbitalSOIs(String playerUUid, Stack<String> oldAddress, Stack<String> newAddress, OrbitalElements orbitalElementsNew) {
@@ -114,6 +110,16 @@ public class Planets {
 
     public Stack<String> getPlanetAddress(String plnt) {
         return allPlanetsAddresses.get(plnt);
+    }
+
+    public PlanetaryBody[] getAllPlanetOrbits() {
+        PlanetaryBody[] allPlanetList = new PlanetaryBody[allPlanetsAddresses.size()];
+        int index = 0;
+        for (Stack<String> address : allPlanetsAddresses.values()) {
+            allPlanetList[index] = getPlanet(address);
+            index++;
+        }
+        return allPlanetList;
     }
 
     public boolean isDimensionPlanet(ResourceKey<Level> dim) {

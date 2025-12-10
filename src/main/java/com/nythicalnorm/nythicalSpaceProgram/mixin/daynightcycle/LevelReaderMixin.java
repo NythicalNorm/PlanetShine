@@ -37,7 +37,7 @@ public interface LevelReaderMixin extends BlockAndTintGetter, CollisionGetter, S
         if (this instanceof Level level) {
             if (level.isClientSide) {
                 if (NythicalSpaceProgram.getCelestialStateSupplier().isPresent()) {
-                    darkLevelFromPlanet = DayNightCycleHandler.getDarknessLightLevel(Optional.of(NythicalSpaceProgram.getCelestialStateSupplier().get().getPlayerData().getSunAngle()), level);
+                    darkLevelFromPlanet = DayNightCycleHandler.getDarknessLightLevel(Optional.of(NythicalSpaceProgram.getCelestialStateSupplier().get().getPlayerOrbit().getSunAngle()), level);
                 }
             }
             else {

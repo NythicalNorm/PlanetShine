@@ -27,7 +27,7 @@ public interface LevelTimeAccessMixin extends LevelReader {
         if (this.isClientSide()) {
             if (NythicalSpaceProgram.getCelestialStateSupplier().isPresent()) {
                 if (NythicalSpaceProgram.getCelestialStateSupplier().get().isOnPlanet()) {
-                    return NythicalSpaceProgram.getCelestialStateSupplier().get().getPlayerData().getSunAngle();
+                    return NythicalSpaceProgram.getCelestialStateSupplier().get().getPlayerOrbit().getSunAngle();
                 }
             }
         }

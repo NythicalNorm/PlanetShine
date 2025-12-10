@@ -3,6 +3,8 @@ package com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers;
 import com.mojang.blaze3d.vertex.*;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetAtmosphere;
 import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
+import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderTypes.SpaceRenderable;
+import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderTypes.RenderablePlanet;
 import com.nythicalnorm.nythicalSpaceProgram.solarsystem.Planets;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.CelestialStateSupplier;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.PlanetShine;
@@ -20,15 +22,15 @@ import java.util.Set;
 @OnlyIn(Dist.CLIENT)
 public class SpaceObjRenderer {
     private static final float InWorldPlanetsDistance = 64f;
-    private static RenderableObjects[] renderPlanets;
+    private static SpaceRenderable[] renderPlanets;
 
     public static void PopulateRenderPlanets(Planets planets) {
         Set<String> planetList = planets.getAllPlanetNames();
 
-        renderPlanets = new RenderableObjects[planetList.size()];
+        renderPlanets = new SpaceRenderable[planetList.size()];
         int i = 0;
         for (String elementVariable : planetList) {
-            renderPlanets[i] = new RenderableObjects(planets.getPlanet(elementVariable));
+            renderPlanets[i] = new RenderablePlanet(planets.getPlanet(elementVariable));
             i++;
         }
     }
@@ -36,28 +38,25 @@ public class SpaceObjRenderer {
     public static void renderPlanetaryBodies(PoseStack poseStack, Minecraft mc, CelestialStateSupplier css, Camera camera, Matrix4f projectionMatrix, float partialTick) {
         poseStack.pushPose();
 
-        for (RenderableObjects obj : renderPlanets) {
-            Vector3d differenceVector = obj.getBody().getAbsolutePos();
-            differenceVector.sub(css.getPlayerData().getAbsolutePos());
-            obj.setDifferenceVector(differenceVector);
-            obj.setDistance(css.getPlayerData().getAbsolutePos().distance(obj.getBody().getAbsolutePos()));
+        for (SpaceRenderable obj : renderPlanets) {
+            obj.calculatePos(css.getPlayerOrbit());
         }
 
-        Arrays.sort(renderPlanets, Comparator.comparingDouble(RenderableObjects::getDistance).reversed());
+        Arrays.sort(renderPlanets, Comparator.comparingDouble(SpaceRenderable::getDistance).reversed());
 
         renderPlanets(renderPlanets, css, poseStack, projectionMatrix, partialTick);
 
         poseStack.popPose();
     }
 
-    public static void renderPlanets(RenderableObjects[] renderPlanets, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
+    public static void renderPlanets(SpaceRenderable[] renderPlanets, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
         Optional<PlanetaryBody> planetOn = css.getCurrentPlanet();
         float currentAlbedo = 1.0f;
         Optional<PlanetAtmosphere> atmosphere = Optional.empty();
 
         if (planetOn.isPresent()) {
             if (planetOn.get().getAtmoshpere().hasAtmosphere()) {
-                currentAlbedo = css.getPlayerData().getSunAngle() * 2;
+                currentAlbedo = css.getPlayerOrbit().getSunAngle() * 2;
                 atmosphere = Optional.of(planetOn.get().getAtmoshpere());
             }
         } else if (css.weInSpace()) {
@@ -68,20 +67,14 @@ public class SpaceObjRenderer {
 
         if (css.isOnPlanet()) {
             if (css.getCurrentPlanet().get().getAtmoshpere().hasAtmosphere()) {
-                alpha = 2*css.getPlayerData().getSunAngle();
+                alpha = 2*css.getPlayerOrbit().getSunAngle();
             }
         }
 
         PlanetShine.drawStarBuffer(poseStack, projectionMatrix, alpha);
 
-        for (RenderableObjects plnt : renderPlanets) {
-            double distance = plnt.getDistance();
-
-            if (distance < (plnt.getBody().getRadius() + 320)) {
-                continue;
-            }
-
-            PlanetRenderer.render(plnt, true, atmosphere, poseStack, projectionMatrix, distance, currentAlbedo);
+        for (SpaceRenderable plnt : renderPlanets) {
+            plnt.render(atmosphere, poseStack, projectionMatrix, currentAlbedo);
         }
     }
 
@@ -93,9 +86,5 @@ public class SpaceObjRenderer {
         poseStack.translate(PlanetPos.x,PlanetPos.y, PlanetPos.z);
         poseStack.scale(planetApparentSize, planetApparentSize, planetApparentSize);
         poseStack.mulPose(planetRot);
-    }
-
-    public static RenderableObjects[] getRenderPlanets() {
-        return renderPlanets;
     }
 }
