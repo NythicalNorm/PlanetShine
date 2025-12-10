@@ -2,7 +2,10 @@ package com.nythicalnorm.nythicalSpaceProgram.planetshine.map;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
+@OnlyIn(Dist.CLIENT)
 public class RenderableIcon {
     private final int[] screenPos;
     private final ResourceLocation texture;

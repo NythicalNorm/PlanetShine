@@ -16,12 +16,15 @@ import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.SpaceObjRende
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.*;
 
 import java.lang.Math;
 import java.util.Collection;
 import java.util.Optional;
 
+@OnlyIn(Dist.CLIENT)
 public class MapRenderer {
     private static final float SCALE_FACTOR = 1/1000000000f;
     private static VertexBuffer arrow = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);

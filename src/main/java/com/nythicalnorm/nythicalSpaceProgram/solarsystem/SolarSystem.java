@@ -91,6 +91,7 @@ public class SolarSystem {
             planets.playerChangeOrbitalSOIs(PlayerUUid, oldAddress, newAddress, elements);
             allPlayerOrbitalAddresses.remove(PlayerUUid);
             PacketHandler.sendToPlayer(new ClientBoundTrackedOrbitUpdate(player, oldAddress, newAddress, elements), player);
+            allPlayerOrbitalAddresses.put(PlayerUUid, newAddress);
         }
         else  {
             Quaternionf playerRot = new Quaternionf();
