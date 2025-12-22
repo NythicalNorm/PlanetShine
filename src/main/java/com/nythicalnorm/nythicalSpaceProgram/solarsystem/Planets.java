@@ -27,18 +27,18 @@ public class Planets {
             382599226,0.091470106618193394721,6.476694128611285E-02,
             5.4073390958703955178,2.162973108375887854,2.7140591915324141503),
             //2358720),
-            new PlanetAtmosphere(false, new float[]{0f, 0f, 0f, 0f}, new float[]{0f, 0f, 0f, 0f}, 0, 1.0f, 0.005f),
+            new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 0.005f),
             new HashMap<>(),1737400, 7.34767309E22,  0f, 0, 2358720);
 
     public PlanetaryBody BUMI = new PlanetaryBody(new OrbitalElements(
             149653496273.0d,4.657951002584728917e-6,1.704239718110438E-02,
             5.1970176873649567284,2.8619013937171278172,6.2504793475201942954),
              // 31557600),
-             new PlanetAtmosphere(true, new float[]{0.7215686274509804f,0.8235294117647058f,1f, 1.0f}, new float[]{0.4823529411764706f,0.6705882352941176f,1f, 1.0f},
-                     100000, 1.0f, 0.5f),
+             new PlanetAtmosphere(true, 0x2121bf, 0x0077ff,
+                     100000, 0.25f,1.0f, 0.5f),
                     new HashMap<>() {{put("nila", NILA);}},6371000, 5.97219E24, 0.408407f , 0, 86400);
 
-    public Star SURIYAN = new Star(new PlanetAtmosphere(true, new float[]{1f,1f,1f, 1f}, new float[]{1f,1f,1f, 0f}, 200000, 1.0f, 1.0f),
+    public Star SURIYAN = new Star(new PlanetAtmosphere(true, 0xffffa8, 0xFFE742, 250000000, 0.5f,1.0f, 1.0f),
             new HashMap<>() {{put("bumi", BUMI);}},696340000, 1.989E30);
 
 

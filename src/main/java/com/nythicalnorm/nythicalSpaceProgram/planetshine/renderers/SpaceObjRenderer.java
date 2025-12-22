@@ -52,30 +52,26 @@ public class SpaceObjRenderer {
     public static void renderPlanets(SpaceRenderable[] renderPlanets, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
         Optional<PlanetaryBody> planetOn = css.getCurrentPlanet();
         float currentAlbedo = 1.0f;
+        float starAlpha = 1.0f;
         Optional<PlanetAtmosphere> atmosphere = Optional.empty();
 
         if (planetOn.isPresent()) {
             if (planetOn.get().getAtmoshpere().hasAtmosphere()) {
                 currentAlbedo = css.getPlayerOrbit().getSunAngle() * 2;
                 atmosphere = Optional.of(planetOn.get().getAtmoshpere());
+                starAlpha = 2*css.getPlayerOrbit().getSunAngle();
             }
-        } else if (css.weInSpace()) {
-            AtmosphereRenderer.renderAtmospheres(renderPlanets, poseStack, projectionMatrix);
+        } else {
+            AtmosphereRenderer.renderSpaceSky(poseStack, projectionMatrix);
         }
 
-        float alpha = 1.0f;
-
-        if (css.isOnPlanet()) {
-            if (css.getCurrentPlanet().get().getAtmoshpere().hasAtmosphere()) {
-                alpha = 2*css.getPlayerOrbit().getSunAngle();
-            }
-        }
-
-        PlanetShine.drawStarBuffer(poseStack, projectionMatrix, alpha);
+        PlanetShine.drawStarBuffer(poseStack, projectionMatrix, starAlpha);
 
         for (SpaceRenderable plnt : renderPlanets) {
             plnt.render(atmosphere, poseStack, projectionMatrix, currentAlbedo);
         }
+
+        AtmosphereRenderer.renderAtmospheres(renderPlanets, poseStack, projectionMatrix, atmosphere);
     }
 
     public static void PerspectiveShift(double PlanetDistance, Vector3d PlanetPos, Quaternionf planetRot, double bodyRadius,PoseStack poseStack){

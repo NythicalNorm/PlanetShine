@@ -6,7 +6,7 @@ import java.util.Map;
 public class GradientSupplier {
     public static PlanetGradient STAR_GRADIENT = new PlanetGradient(new BiomeGroup[]{
             new BiomeGroup("orangeHot", -1f, 1f, new BiomeGradient[]{
-                    new BiomeGradient(0,0.5f, 0, 1, 1f, Color.decode("#fbba39")),
+                        new BiomeGradient(0,0.5f, 0, 1, 1f, Color.decode("#fbba39")),
                     new BiomeGradient(0.5f,0.6f, 0, 1, 1f, Color.decode("#fbd955")),
                     new BiomeGradient(0.6f,65f, 0, 1, 1f, Color.decode("#ffffa8")),
                     new BiomeGradient(0.65f,1f, 0, 1, 1f, Color.decode("#fffffe")),

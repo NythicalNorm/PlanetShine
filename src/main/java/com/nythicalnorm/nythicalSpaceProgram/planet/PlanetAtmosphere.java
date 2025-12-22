@@ -1,21 +1,20 @@
 package com.nythicalnorm.nythicalSpaceProgram.planet;
 
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-
 public class PlanetAtmosphere {
     private final boolean hasAtmosphere;
-    private final float[] colorTransitionOne;
-    private final float[] colorTransitionTwo;
+    private final int overlayColor;
+    private final int atmoColor;
     private final double atmosphereHeight;
+    private final float atmosphereAlpha;
     private final float exposureNight;
     private final float exposureDay;
 
-    public PlanetAtmosphere(boolean hasAtmosphere, float[] colorTransitionOne, float[] colorTransitionTwo, double atmosphereHeight, float exposureNight, float exposureDay) {
+    public PlanetAtmosphere(boolean hasAtmosphere, int overlayColor, int atmoColor, double atmosphereHeight, float atmosphereAlpha, float exposureNight, float exposureDay) {
         this.hasAtmosphere = hasAtmosphere;
-        this.colorTransitionOne = colorTransitionOne;
-        this.colorTransitionTwo = colorTransitionTwo;
+        this.overlayColor = overlayColor;
+        this.atmoColor = atmoColor;
         this.atmosphereHeight = atmosphereHeight;
+        this.atmosphereAlpha = atmosphereAlpha;
         this.exposureNight = exposureNight;
         this.exposureDay = exposureDay;
     }
@@ -24,12 +23,13 @@ public class PlanetAtmosphere {
         return hasAtmosphere;
     }
 
-    public float[] getColorTransitionOne() {
-        return colorTransitionOne;
+    public float[] getOverlayColor(float alpha)
+    {
+        return getRGBAFloats(overlayColor, alpha);
     }
 
-    public float[] getColorTransitionTwo() {
-        return colorTransitionTwo;
+    public float[] getAtmoColor() {
+        return getRGBAFloats(atmoColor, 1.0f);
     }
 
     public double getAtmosphereHeight() {
@@ -42,5 +42,24 @@ public class PlanetAtmosphere {
 
     public float getExposureDay() {
         return exposureDay;
+    }
+
+    public float getAtmosphereAlpha() {
+        return atmosphereAlpha;
+    }
+
+    private float[] getRGBAFloats(int val, float alpha) {
+        float[] rgbaColor = new float[4];
+
+        int red = (val >> 16) & 0xFF;
+        int green = (val >> 8) & 0xFF;
+        int blue = (val >> 0) & 0xFF;
+
+        rgbaColor[0] = ((float)red)/255f;
+        rgbaColor[1] = ((float)green)/255f;
+        rgbaColor[2] = ((float)blue)/255f;
+        rgbaColor[3] = alpha;
+
+        return rgbaColor;
     }
 }

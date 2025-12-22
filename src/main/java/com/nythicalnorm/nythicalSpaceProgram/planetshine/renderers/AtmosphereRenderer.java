@@ -5,68 +5,64 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.nythicalSpaceProgram.NythicalSpaceProgram;
+import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetAtmosphere;
+import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderTypes.RenderablePlanet;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderTypes.SpaceRenderable;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.shaders.ModShaders;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
 import org.joml.*;
 
+import java.lang.Math;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class AtmosphereRenderer {
     private static Supplier<ShaderInstance> skyboxShader;
     private static VertexBuffer skyboxBuffer;
-    private static Uniform BottomColor;
-    private static Uniform TopColor;
-    private static Uniform TransitionPoint;
-    private static Uniform Opacity;
+    private static Uniform OverlayColor;
+    private static Uniform AtmoColor;
+    private static Uniform OverlayAngle;
+    private static Uniform AtmoAngle;
 
-    private static final PlanetAtmosphere EmptySpaceAtmo = new PlanetAtmosphere(false, new float[]{0,0,0,1}, new float[]{0,0,0,1}, Double.POSITIVE_INFINITY,0,0);
+    private static final PlanetAtmosphere EmptySpaceAtmo = new PlanetAtmosphere(false, 0, 0, Double.POSITIVE_INFINITY, 1.0f,0f,0f);
 
     public static void setupShader(VertexBuffer skyBuffer) {
         skyboxShader = ModShaders.getSkyboxShaderInstance();
         skyboxBuffer = skyBuffer;
         if (skyboxShader.get() != null) {
-            BottomColor = skyboxShader.get().getUniform("nspBottomColor");
-            TopColor = skyboxShader.get().getUniform("nspTopColor");
-            TransitionPoint = skyboxShader.get().getUniform("nspTransitionPoint");
-            Opacity = skyboxShader.get().getUniform("nspOpacity");
+            OverlayColor = skyboxShader.get().getUniform("nspOverlayColor");
+            AtmoColor = skyboxShader.get().getUniform("nspAtmoColor");
+            OverlayAngle = skyboxShader.get().getUniform("nspOverlayAngle");
+            AtmoAngle = skyboxShader.get().getUniform("nspAtmoAngle");
         }
         else {
             NythicalSpaceProgram.logError("Shader not loading");
         }
     }
 
-    public static void render(SpaceRenderable renBody, double distance, PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix) {
+    public static void render(PlanetaryBody renBody, Vector3f relativeDir, double distance, PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix) {
         poseStack.pushPose();
-
         RenderSystem.enableBlend();
 
-        Vector3f relativeDir = new Vector3f(0f, -1f, 0f);
+        poseStack.mulPose(new Quaternionf().rotateTo(new Vector3f(0f,1f,0f), relativeDir));
 
-        if (renBody != null) {
-            relativeDir = renBody.getNormalizedDiffVectorf();
-        }
+        //reduce the atmosphere alpha as the player gets further away, only works if the atmosphere's alpha value is less than 1
+        float distDiffAtmo =  1f - (float)((distance - renBody.getRadius())/atmosphere.getAtmosphereHeight());
+        float colorAlpha = Mth.clamp(distDiffAtmo, atmosphere.getAtmosphereAlpha(), 1f);
 
-        poseStack.mulPose(new Quaternionf().rotateTo(new Vector3f(0f,-1f,0f), relativeDir));
-        float[] ColorOne = atmosphere.getColorTransitionOne();
-        float[] ColorTwo = atmosphere.getColorTransitionTwo();
+        float[] overlayColor = atmosphere.getOverlayColor(colorAlpha);
+        float[] atmosphereColor = atmosphere.getAtmoColor();
 
-        float distDiffAtmo =  1f - (float)(distance/atmosphere.getAtmosphereHeight());
-        float howDark = Mth.clamp(distDiffAtmo, 0f, 1f);
-        ColorTwo[0] = ColorTwo[0]*howDark;
-        ColorTwo[1] = ColorTwo[1]*howDark;
-        ColorTwo[2] = ColorTwo[2]*howDark;
+        float planetAnglularSize = cosOfAtan((float)(renBody.getRadius()/distance));
+        float atmoAnglularSize = cosOfAtan((float)(renBody.getAtmosphereRadius()/distance));
 
-        ColorOne[0] = ColorOne[0]*howDark;
-        ColorOne[1] = ColorOne[1]*howDark;
-        ColorOne[2] = ColorOne[2]*howDark;
-
-        BottomColor.set(ColorOne);
-        TopColor.set(ColorTwo);
-        TransitionPoint.set(0.52777777777f);
-        //Opacity.set(1.0f);
+        OverlayColor.set(overlayColor);
+        AtmoColor.set(atmosphereColor);
+        OverlayAngle.set(planetAnglularSize);
+        AtmoAngle.set(atmoAnglularSize);
 
         skyboxBuffer.bind();
         skyboxBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, skyboxShader.get());
@@ -75,10 +71,26 @@ public class AtmosphereRenderer {
         poseStack.popPose();
     }
 
-    public static void renderAtmospheres(SpaceRenderable[] renBody, PoseStack poseStack, Matrix4f projectionMatrix) {
-        boolean alreadyRendered = false;
+    private static float tanOf2Atan(float x) {
+        return 2*x/(1-(x*x));
+    }
 
-//        for (RenderableInSpace ren : renBody) {
+    private static float cosOf2Atan(float x) {
+        return (1-(x*x))/(1+(x*x));
+    }
+
+    private static float cosOfAtan(float x) {
+        return 1/(float)Math.sqrt(1+(x*x));
+    }
+
+    public static void renderAtmospheres(SpaceRenderable[] renBody, PoseStack poseStack, Matrix4f projectionMatrix, Optional<PlanetAtmosphere> atmosphere) {
+
+        for (SpaceRenderable ren : renBody) {
+            if (ren instanceof RenderablePlanet renPlanet) {
+                if (renPlanet.getBody().getAtmoshpere().hasAtmosphere()) {
+                    render(renPlanet.getBody(), renPlanet.getNormalizedDiffVectorf(), renPlanet.getDistance(), renPlanet.getBody().getAtmoshpere(), poseStack, projectionMatrix);
+                }
+            }
 //            PlanetaryBody plnt = ren.getBody();
 //            double distance = (ren.getDistance() - plnt.getRadius());
 //
@@ -86,13 +98,14 @@ public class AtmosphereRenderer {
 //                alreadyRendered = true;
 //                render(ren, distance, plnt.getAtmoshpere(), poseStack, projectionMatrix);
 //            }
-//        }
-        if (!alreadyRendered) {
-            renderSpaceSky(poseStack, projectionMatrix);
         }
     }
 
     public static void renderSpaceSky(PoseStack poseStack, Matrix4f projectionMatrix) {
-        render(null, 0, EmptySpaceAtmo, poseStack, projectionMatrix);
+        poseStack.pushPose();
+        skyboxBuffer.bind();
+        skyboxBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
+        VertexBuffer.unbind();
+        poseStack.popPose();
     }
 }
