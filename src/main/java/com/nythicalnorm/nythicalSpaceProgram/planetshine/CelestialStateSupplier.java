@@ -5,6 +5,7 @@ import com.nythicalnorm.nythicalSpaceProgram.orbit.*;
 import com.nythicalnorm.nythicalSpaceProgram.network.PacketHandler;
 import com.nythicalnorm.nythicalSpaceProgram.network.ServerBoundTimeWarpChange;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.networking.ClientTimeHandler;
+import com.nythicalnorm.nythicalSpaceProgram.planetshine.textures.PlanetTexManager;
 import com.nythicalnorm.nythicalSpaceProgram.solarsystem.Planets;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers.SpaceObjRenderer;
 import net.minecraft.client.Minecraft;
@@ -24,12 +25,14 @@ public class CelestialStateSupplier {
 
     private final Planets planets;
     private ModScreenManager screenManager;
+    private PlanetTexManager planetTexManager;
 
     public CelestialStateSupplier(EntitySpacecraftBody playerDataFromServer, Planets planets) {
         playerOrbit = new ClientPlayerSpacecraftBody(playerDataFromServer);
         this.planets = planets;
         SpaceObjRenderer.PopulateRenderPlanets(planets);
         this.screenManager = new ModScreenManager();
+        this.planetTexManager = new PlanetTexManager();
     }
 
     public void tick() {
@@ -149,5 +152,9 @@ public class CelestialStateSupplier {
 
     public ModScreenManager getScreenManager() {
         return screenManager;
+    }
+
+    public PlanetTexManager getPlanetTexManager() {
+        return planetTexManager;
     }
 }

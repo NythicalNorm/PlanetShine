@@ -1,6 +1,7 @@
 package com.nythicalnorm.nythicalSpaceProgram.planetshine.renderers;
 
 import com.mojang.blaze3d.vertex.*;
+import com.nythicalnorm.nythicalSpaceProgram.orbit.Star;
 import com.nythicalnorm.nythicalSpaceProgram.planet.PlanetAtmosphere;
 import com.nythicalnorm.nythicalSpaceProgram.orbit.PlanetaryBody;
 import com.nythicalnorm.nythicalSpaceProgram.planetshine.renderTypes.SpaceRenderable;
@@ -52,30 +53,32 @@ public class SpaceObjRenderer {
     public static void renderPlanets(SpaceRenderable[] renderPlanets, CelestialStateSupplier css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
         Optional<PlanetaryBody> planetOn = css.getCurrentPlanet();
         float currentAlbedo = 1.0f;
+        float starAlpha = 1.0f;
         Optional<PlanetAtmosphere> atmosphere = Optional.empty();
 
         if (planetOn.isPresent()) {
             if (planetOn.get().getAtmoshpere().hasAtmosphere()) {
                 currentAlbedo = css.getPlayerOrbit().getSunAngle() * 2;
                 atmosphere = Optional.of(planetOn.get().getAtmoshpere());
+                starAlpha = 2*css.getPlayerOrbit().getSunAngle();
             }
-        } else if (css.weInSpace()) {
-            AtmosphereRenderer.renderAtmospheres(renderPlanets, poseStack, projectionMatrix);
+        } else {
+            AtmosphereRenderer.renderSpaceSky(poseStack, projectionMatrix);
         }
 
-        float alpha = 1.0f;
-
-        if (css.isOnPlanet()) {
-            if (css.getCurrentPlanet().get().getAtmoshpere().hasAtmosphere()) {
-                alpha = 2*css.getPlayerOrbit().getSunAngle();
-            }
-        }
-
-        PlanetShine.drawStarBuffer(poseStack, projectionMatrix, alpha);
+        PlanetShine.drawStarBuffer(poseStack, projectionMatrix, starAlpha);
 
         for (SpaceRenderable plnt : renderPlanets) {
             plnt.render(atmosphere, poseStack, projectionMatrix, currentAlbedo);
+            //rendering only the sun's atmosphere for now
+            if (plnt instanceof RenderablePlanet renPlanet) {
+                if (renPlanet.getBody() instanceof Star) {
+                    AtmosphereRenderer.render(renPlanet.getBody(), renPlanet.getNormalizedDiffVectorf(), renPlanet.getDistance(), renPlanet.getBody().getAtmoshpere(), poseStack, projectionMatrix);
+                }
+            }
         }
+
+        //AtmosphereRenderer.renderAtmospheres(renderPlanets, poseStack, projectionMatrix, atmosphere);
     }
 
     public static void PerspectiveShift(double PlanetDistance, Vector3d PlanetPos, Quaternionf planetRot, double bodyRadius,PoseStack poseStack){

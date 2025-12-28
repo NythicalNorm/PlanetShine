@@ -4,6 +4,7 @@ import com.nythicalnorm.nythicalSpaceProgram.dimensions.DimensionTeleporter;
 import com.nythicalnorm.nythicalSpaceProgram.dimensions.SpaceDimension;
 import com.nythicalnorm.nythicalSpaceProgram.network.*;
 import com.nythicalnorm.nythicalSpaceProgram.orbit.*;
+import com.nythicalnorm.nythicalSpaceProgram.planettexgen.handlers.PlanetTexHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -25,12 +26,14 @@ public class SolarSystem {
     private final MinecraftServer server;
     private HashMap<String, Stack<String>> allPlayerOrbitalAddresses;
     private final Planets planets;
+    private PlanetTexHandler planetTexHandler;
 
     public SolarSystem(MinecraftServer server, Planets pPlanets) {
         timePassPerSecond = 1;
         allPlayerOrbitalAddresses = new HashMap<>();
         this.server = server;
         this.planets = pPlanets;
+
     }
 
     public MinecraftServer getServer() {
@@ -48,6 +51,11 @@ public class SolarSystem {
         PacketHandler.sendToAllClients(new ClientBoundSolarSystemTimeUpdate(currentTime,timePassPerSecond));
     }
 
+    public void serverStarted() {
+        this.planetTexHandler = new PlanetTexHandler();
+        server.execute(() -> planetTexHandler.loadOrCreateTex(server, this.planets));
+    }
+
     public double getCurrentTime() {
         return currentTime;
     }
@@ -57,7 +65,8 @@ public class SolarSystem {
             return;
         }
         timePassPerSecond = (double) Mth.clamp(proposedSetTimeWarpSpeed, 0, 5000000);
-        player.displayClientMessage(Component.translatable("nythicalspaceprogram.settimewarp").append(proposedSetTimeWarpSpeed + "x"), true);
+        server.getPlayerList().broadcastSystemMessage(Component.translatable("nythicalspaceprogram.state.settimewarp",
+                proposedSetTimeWarpSpeed), true);
         PacketHandler.sendToAllClients(new ClientBoundTimeWarpUpdate(true, proposedSetTimeWarpSpeed));
     }
 
@@ -74,6 +83,9 @@ public class SolarSystem {
                 entity.changeDimension(overworldLevel, new DimensionTeleporter(overworldLevel.getSharedSpawnPos().getCenter()));
             }
             PacketHandler.sendToPlayer(new ClientBoundLoginSolarSystemState(new ClientPlayerSpacecraftBody()), (ServerPlayer) entity);
+        }
+        if (planetTexHandler != null) {
+            planetTexHandler.sendAllTexToPlayer(entity.getUUID());
         }
     }
 
