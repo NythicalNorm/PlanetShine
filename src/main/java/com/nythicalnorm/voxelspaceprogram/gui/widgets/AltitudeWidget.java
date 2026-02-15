@@ -1,7 +1,7 @@
 package com.nythicalnorm.voxelspaceprogram.gui.widgets;
 
+import com.nythicalnorm.voxelspaceprogram.PSClient;
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -37,7 +37,7 @@ public class AltitudeWidget extends AbstractWidget {
 
         pGuiGraphics.blit(Altitude_GUI_TEXTURE, x, y,0,0,92,28);
 
-        CelestialStateSupplier.getInstance().ifPresent(css -> renderAltitudeNumbers(css, pGuiGraphics, x, y));
+        PSClient.getInstance().ifPresent(css -> renderAltitudeNumbers(css, pGuiGraphics, x, y));
 
         pGuiGraphics.blit(Altitude_GUI_TEXTURE, x + 10, y + 15,96,0,5,13);
     }
@@ -47,7 +47,7 @@ public class AltitudeWidget extends AbstractWidget {
 
     }
 
-    private void renderAltitudeNumbers(CelestialStateSupplier css, GuiGraphics pGuiGraphics, int xPos, int yPos) {
+    private void renderAltitudeNumbers(PSClient css, GuiGraphics pGuiGraphics, int xPos, int yPos) {
         //altitude = 100000000 - altitude;
         double altitude = 0;
 

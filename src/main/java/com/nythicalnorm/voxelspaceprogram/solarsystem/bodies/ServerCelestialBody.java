@@ -1,6 +1,6 @@
 package com.nythicalnorm.voxelspaceprogram.solarsystem.bodies;
 
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -11,8 +11,8 @@ import java.util.concurrent.CompletableFuture;
 
 public interface ServerCelestialBody {
     default void initServerPlanet() {
-        if (SolarSystem.get() != null) {
-            setLevel(SolarSystem.get().getServer().getLevel(getDimension()));
+        if (PSServer.get() != null) {
+            setLevel(PSServer.get().getServer().getLevel(getDimension()));
         }
     }
 

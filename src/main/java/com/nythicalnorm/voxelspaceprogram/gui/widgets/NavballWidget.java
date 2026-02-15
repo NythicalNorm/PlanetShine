@@ -5,10 +5,10 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.math.Axis;
+import com.nythicalnorm.voxelspaceprogram.PSClient;
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
 import com.nythicalnorm.voxelspaceprogram.gui.screen.PlayerSpacecraftScreen;
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
-import com.nythicalnorm.voxelspaceprogram.planetshine.generators.QuadSphereModelGenerator;
+import com.nythicalnorm.voxelspaceprogram.rendering.generators.QuadSphereModelGenerator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -40,10 +40,10 @@ public class NavballWidget extends AbstractWidget {
         int xPos = getX() - 47;
         int yPos = getY() - 86;
 
-        CelestialStateSupplier.getInstance().ifPresent(celestialStateSupplier -> renderNavBall(celestialStateSupplier, pGuiGraphics));
+        PSClient.getInstance().ifPresent(psClient -> renderNavBall(psClient, pGuiGraphics));
 
         pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos, yPos,0,0,94,86);
-        PlayerSpacecraftScreen spacecraftScreen = CelestialStateSupplier.getInstance().get().getScreenManager().getSpacecraftScreen();
+        PlayerSpacecraftScreen spacecraftScreen = PSClient.getInstance().get().getScreenManager().getSpacecraftScreen();
 
         if (spacecraftScreen != null) {
             renderThrottleBar(pGuiGraphics, xPos, yPos, spacecraftScreen);
@@ -53,7 +53,7 @@ public class NavballWidget extends AbstractWidget {
         }
     }
 
-    private void renderNavBall(CelestialStateSupplier css, GuiGraphics pGuiGraphics) {
+    private void renderNavBall(PSClient css, GuiGraphics pGuiGraphics) {
         RenderSystem.depthMask(false);
         RenderSystem.enableDepthTest();
 
@@ -100,8 +100,8 @@ public class NavballWidget extends AbstractWidget {
     }
 
     private void renderRelativeVelocity(GuiGraphics pGuiGraphics, int xPos, int yPos) {
-        if (CelestialStateSupplier.getInstance().get().weInSpaceDim()) {
-            int speed = (int) CelestialStateSupplier.getInstance().get().getPlayerOrbit().getRelativeVelocity().length();
+        if (PSClient.getInstance().get().weInSpaceDim()) {
+            int speed = (int) PSClient.getInstance().get().getPlayerOrbit().getRelativeVelocity().length();
             Component orbitalSpeedComp = Component.translatable("voxelspaceprogram.screen.orbital_speed", speed);
             pGuiGraphics.drawString(Minecraft.getInstance().font, orbitalSpeedComp,xPos + 22, yPos + 5, 0x00ff2b, false);
         }

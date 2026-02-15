@@ -11,7 +11,7 @@ import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -82,7 +82,7 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
         double argumentOfPeriapsis = orbital_elements_json.get("argument_of_periapsis").getAsDouble();
         double longitudeOfAscendingNode = orbital_elements_json.get("longitude_of_ascending_node").getAsDouble();
 
-        return new OrbitalElements(semiMajorAxis, eccentricity, Calcs.TimePerTickToTimePerMilliTick(periapsisTime)
+        return new OrbitalElements(semiMajorAxis, eccentricity, TimeCalc.TimePerTickToTimePerMilliTick(periapsisTime)
                 , inclination, argumentOfPeriapsis, longitudeOfAscendingNode);
     }
 

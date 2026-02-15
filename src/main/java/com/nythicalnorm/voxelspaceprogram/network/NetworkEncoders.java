@@ -12,6 +12,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -85,13 +86,14 @@ public class NetworkEncoders {
 
 
     public static void writeOrbitalElements(FriendlyByteBuf friendlyByteBuf, OrbitalElements orbitalElements) {
-        friendlyByteBuf.writeDouble(orbitalElements.SemiMajorAxis);
-        friendlyByteBuf.writeDouble(orbitalElements.Eccentricity);
-        friendlyByteBuf.writeLong(orbitalElements.periapsisTime);
+        friendlyByteBuf.writeDouble(orbitalElements.getSemiMajorAxis());
+        friendlyByteBuf.writeDouble(orbitalElements.getEccentricity());
+        friendlyByteBuf.writeLong(orbitalElements.getPeriapsisTime());
 
-        friendlyByteBuf.writeDouble(orbitalElements.Inclination);
-        friendlyByteBuf.writeDouble(orbitalElements.ArgumentOfPeriapsis);
-        friendlyByteBuf.writeDouble(orbitalElements.LongitudeOfAscendingNode);
+        friendlyByteBuf.writeDouble(orbitalElements.getInclination());
+        friendlyByteBuf.writeDouble(orbitalElements.getArgumentOfPeriapsis());
+        friendlyByteBuf.writeDouble(orbitalElements.getLongitudeOfAscendingNode());
+        friendlyByteBuf.writeDouble(orbitalElements.getParentMass());
     }
 
     public static OrbitalElements readOrbitalElements(FriendlyByteBuf friendlyByteBuf) {
@@ -99,6 +101,7 @@ public class NetworkEncoders {
                 friendlyByteBuf.readDouble(),
                 friendlyByteBuf.readDouble(),
                 friendlyByteBuf.readLong(),
+                friendlyByteBuf.readDouble(),
                 friendlyByteBuf.readDouble(),
                 friendlyByteBuf.readDouble(),
                 friendlyByteBuf.readDouble()
@@ -127,7 +130,7 @@ public class NetworkEncoders {
         );
     }
 
-    public static void writeVector3d(FriendlyByteBuf buffer, Vector3d pVector3f) {
+    public static void writeVector3d(FriendlyByteBuf buffer, Vector3dc pVector3f) {
         buffer.writeDouble(pVector3f.x());
         buffer.writeDouble(pVector3f.y());
         buffer.writeDouble(pVector3f.z());

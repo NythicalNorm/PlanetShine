@@ -1,7 +1,7 @@
 package com.nythicalnorm.voxelspaceprogram.planettexgen;
 
 
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.PlanetBodyCalc;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -28,7 +28,7 @@ public class PlanetMapGen {
                 for (int y = 0; y < size; y++) {
                     float u = (float) x / size;
                     float v = (float) y / size;
-                    Vector3f spherePos = Calcs.getQuadSquarePos(u,v,side);
+                    Vector3f spherePos = PlanetBodyCalc.getQuadSquarePos(u,v,side);
 
                     float baseNoise = (float) ns.getValue(spherePos.x, spherePos.y, spherePos.z);
                     //float baseNoise = noiseHandler.getNoiseAt(spherePos);

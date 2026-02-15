@@ -1,6 +1,6 @@
 package com.nythicalnorm.voxelspaceprogram.mixin.daynightcycle;
 
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.voxelspaceprogram.util.DayNightCycleHandler;
@@ -24,8 +24,8 @@ public class WorldGenRegionMixin {
         if (!level.isClientSide()) {
             CelestialBody plnt = ((CelestialBodyAccessor)level).getCelestialBody();
             Optional<Long> currentTime = Optional.empty();
-            if (plnt != null && SolarSystem.getInstance().isPresent()) {
-                currentTime = DayNightCycleHandler.getDayTime(pPos, plnt, SolarSystem.getInstance().get().getCurrentTime());
+            if (plnt != null && PSServer.getInstance().isPresent()) {
+                currentTime = DayNightCycleHandler.getDayTime(pPos, plnt, PSServer.getInstance().get().getCurrentTime());
             }
             if (currentTime.isPresent()) {
                 cir.setReturnValue(new DifficultyInstance(level.getDifficulty(), level.getDayTime(), 0L, level.getMoonBrightness()));

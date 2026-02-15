@@ -30,7 +30,7 @@ public abstract class PlanetaryBody extends CelestialBody {
     }
 
     @Override
-    protected void simulate(long TimeElapsed, Vector3d parentPos) {
+    protected void simulate(long TimeElapsed, Vector3dc parentPos) {
         super.simulate(TimeElapsed, parentPos);
 
         float rotationAngle = NorthPoleDir.angle + (float)((2*Math.PI/RotationPeriod) * (TimeElapsed % RotationPeriod));

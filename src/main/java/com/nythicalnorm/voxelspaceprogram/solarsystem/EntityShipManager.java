@@ -1,23 +1,26 @@
 package com.nythicalnorm.voxelspaceprogram.solarsystem;
 
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.network.PacketHandler;
 import com.nythicalnorm.voxelspaceprogram.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.ServerCelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.vs.ShipTeleporter;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
-import com.nythicalnorm.voxelspaceprogram.util.CelestialBodyUtils;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.PlanetBodyCalc;
+import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
@@ -32,26 +35,26 @@ import java.util.Map;
 
 public class EntityShipManager {
 
-    private final SolarSystem solarSystem;
+    private final PSServer psServer;
     private final ShipTeleporter shipTeleporter;
-    private final Map<OrbitId, OrbitHostSpace> allHostSpaces;
+    private final Map<OrbitId, OrbitHostSpace> loadedHostSpaces;
 
     private static final int HOST_SPACE_GAP_SIZE = 16000;
     private static final int HOST_SPACE_DIAMETER = 8000;
     private static final double teleportToGroundHeight = 1000d;
 
-    public EntityShipManager(SolarSystem solarSystem, Map<OrbitId, OrbitHostSpace> allHostSpaces) {
-        this.solarSystem = solarSystem;
-        shipTeleporter = new ShipTeleporter(solarSystem.getSpaceLevel(), this);
-        this.allHostSpaces = allHostSpaces;
+    public EntityShipManager(PSServer psServer, Map<OrbitId, OrbitHostSpace> loadedHostSpaces) {
+        this.psServer = psServer;
+        shipTeleporter = new ShipTeleporter(psServer.getSpaceLevel(), this);
+        this.loadedHostSpaces = loadedHostSpaces;
     }
 
     public OrbitHostSpace getOrCreateHostSpace(EntityOrbitBody entityOrbitBody){
-        OrbitHostSpace hostSpace = allHostSpaces.get(entityOrbitBody.getOrbitId());
+        OrbitHostSpace hostSpace = loadedHostSpaces.get(entityOrbitBody.getOrbitId());
         if (hostSpace == null) {
-            Vector3d posNew = genNewHostSpaceLoc(allHostSpaces.size());
-            hostSpace = new OrbitHostSpace(entityOrbitBody.getOrbitId(), posNew, entityOrbitBody);
-            allHostSpaces.put(entityOrbitBody.getOrbitId(), hostSpace);
+            Vector3d posNew = genNewHostSpaceLoc(loadedHostSpaces.size());
+            hostSpace = entityOrbitBody.createHostSpace(posNew); //new OrbitHostSpace(entityOrbitBody.getOrbitId(), posNew, entityOrbitBody);
+            loadedHostSpaces.put(entityOrbitBody.getOrbitId(), hostSpace);
         }
         return hostSpace;
     }
@@ -69,34 +72,49 @@ public class EntityShipManager {
     }
 
     public void onGameTick() {
+        updateHostSpaceEntities();
         checkShipTeleportToSpace();
         checkEntityTeleportToPlanet();
     }
 
+    private void updateHostSpaceEntities() {
+        for (OrbitHostSpace hostSpace : loadedHostSpaces.values()) {
+            hostSpace.OnGameTick();
+        }
+    }
+
+    public void handleHostPlayerMove(@Nullable ServerPlayer sender, OrbitId playerBodyID, Vector3d addedVel) {
+        EntityOrbitBody entityOrbitBody = psServer.getSolarSystem().getSpacecraftOrbit(playerBodyID);
+        if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody && playerOrbitBody.getPlayerEntity().equals(sender)) {
+            OrbitHostSpace playerHostSpace = getOrCreateHostSpace(playerOrbitBody);
+            playerHostSpace.applyHostVelocity(addedVel);
+        }
+    }
+
     public void checkShipTeleportToSpace() {
         List<LoadedServerShip> alreadyTeleported = new ArrayList<>();
-        ValkyrienSkies.api().getServerShipWorld(solarSystem.getServer()).getLoadedShips().forEach(loadedServerShip -> {
+        ValkyrienSkies.api().getServerShipWorld(psServer.getServer()).getLoadedShips().forEach(loadedServerShip -> {
             ResourceKey<Level> shipDimension = VSGameUtilsKt.getResourceKey(loadedServerShip.getChunkClaimDimension());
-            CelestialBody celestialBody = solarSystem.getPlanetsProvider().getDimensionPlanet(shipDimension);
+            CelestialBody celestialBody = psServer.getSolarSystem().getDimensionOfPlanet(shipDimension);
 
             if (celestialBody != null) {
                 Vector3dc currentPos = loadedServerShip.getTransform().getPositionInWorld();
                 if (currentPos.y() >= ShipTeleporter.TELEPORT_Y_HEIGHT && !alreadyTeleported.contains(loadedServerShip)) {
-                    shipTeleporter.teleportShipsAndEntities(loadedServerShip, celestialBody, alreadyTeleported, solarSystem.getServer());
+                    shipTeleporter.teleportShipsAndEntities(loadedServerShip, celestialBody, alreadyTeleported, psServer.getServer());
                 }
             }
         });
     }
 
     private void checkEntityTeleportToPlanet() {
-        solarSystem.getPlanetsProvider().getAllSpacecraftBodies().values().forEach(entityOrbitBody -> {
-            if (entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.getAltitude() < teleportToGroundHeight && entityOrbitBody.getParent() instanceof CelestialBody celestialBody) {
-                ServerLevel planetLevel = ((ServerCelestialBody)celestialBody).getLevel();
+        psServer.getSolarSystem().getAllSpacecraftBodies().values().forEach(entityOrbitBody -> {
+            if (entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.getAltitude() < teleportToGroundHeight) {
+                ServerLevel planetLevel = ((ServerCelestialBody)entityOrbitBody.getParent()).getLevel();
                 if (planetLevel != null) {
-                    Vector2d pos = Calcs.vectorToPlanetDimPos(entityOrbitBody.getRelativePos(), celestialBody.getRadius(), celestialBody.getRotation());
+                    Vector2d pos = PlanetBodyCalc.vectorToPlanetDimPos(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent().getRotation());
                     if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody) {
                         teleportEntity(playerOrbitBody.getPlayerEntity(), planetLevel, pos);
-                        solarSystem.getPlanetsProvider().entityRemoveOrbital(entityOrbitBody);
+                        psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));
                     }
                 }
@@ -116,27 +134,27 @@ public class EntityShipManager {
         entity.teleportTo(level, x, y, z, EnumSet.noneOf(RelativeMovement.class), -85f, 0f);
     }
 
-    public static ServerSpaceshipBody planetShipToSpaceShipBodyBuilder(ServerShip ship, CelestialBody celestialBody) {
+    public ServerSpaceshipBody planetShipToSpaceShipBodyBuilder(ServerShip ship, CelestialBody celestialBody) {
         BodyKinematics bodyKinematics = ship.getKinematics();
         AbstractSpaceshipBody.ShipOrbitBuilder builder = new AbstractSpaceshipBody.ShipOrbitBuilder();
         builder.setShip(ship);
 
-        Vector3d relativesShipPosition = CelestialBodyUtils.getRelativePositon(bodyKinematics.getTransform().getPosition(), celestialBody);
+        Vector3d relativesShipPosition = OrbitalBodyUtils.getRelativePositon(bodyKinematics.getTransform().getPosition(), celestialBody);
         builder.setRelativeOrbitalPos(relativesShipPosition);
 
-        Quaterniond rotationDifference = CelestialBodyUtils.getSpaceRotationFromPlanetPos(relativesShipPosition, celestialBody);
+        Quaterniond rotationDifference = OrbitalBodyUtils.getSpaceRotationFromPlanetPos(relativesShipPosition, celestialBody);
         Quaterniond shipNewRot = new Quaterniond();
         bodyKinematics.getRotation().mul(rotationDifference, shipNewRot);
         builder.setRotation(shipNewRot);
         // need to take into account the planets rotational velocity that is also transferred to the ship, earth moving at 1000 m/s at the equator etc...
         Vector3d velocity = new Vector3d(ship.getVelocity()).rotate(rotationDifference);
         builder.setRelativeVelocity(velocity);
-        Vector3d absoluteShipPosition = celestialBody.getAbsolutePos().add(relativesShipPosition);
+        Vector3d absoluteShipPosition = new Vector3d(celestialBody.getAbsolutePos()).add(relativesShipPosition);
         builder.setAbsoluteOrbitalPos(absoluteShipPosition);
 
         builder.setParent(celestialBody);
         builder.setStableOrbit(false);
-        builder.setOrbitalElements(new OrbitalElements(relativesShipPosition, velocity, SolarSystem.get().getCurrentTime(), celestialBody.getMass()));
+        builder.setOrbitalElements(new OrbitalElements(relativesShipPosition, velocity, psServer.getCurrentTime(), celestialBody.getMass()));
 
         return (ServerSpaceshipBody) builder.build();
     }

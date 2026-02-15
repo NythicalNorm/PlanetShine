@@ -21,8 +21,8 @@ public abstract class StarBody extends CelestialBody {
         return OrbitalBodyTypesHolder.STAR_BODY;
     }
 
-    public void simulatePlanets(long currentTime) {
-        this.simulatePropagate(currentTime, new Vector3d(0d, 0d, 0d), this.getMass());
+    public void simulatePlanets(long currentTime, boolean isTimeWarping) {
+        this.simulatePropagate(currentTime, new Vector3d(0d, 0d, 0d), isTimeWarping);
     }
 
     @Override

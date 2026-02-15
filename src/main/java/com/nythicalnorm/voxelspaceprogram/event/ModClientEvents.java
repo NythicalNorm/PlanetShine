@@ -1,9 +1,9 @@
 package com.nythicalnorm.voxelspaceprogram.event;
 
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
-import com.nythicalnorm.voxelspaceprogram.planetshine.generators.QuadSphereModelGenerator;
-import com.nythicalnorm.voxelspaceprogram.planetshine.PlanetShine;
-import com.nythicalnorm.voxelspaceprogram.planetshine.shaders.VSPShaders;
+import com.nythicalnorm.voxelspaceprogram.rendering.generators.QuadSphereModelGenerator;
+import com.nythicalnorm.voxelspaceprogram.rendering.PSRenderer;
+import com.nythicalnorm.voxelspaceprogram.rendering.shaders.VSPShaders;
 import com.nythicalnorm.voxelspaceprogram.util.KeyBindings;
 import net.minecraft.Util;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,7 +24,7 @@ public class ModClientEvents {
         VoxelSpaceProgram.log("Baking Planet Models: ");
         long  beforeTimes = Util.getMillis();
         QuadSphereModelGenerator.setupModels();
-        PlanetShine.setupBuffers();
+        PSRenderer.setupBuffers();
         VoxelSpaceProgram.log("Setup Complete Took : " + (Util.getMillis()-beforeTimes) + " milliseconds");
     }
 

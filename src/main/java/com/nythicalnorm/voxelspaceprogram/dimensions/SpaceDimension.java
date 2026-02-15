@@ -37,7 +37,7 @@ public class SpaceDimension {
                 OptionalLong.of(0), // fixedTime
                 false, // hasSkylight
                 false, // hasCeiling
-                false, // ultraWarm
+                true, // ultraWarm
                 false, // natural
                 1.0, // coordinateScale
                 true, // bedWorks

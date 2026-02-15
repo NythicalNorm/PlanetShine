@@ -83,12 +83,12 @@ public class VoxelSpaceProgram
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event)
     {
-        SolarSystem.getInstance().ifPresent(SolarSystem::serverStarted);
+        PSServer.getInstance().ifPresent(PSServer::serverStarted);
     }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
-        SolarSystem.close();
+        PSServer.close();
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent

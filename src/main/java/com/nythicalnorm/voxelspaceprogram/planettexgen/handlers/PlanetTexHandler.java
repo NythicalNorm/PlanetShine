@@ -5,12 +5,12 @@ import com.nythicalnorm.voxelspaceprogram.network.textures.ClientboundPlanetText
 import com.nythicalnorm.voxelspaceprogram.network.PacketHandler;
 import com.nythicalnorm.voxelspaceprogram.planettexgen.GradientSupplier;
 import com.nythicalnorm.voxelspaceprogram.planettexgen.lod_tex.LodTexGenTask;
-import com.nythicalnorm.voxelspaceprogram.solarsystem.PlanetsProvider;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitId;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.ServerCelestialBody;
 import com.nythicalnorm.voxelspaceprogram.storage.SpacecraftDataStorage;
-import com.nythicalnorm.voxelspaceprogram.util.LodTexUtils;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.LodTexCalc;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,7 +30,7 @@ public class PlanetTexHandler {
     private static File planetsDir;
     private static ExecutorService texExecuter;
 
-    public void loadOrCreatePlanetTex(MinecraftServer server, PlanetsProvider planets, Path modSaveFolder) {
+    public void loadOrCreatePlanetTex(MinecraftServer server, SolarSystem planets, Path modSaveFolder) {
 
         Path planetsTexturesPath = modSaveFolder.resolve(planetTexturesPath);
         PlanetTexHandler.planetsDir = SpacecraftDataStorage.getOrCreateDir(planetsTexturesPath);
@@ -73,15 +73,15 @@ public class PlanetTexHandler {
         }
 
         Vec3 plrPos = player.position();
-        int texturePixelSize = LodTexUtils.getTexturePixelSize(playerOnPlanet);
-        Vector2i texPos = LodTexUtils.getPlanetTexCoordinates(plrPos, texturePixelSize);
+        int texturePixelSize = LodTexCalc.getTexturePixelSize(playerOnPlanet);
+        Vector2i texPos = LodTexCalc.getPlanetTexCoordinates(plrPos, texturePixelSize);
 
         File biomeTexLocation = getFilePath(((ServerCelestialBody)playerOnPlanet).getPlanetTextureFolder(), texPos.x, texPos.y);
 
         CompletableFuture<byte[]> biomeTex = CompletableFuture.supplyAsync(
                 new LodTexGenTask(((ServerCelestialBody)playerOnPlanet).getLevel(), 0,  texPos.x, texPos.y, texturePixelSize, biomeTexLocation), texExecuter);
 
-        int index = texPos.x + (texPos.y * LodTexUtils.texQuadsPerCubeCell);
+        int index = texPos.x + (texPos.y * LodTexCalc.texQuadsPerCubeCell);
 
         biomeTex.thenAccept(texBytes -> {
             PacketHandler.sendToPlayer(new ClientboundLodTexturePacket(playerOnPlanet.getDimension(), index, 0, texBytes), player);

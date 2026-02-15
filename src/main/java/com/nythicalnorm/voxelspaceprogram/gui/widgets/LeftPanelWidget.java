@@ -1,6 +1,6 @@
 package com.nythicalnorm.voxelspaceprogram.gui.widgets;
 
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
+import com.nythicalnorm.voxelspaceprogram.PSClient;
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
 import com.nythicalnorm.voxelspaceprogram.gui.screen.PlayerSpacecraftScreen;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 
 @OnlyIn(Dist.CLIENT)
 public class LeftPanelWidget extends AbstractWidget {
@@ -27,7 +28,7 @@ public class LeftPanelWidget extends AbstractWidget {
 
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x, y,0,0,66,35);
 
-        PlayerSpacecraftScreen spacecraftScreen = CelestialStateSupplier.getInstance().get().getScreenManager().getSpacecraftScreen();
+        PlayerSpacecraftScreen spacecraftScreen = PSClient.getInstance().get().getScreenManager().getSpacecraftScreen();
 
         if (spacecraftScreen != null) {
            if (spacecraftScreen.isDockingMode()) {
@@ -65,7 +66,7 @@ public class LeftPanelWidget extends AbstractWidget {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput pNarrationElementOutput) {
+    protected void updateWidgetNarration(@NotNull NarrationElementOutput pNarrationElementOutput) {
 
     }
 }

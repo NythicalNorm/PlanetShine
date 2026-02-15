@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import com.nythicalnorm.voxelspaceprogram.network.NetworkEncoders;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitCodec;
 import com.nythicalnorm.voxelspaceprogram.storage.PlanetDataResolver;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
@@ -81,7 +81,7 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
                     starting_rotation.getAsFloat());
         }
         JsonElement rotation_period = jsonObj.get("rotation_period");
-        body.setRotationPeriod(rotation_period != null ? Calcs.timeDoubleToLong(rotation_period.getAsDouble()) : 0L);
+        body.setRotationPeriod(rotation_period != null ? TimeCalc.timeDoubleToLong(rotation_period.getAsDouble()) : 0L);
 
         JsonElement dimensionID = jsonObj.get("dimension_id");
 //        if (dimensionID != null) {

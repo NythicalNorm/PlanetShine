@@ -1,11 +1,8 @@
 package com.nythicalnorm.voxelspaceprogram.network;
 
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
-import com.nythicalnorm.voxelspaceprogram.network.orbitaldata.ClientboundHostOrbitSet;
-import com.nythicalnorm.voxelspaceprogram.network.orbitaldata.ClientboundOrbitRemove;
-import com.nythicalnorm.voxelspaceprogram.network.orbitaldata.ClientboundOrbitSOIChange;
-import com.nythicalnorm.voxelspaceprogram.network.orbitaldata.ClientboundLoginSolarSystemState;
-import com.nythicalnorm.voxelspaceprogram.network.spacecraft.ServerboundSpacecraftMove;
+import com.nythicalnorm.voxelspaceprogram.network.orbitaldata.*;
+import com.nythicalnorm.voxelspaceprogram.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.voxelspaceprogram.network.textures.ClientboundLodTexturePacket;
 import com.nythicalnorm.voxelspaceprogram.network.textures.ClientboundPlanetTexturePacket;
 import com.nythicalnorm.voxelspaceprogram.network.time.ClientboundSolarSystemTimeUpdate;
@@ -47,6 +44,12 @@ public class PacketHandler {
                 .consumerMainThread(ClientboundOrbitSOIChange::handle)
                 .add();
 
+        INSTANCE.messageBuilder(ClientboundOrbitChange.class, ++id)
+                .encoder(ClientboundOrbitChange::encode)
+                .decoder(ClientboundOrbitChange::new)
+                .consumerMainThread(ClientboundOrbitChange::handle)
+                .add();
+
         INSTANCE.messageBuilder(ClientboundOrbitRemove.class, ++id)
                 .encoder(ClientboundOrbitRemove::encode)
                 .decoder(ClientboundOrbitRemove::new)
@@ -65,6 +68,7 @@ public class PacketHandler {
                 .consumerMainThread(ClientboundTimeWarpUpdate::handle)
                 .add();
 
+        //Textures
         INSTANCE.messageBuilder(ClientboundPlanetTexturePacket.class, ++id)
                 .encoder(ClientboundPlanetTexturePacket::encode)
                 .decoder(ClientboundPlanetTexturePacket::new)
@@ -77,12 +81,11 @@ public class PacketHandler {
                 .consumerMainThread(ClientboundLodTexturePacket::handle)
                 .add();
 
-
         // Server to Client
-        INSTANCE.messageBuilder(ServerboundSpacecraftMove.class, ++id)
-                .encoder(ServerboundSpacecraftMove::encode)
-                .decoder(ServerboundSpacecraftMove::new)
-                .consumerMainThread(ServerboundSpacecraftMove::handle)
+        INSTANCE.messageBuilder(ServerboundPlayerHostVelUpdate.class, ++id)
+                .encoder(ServerboundPlayerHostVelUpdate::encode)
+                .decoder(ServerboundPlayerHostVelUpdate::new)
+                .consumerMainThread(ServerboundPlayerHostVelUpdate::handle)
                 .add();
 
         INSTANCE.messageBuilder(ServerboundTimeWarpChange.class, ++id)

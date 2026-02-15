@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
@@ -22,7 +23,7 @@ public abstract class OrbitalBody {
     protected Quaternionf rotation;
     protected @Nullable OrbitalElements orbitalElements;
     protected ConcurrentMap<OrbitId, OrbitalBody> childElements;
-    protected @Nullable OrbitalBody parent; // Nullable only in the case of the sun
+    protected @Nullable CelestialBody parent; // Nullable only in the case of the sun
     protected boolean isStableOrbit;
 
     public OrbitalBody(OrbitalBody.Builder<?> builder) {
@@ -54,27 +55,27 @@ public abstract class OrbitalBody {
         return isStableOrbit;
     }
 
-    public Vector3d getRelativePos() {
-        return new Vector3d(relativeOrbitalPos);
+    public Vector3dc getRelativePos() {
+        return relativeOrbitalPos;
     }
 
-    public Vector3d getAbsolutePos() {
-        return new Vector3d(absoluteOrbitalPos);
+    public Vector3dc getAbsolutePos() {
+        return absoluteOrbitalPos;
     }
 
-    public Vector3d getRelativeVelocity() {
-        return new Vector3d(relativeVelocity);
+    public Vector3dc getRelativeVelocity() {
+        return relativeVelocity;
     }
 
     public Quaternionf getRotation() {
         return rotation;
     }
 
-    public void setParent(@Nullable OrbitalBody parent) {
+    public void setParent(@Nullable CelestialBody parent) {
         this.parent = parent;
     }
 
-    public @Nullable OrbitalBody getParent() {
+    public @Nullable CelestialBody getParent() {
         return parent;
     }
 
@@ -86,15 +87,10 @@ public abstract class OrbitalBody {
         this.rotation = rotation;
     }
 
-    public abstract void simulatePropagate(long TimeElapsed, Vector3d parentPos, double parentMass);
+    public abstract void simulatePropagate(long TimeElapsed, Vector3dc parentPos, boolean isTimeWarping);
 
     public OrbitalBody getChild(OrbitId name) {
         return childElements.get(name) ;
-    }
-
-    public void addChildBody(OrbitalBody orbitData) {
-        orbitData.setParent(this);
-        this.childElements.put(orbitData.getOrbitId(), orbitData);
     }
 
     public void removeChild(OrbitId oldAddress) {
@@ -108,8 +104,12 @@ public abstract class OrbitalBody {
         return null;
     }
 
-    public void setOrbitalElements(@Nullable OrbitalElements orbitalElements) {
-        this.orbitalElements = orbitalElements;
+    public void setOrbitalElements(OrbitalElements orbitalElements) {
+        if (this.orbitalElements != null) {
+            this.orbitalElements.set(orbitalElements);
+        } else {
+            this.orbitalElements = new OrbitalElements(orbitalElements);
+        }
     }
 
     public @Nullable OrbitalElements getOrbitalElements() {
@@ -126,8 +126,8 @@ public abstract class OrbitalBody {
     }
 
     public double getAltitude() {
-        if (this.parent instanceof CelestialBody celestialBody) {
-            return this.relativeOrbitalPos.length() + 0.5d - celestialBody.getRadius();
+        if (this.parent != null) {
+            return this.relativeOrbitalPos.length() + 0.5d - this.parent.getRadius();
         } else {
             return this.relativeOrbitalPos.length() + 0.5d;
         }

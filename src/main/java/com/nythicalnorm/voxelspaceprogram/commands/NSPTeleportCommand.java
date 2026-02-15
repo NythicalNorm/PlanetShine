@@ -2,7 +2,7 @@ package com.nythicalnorm.voxelspaceprogram.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
 import net.minecraft.commands.CommandSourceStack;
@@ -41,8 +41,8 @@ public class NSPTeleportCommand {
 
     private int TeleportToOrbit(CommandSourceStack pSource, Collection<? extends Entity> pTargets, String body,
                                 double semiMajorAxisInput, double eccentricity, double inclination) {
-        SolarSystem.getInstance().ifPresent(solarSystem -> {
-            CelestialBody planet = solarSystem.getPlanetsProvider().getPlanet(body);
+        PSServer.getInstance().ifPresent(psServer -> {
+            CelestialBody planet = psServer.getSolarSystem().getPlanet(body);
             for(Entity entity : pTargets) {
                 if (entity instanceof ServerPlayer && planet != null) {
                     double semiMajorAxis = (semiMajorAxisInput*1000d) + planet.getRadius();
@@ -50,9 +50,9 @@ public class NSPTeleportCommand {
                         semiMajorAxis = (semiMajorAxisInput*1000d) - planet.getRadius();
                         //return 0;
                     }
-                    long startingAnomaly = solarSystem.getCurrentTime();
-                    OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingAnomaly, inclination, 0d, 0d);
-                    solarSystem.playerTeleportOrbit(planet, (ServerPlayer) entity, orbitalElement);
+                    long startingAnomaly = psServer.getCurrentTime();
+                    OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingAnomaly, inclination, 0d, 0d, planet.getMass());
+                    psServer.playerTeleportOrbit(planet, (ServerPlayer) entity, orbitalElement);
                 }
             }
             pSource.sendSuccess(() -> {

@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,25 +41,30 @@ public abstract class CelestialBody extends OrbitalBody {
         return dimension;
     }
 
-    protected void simulate(long TimeElapsed, Vector3d parentPos) {
+    protected void simulate(long TimeElapsed, Vector3dc parentPos) {
         if (orbitalElements != null) {
             Vector3d[] stateVectors = orbitalElements.ToCartesian(TimeElapsed);
             this.relativeOrbitalPos = stateVectors[0];
             this.relativeVelocity = stateVectors[1];
 
-            Vector3d newAbs = new Vector3d(parentPos);
-            this.absoluteOrbitalPos = newAbs.add(relativeOrbitalPos);
+            this.absoluteOrbitalPos = this.absoluteOrbitalPos.set(parentPos).add(relativeOrbitalPos);
         }
     }
 
-    public void simulatePropagate(long TimeElapsed, Vector3d parentPos, double mass) {
+    @Override
+    public void simulatePropagate(long TimeElapsed, Vector3dc parentPos, boolean isTimeWarping) {
         simulate(TimeElapsed, parentPos);
 
         if (childElements != null) {
             for (OrbitalBody body : childElements.values()) {
-                body.simulatePropagate(TimeElapsed, absoluteOrbitalPos, this.mass);
+                body.simulatePropagate(TimeElapsed, absoluteOrbitalPos, isTimeWarping);
             }
         }
+    }
+
+    public void addChildBody(OrbitalBody orbitData) {
+        orbitData.setParent(this);
+        this.childElements.put(orbitData.getOrbitId(), orbitData);
     }
 
     public double getRadius(){
@@ -100,10 +106,10 @@ public abstract class CelestialBody extends OrbitalBody {
     protected void initCalcs() {
         for (OrbitalBody orbitBody : childElements.values()) {
             if (orbitBody instanceof CelestialBody body && orbitBody.getOrbitalElements() != null) {
-                orbitBody.getOrbitalElements().setOrbitalPeriod(this.mass);
+                orbitBody.getOrbitalElements().initCalcs(this.mass);
 
                 double soi = Math.pow(body.mass/this.mass, 0.4d);
-                soi = soi * orbitBody.getOrbitalElements().SemiMajorAxis;
+                soi = soi * orbitBody.getOrbitalElements().getSemiMajorAxis();
                 body.setSphereOfInfluence(soi);
                 body.initCalcs();
 

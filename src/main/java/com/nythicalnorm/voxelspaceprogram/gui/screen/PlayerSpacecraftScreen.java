@@ -1,5 +1,6 @@
 package com.nythicalnorm.voxelspaceprogram.gui.screen;
 
+import com.nythicalnorm.voxelspaceprogram.PSClient;
 import com.nythicalnorm.voxelspaceprogram.gui.input.PlayerInputAxis;
 import com.nythicalnorm.voxelspaceprogram.gui.input.PlayerInputDirection;
 import com.nythicalnorm.voxelspaceprogram.gui.widgets.AltitudeWidget;
@@ -7,7 +8,6 @@ import com.nythicalnorm.voxelspaceprogram.gui.widgets.LeftPanelWidget;
 import com.nythicalnorm.voxelspaceprogram.gui.widgets.NavballWidget;
 import com.nythicalnorm.voxelspaceprogram.gui.widgets.TimeWarpWidget;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.player.ClientPlayerOrbitBody;
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
 import com.nythicalnorm.voxelspaceprogram.util.KeyBindings;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class PlayerSpacecraftScreen extends MouseLookScreen {
     private ItemStack jetpackItem;
     private final LocalPlayer player;
-    private final CelestialStateSupplier css;
+    private final PSClient css;
     private final Options minecraftOptions;
     private float initialYLookDir;
     private boolean SAS = false;
@@ -38,7 +38,7 @@ public class PlayerSpacecraftScreen extends MouseLookScreen {
     private PlayerInputDirection CtrlShiftAxis;
     private PlayerInputAxis throttleAxis;
 
-    public PlayerSpacecraftScreen(ItemStack spacesuitItem, LocalPlayer player, CelestialStateSupplier css) {
+    public PlayerSpacecraftScreen(ItemStack spacesuitItem, LocalPlayer player, PSClient css) {
         super(Component.empty());
         this.jetpackItem = spacesuitItem;
         this.player = player;

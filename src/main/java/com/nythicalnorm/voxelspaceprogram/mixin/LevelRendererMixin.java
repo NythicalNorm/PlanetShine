@@ -2,9 +2,9 @@ package com.nythicalnorm.voxelspaceprogram.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
-import com.nythicalnorm.voxelspaceprogram.planetshine.PlanetShine;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.PSClient;
+import com.nythicalnorm.voxelspaceprogram.rendering.PSRenderer;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -37,7 +37,7 @@ public abstract class LevelRendererMixin {
         LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
         Minecraft mc = Minecraft.getInstance();
         //long beforeTimes = Util.getNanos();
-        Optional<CelestialStateSupplier> css = CelestialStateSupplier.getInstance();
+        Optional<PSClient> css = PSClient.getInstance();
 
         if (mc.level == null || css.isEmpty()) {
             return;
@@ -47,21 +47,21 @@ public abstract class LevelRendererMixin {
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();
                 if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !this.doesMobEffectBlockSky(pCamera)) {
-                    PlanetShine.renderSkybox(mc, levelRenderer, pPoseStack, pPartialTick, pCamera, skyBuffer, css.get());
+                    PSRenderer.renderSkybox(mc, levelRenderer, pPoseStack, pPartialTick, pCamera, skyBuffer, css.get());
                 }
             }
             ci.cancel();
         }
         //long diff = Util.getNanos() - beforeTimes;
-        //VoxelSpaceProgram.log("PlanetShine Time: " + diff);
+        //VoxelSpaceProgram.log("PSRenderer Time: " + diff);
     }
 
-    @ModifyVariable(method = "renderClouds", at = @At("LOAD"), ordinal = 0)
+    @ModifyVariable(method = "renderClouds", at = @At("LOAD"), ordinal = 0, argsOnly = true)
     private double changeCloudSpeed(double value) {
-        Optional<CelestialStateSupplier> css = CelestialStateSupplier.getInstance();
-        if (!css.isEmpty()) {
-            if (css.get().doRender()) {
-                return Calcs.TimePerMilliTickToTick(css.get().getCurrentTime()) * 0.03F;
+        PSClient psClient = PSClient.get();
+        if (psClient != null) {
+            if (psClient.doRender()) {
+                return TimeCalc.TimePerMilliTickToTick(psClient.getCurrentTime()) * 0.03F;
             }
         }
 

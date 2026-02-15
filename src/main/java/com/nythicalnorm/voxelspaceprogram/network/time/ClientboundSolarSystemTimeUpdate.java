@@ -27,9 +27,7 @@ public class ClientboundSolarSystemTimeUpdate {
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT ) {
             NetworkEvent.Context context = contextSupplier.get();
-            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                    ClientPacketHandler.UpdateTimeState(currentTime)));
-
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPacketHandler.UpdateTimeState(currentTime));
             context.setPacketHandled(true);
         }
     }

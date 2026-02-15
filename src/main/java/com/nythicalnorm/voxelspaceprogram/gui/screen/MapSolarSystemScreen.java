@@ -2,15 +2,16 @@ package com.nythicalnorm.voxelspaceprogram.gui.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.nythicalnorm.voxelspaceprogram.PSClient;
+import com.nythicalnorm.voxelspaceprogram.gui.PSScreenManager;
 import com.nythicalnorm.voxelspaceprogram.gui.widgets.AltitudeWidget;
 import com.nythicalnorm.voxelspaceprogram.gui.widgets.LeftPanelWidget;
 import com.nythicalnorm.voxelspaceprogram.gui.widgets.NavballWidget;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
 import com.nythicalnorm.voxelspaceprogram.gui.widgets.TimeWarpWidget;
-import com.nythicalnorm.voxelspaceprogram.planetshine.map.MapRenderer;
+import com.nythicalnorm.voxelspaceprogram.rendering.map.MapRenderer;
 import com.nythicalnorm.voxelspaceprogram.util.KeyBindings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,16 +25,16 @@ import java.lang.Math;
 
 @OnlyIn(Dist.CLIENT)
 public class MapSolarSystemScreen extends MouseLookScreen {
-    private CelestialStateSupplier css;
+    private PSScreenManager screenManager;
     private OrbitalBody[] FocusableBodies;
     private int currentFocusedBodyIndex;
     private final boolean isSpacecraftScreenOpen;
 
     public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen) {
         super(Component.empty());
-        CelestialStateSupplier.getInstance().ifPresent (celestialStateSupplier -> {
-            css = celestialStateSupplier;
-            celestialStateSupplier.getScreenManager().setMapScreenOpen(true);
+        PSClient.getInstance().ifPresent (psClient -> {
+            this.screenManager = psClient.getScreenManager();
+            psClient.getScreenManager().setMapScreenOpen(true);
         });
         this.isSpacecraftScreenOpen = PisSpacecraftScreenOpen;
     }
@@ -69,7 +70,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
-        MapRenderer.renderMapObjects(graphics, mapPosestack, projectionMatrix, relativeCameraPos, FocusableBodies[currentFocusedBodyIndex], css);
+        MapRenderer.renderMapObjects(graphics, mapPosestack, projectionMatrix, relativeCameraPos, FocusableBodies[currentFocusedBodyIndex]);
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
         mapPosestack.popPose();
@@ -88,7 +89,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
             this.onClose();
             return true;
         }  else if (isSpacecraftScreenOpen) {
-            if (css.getScreenManager().getSpacecraftScreen().keyPressed(pKeyCode, pScanCode, pModifiers)) {
+            if (screenManager.getSpacecraftScreen().keyPressed(pKeyCode, pScanCode, pModifiers)) {
                 return true;
             }
         }
@@ -103,7 +104,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     @Override
     public boolean keyReleased(int pKeyCode, int pScanCode, int pModifiers) {
         if (isSpacecraftScreenOpen) {
-            if (css.getScreenManager().getSpacecraftScreen().keyReleased(pKeyCode, pScanCode, pModifiers)) {
+            if (screenManager.getSpacecraftScreen().keyReleased(pKeyCode, pScanCode, pModifiers)) {
                 return true;
             }
         }
@@ -114,9 +115,9 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     public void onClose() {
         super.onClose();
         if (isSpacecraftScreenOpen) {
-            Minecraft.getInstance().setScreen(css.getScreenManager().getSpacecraftScreen());
+            Minecraft.getInstance().setScreen(screenManager.getSpacecraftScreen());
         }
-        css.getScreenManager().closeMapScreen();
+        screenManager.closeMapScreen();
     }
 
     public void changeFocusBody(int additionalIndex) {
@@ -125,9 +126,10 @@ public class MapSolarSystemScreen extends MouseLookScreen {
             currentFocusedBodyIndex = 0;
         }
         if (FocusableBodies[currentFocusedBodyIndex] instanceof CelestialBody celestialBody) {
-            if (css.getCurrentPlanet().isPresent()) {
-                if (css.getCurrentPlanet().get().equals(FocusableBodies[currentFocusedBodyIndex])) {
-                    Vector3d playerRelativePos = css.getPlayerOrbit().getRelativePos();
+            PSClient psClient = PSClient.get();
+            if (psClient.getCurrentPlanet().isPresent()) {
+                if (psClient.getCurrentPlanet().get().equals(FocusableBodies[currentFocusedBodyIndex])) {
+                    Vector3d playerRelativePos = new Vector3d(psClient.getPlayerOrbit().getRelativePos());
                     playerRelativePos.normalize();
                     cameraYrot = (float) Math.atan2(playerRelativePos.x,playerRelativePos.z);
                     cameraXrot = (float) Math.asin(playerRelativePos.y);
@@ -138,19 +140,20 @@ public class MapSolarSystemScreen extends MouseLookScreen {
             radiusZoomLevel = 1000000;
         }
 
-        MapRenderer.updateMapRenderables(css, FocusableBodies[currentFocusedBodyIndex]);
+        MapRenderer.updateMapRenderables(PSClient.get(), FocusableBodies[currentFocusedBodyIndex]);
     }
 
     private void populateFocusedBodiesList() {
         OrbitalBody currentFocusedBody = null;
+        PSClient psClient = PSClient.get();
 
-        if (css.isOnPlanet()) {
-            currentFocusedBody = css.getCurrentPlanet().get();
-        } else if (css.weInSpaceDim() && css.getPlayerOrbit() != null) {
-            currentFocusedBody = css.getPlayerOrbit();
+        if (psClient.isOnPlanet()) {
+            currentFocusedBody = psClient.getCurrentPlanet().get();
+        } else if (psClient.weInSpaceDim()) {
+            currentFocusedBody = psClient.getPlayerOrbit();
         }
 
-        int totalFocusAmount = css.getPlanetsProvider().getAllPlanetaryBodies().size();
+        int totalFocusAmount = psClient.getSolarSystem().getAllPlanetaryBodies().size();
         if (currentFocusedBody instanceof EntityOrbitBody) {
             totalFocusAmount += 1;
         }
@@ -162,7 +165,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         FocusableBodies[index] = currentFocusedBody;
         currentFocusedBodyIndex = index;
 
-        for (CelestialBody plnt : css.getPlanetsProvider().getAllPlanetaryBodies().values()) {
+        for (CelestialBody plnt : psClient.getSolarSystem().getAllPlanetaryBodies().values()) {
             if (plnt != currentFocusedBody) {
                 index++;
                 FocusableBodies[index] = plnt;

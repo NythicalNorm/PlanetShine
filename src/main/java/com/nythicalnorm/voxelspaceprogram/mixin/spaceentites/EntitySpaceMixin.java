@@ -1,7 +1,7 @@
 package com.nythicalnorm.voxelspaceprogram.mixin.spaceentites;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.nythicalnorm.voxelspaceprogram.dimensions.SpaceDimension;
+import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +15,7 @@ public class EntitySpaceMixin {
 
     @ModifyReturnValue(method = "isNoGravity", at = @At(value = "TAIL"))
     public boolean isNoGravity(boolean original) {
-        if (level.dimension().equals(SpaceDimension.SPACE_LEVEL_KEY)) {
+        if (OrbitalBodyUtils.isSpaceLevel(level)) {
             return true;
         } else {
             return original;

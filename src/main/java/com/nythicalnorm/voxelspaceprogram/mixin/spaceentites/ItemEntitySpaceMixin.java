@@ -1,6 +1,6 @@
 package com.nythicalnorm.voxelspaceprogram.mixin.spaceentites;
 
-import com.nythicalnorm.voxelspaceprogram.dimensions.SpaceDimension;
+import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import net.minecraft.world.entity.item.ItemEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
@@ -12,7 +12,7 @@ public class ItemEntitySpaceMixin {
     public float changeFrictionMultiplier(float constant) {
         ItemEntity itemEntity = ((ItemEntity)(Object) this);
 
-        if (itemEntity.level() != null && itemEntity.level().dimension().equals(SpaceDimension.SPACE_LEVEL_KEY)) {
+        if (itemEntity.level() != null && OrbitalBodyUtils.isSpaceLevel(itemEntity.level())) {
             return 1.0F;
         } else {
             return constant;

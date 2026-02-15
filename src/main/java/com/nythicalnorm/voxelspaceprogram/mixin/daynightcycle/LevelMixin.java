@@ -1,13 +1,16 @@
 package com.nythicalnorm.voxelspaceprogram.mixin.daynightcycle;
 
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.voxelspaceprogram.util.DayNightCycleHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,6 +20,10 @@ import java.util.Optional;
 
 @Mixin(Level.class)
 public class LevelMixin implements CelestialBodyAccessor {
+    @Shadow
+    @Final
+    private ResourceKey<Level> dimension;
+
     @Unique
     CelestialBody celestialBody;
 
@@ -43,8 +50,8 @@ public class LevelMixin implements CelestialBodyAccessor {
 
         if (!level.isClientSide()) {
             Optional<Long> currentTime = Optional.empty();
-            if (isPlanet() && SolarSystem.getInstance().isPresent()) {
-                currentTime = DayNightCycleHandler.getDayTime(pPos, getCelestialBody(), SolarSystem.getInstance().get().getCurrentTime());
+            if (isPlanet() && PSServer.getInstance().isPresent()) {
+                currentTime = DayNightCycleHandler.getDayTime(pPos, getCelestialBody(), PSServer.getInstance().get().getCurrentTime());
             }
 
             if (currentTime.isPresent()) {

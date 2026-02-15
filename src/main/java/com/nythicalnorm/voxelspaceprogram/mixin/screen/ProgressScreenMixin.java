@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ProgressScreenMixin {
     @Inject( method = "render", at = @At("HEAD"))
     public void renderScreen(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick, CallbackInfo ci) {
-//        if (CelestialStateSupplier.get() != null && CelestialStateSupplier.get().doRender()) {
+//        if (PSClient.get() != null && PSClient.get().doRender()) {
 //            ci.cancel();
 //        }
     }

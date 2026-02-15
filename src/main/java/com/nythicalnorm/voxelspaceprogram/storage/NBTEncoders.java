@@ -7,14 +7,15 @@ import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.joml.Vector3f;
 
 public class NBTEncoders {
-    public static CompoundTag putVector3d(Vector3d vector) {
+    public static CompoundTag putVector3d(Vector3dc vector) {
         CompoundTag vectorTag = new CompoundTag();
-        vectorTag.putDouble("x", vector.x);
-        vectorTag.putDouble("y", vector.y);
-        vectorTag.putDouble("z", vector.z);
+        vectorTag.putDouble("x", vector.x());
+        vectorTag.putDouble("y", vector.y());
+        vectorTag.putDouble("z", vector.z());
         return vectorTag;
     }
 
@@ -66,13 +67,14 @@ public class NBTEncoders {
             return elementsTag;
         }
 
-        elementsTag.putDouble("major_axis", orbitalElements.SemiMajorAxis);
-        elementsTag.putDouble("eccentricity", orbitalElements.Eccentricity);
-        elementsTag.putLong("periapsis_time", orbitalElements.periapsisTime);
+        elementsTag.putDouble("major_axis", orbitalElements.getSemiMajorAxis());
+        elementsTag.putDouble("eccentricity", orbitalElements.getEccentricity());
+        elementsTag.putLong("periapsis_time", orbitalElements.getPeriapsisTime());
 
-        elementsTag.putDouble("inclination", orbitalElements.Inclination);
-        elementsTag.putDouble("argument_periapsis", orbitalElements.ArgumentOfPeriapsis);
-        elementsTag.putDouble("longitude", orbitalElements.LongitudeOfAscendingNode);
+        elementsTag.putDouble("inclination", orbitalElements.getInclination());
+        elementsTag.putDouble("argument_periapsis", orbitalElements.getArgumentOfPeriapsis());
+        elementsTag.putDouble("longitude", orbitalElements.getLongitudeOfAscendingNode());
+        elementsTag.putDouble("parent_mass", orbitalElements.getParentMass());
 
         return elementsTag;
     }
@@ -85,7 +87,8 @@ public class NBTEncoders {
 
                 tag.getDouble("inclination"),
                 tag.getDouble("argument_periapsis"),
-                tag.getDouble("longitude")
+                tag.getDouble("longitude"),
+                tag.getDouble("parent_mass")
         );
     }
 

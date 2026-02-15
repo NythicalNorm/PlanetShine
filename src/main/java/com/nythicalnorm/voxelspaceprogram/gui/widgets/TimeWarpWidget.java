@@ -1,10 +1,10 @@
 package com.nythicalnorm.voxelspaceprogram.gui.widgets;
 
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
+import com.nythicalnorm.voxelspaceprogram.PSClient;
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.planet.PlanetaryBody;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -29,11 +29,11 @@ public class TimeWarpWidget extends AbstractWidget {
     protected void renderWidget(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
         pGuiGraphics.blit(TIME_WARP_TEXTURE, getX(), getY(),0,0,136,34);
 
-        CelestialStateSupplier.getInstance().ifPresent(celestialStateSupplier -> {
-            Component timeComp = parseTime(celestialStateSupplier.getCurrentTimeInSec(), celestialStateSupplier.getPlanetsProvider().getOverworldPlanet());
+        PSClient.getInstance().ifPresent(psClient -> {
+            Component timeComp = parseTime(psClient.getCurrentTimeInSec(), psClient.getSolarSystem().getOverworldPlanet());
             pGuiGraphics.drawString(Minecraft.getInstance().font, timeComp,13, 6, 0x00ff2b, false);
 
-            int timeWarpSettingAmount = celestialStateSupplier.getCurrentTimeWarpSetting() + 1;
+            int timeWarpSettingAmount = psClient.getCurrentTimeWarpSetting() + 1;
             int ArrowXVal = 15;
 
             for (int i = 0; i < timeWarpSettingAmount; i++) {
@@ -44,13 +44,13 @@ public class TimeWarpWidget extends AbstractWidget {
     }
 
     private Component parseTime(Double currentTime, CelestialBody overworldPlanet) {
-        if (!(overworldPlanet instanceof PlanetaryBody)) {
+        if (overworldPlanet == null || overworldPlanet.getOrbitalElements() == null) {
             return Component.empty();
         }
 
-       double yearTime = (2*Math.PI)/overworldPlanet.getOrbitalElements().MeanAngularMotion;
+       double yearTime = overworldPlanet.getOrbitalElements().getOrbitalPeriod();
        // this is not sidereal rotation period the values need to be changed and this calculation also needs to be changed.
-       double dayTime = Calcs.timeLongToDouble(((PlanetaryBody)overworldPlanet).getRotationPeriod());
+       double dayTime = TimeCalc.timeLongToDouble(((PlanetaryBody)overworldPlanet).getRotationPeriod());
        double hourTime = dayTime/24;
        double minuteTime = hourTime/60;
 

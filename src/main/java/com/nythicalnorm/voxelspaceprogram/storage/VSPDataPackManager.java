@@ -1,9 +1,9 @@
 package com.nythicalnorm.voxelspaceprogram.storage;
 
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitId;
-import com.nythicalnorm.voxelspaceprogram.solarsystem.PlanetsProvider;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
@@ -21,7 +21,7 @@ public class VSPDataPackManager {
     private static final String VSPCommonData = "vsp_common_data";
 
     public static void planetDatapackLoaded(PlanetDataResolver.PlanetLoadedData pPlanetLoadedData) {
-        if (SolarSystem.getInstance().isEmpty()) {
+        if (PSServer.getInstance().isEmpty()) {
             planetLoadedData = pPlanetLoadedData;
         } else {
             VoxelSpaceProgram.log("Datapack reloaded, but planets can't be changed during runtime with datapacks.");
@@ -43,8 +43,8 @@ public class VSPDataPackManager {
         }
         // load spacecraft data here
 
-        PlanetsProvider planetsProvider = new PlanetsProvider(AllPlanetaryBodies, AllSpacecraftBodies, PlanetDimensions, rootStar);
-        new SolarSystem(pServer, planetsProvider);
+        SolarSystem solarSystem = new SolarSystem(AllPlanetaryBodies, AllSpacecraftBodies, PlanetDimensions, rootStar);
+        new PSServer(pServer, solarSystem);
     }
 
     public static VSPCommonSaveData createOrLoadSaveData(MinecraftServer server) {

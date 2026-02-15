@@ -2,11 +2,11 @@ package com.nythicalnorm.voxelspaceprogram.event;
 
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
 import com.nythicalnorm.voxelspaceprogram.commands.NSPTeleportCommand;
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
-import com.nythicalnorm.voxelspaceprogram.dimensions.SpaceDimension;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.voxelspaceprogram.storage.PlanetDataResolver;
+import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -24,8 +24,8 @@ import net.minecraftforge.server.command.ConfigCommand;
 public class ForgeServerEvents {
     @SubscribeEvent
     public static void OnTick(TickEvent.ServerTickEvent event) {
-        if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END && SolarSystem.get() != null) {
-            SolarSystem.get().OnGameTick();
+        if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END && PSServer.get() != null) {
+            PSServer.get().OnGameTick();
         }
     }
 
@@ -43,8 +43,8 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof ServerLevel serverLevel) {
-            if (SolarSystem.get() != null) {
-                CelestialBody planetaryBody = SolarSystem.get().getPlanetsProvider().getDimensionPlanet(serverLevel.dimension());
+            if (PSServer.get() != null) {
+                CelestialBody planetaryBody = PSServer.get().getSolarSystem().getDimensionOfPlanet(serverLevel.dimension());
                 if (planetaryBody != null && serverLevel instanceof CelestialBodyAccessor celestialBodyAccessor) {
                     celestialBodyAccessor.setCelestialBody(planetaryBody);
                 }
@@ -55,8 +55,8 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void OnLevelSave(LevelEvent.Save event) {
         if (event.getLevel() instanceof Level level) {
-            if (level.dimension().equals(SpaceDimension.SPACE_LEVEL_KEY) && SolarSystem.get() != null) {
-                SolarSystem.get().saveSolarSys();
+            if (OrbitalBodyUtils.isSpaceLevel(level) && PSServer.get() != null) {
+                PSServer.get().saveSolarSys();
             }
         }
     }
@@ -64,18 +64,18 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void onPlayerLoggedInEvent(PlayerEvent.PlayerLoggedInEvent event) {
         VoxelSpaceProgram.log("Hello");
-        SolarSystem.getInstance().ifPresent(solarSystem -> solarSystem.playerJoined(event.getEntity()));
+        PSServer.getInstance().ifPresent(psServer -> psServer.playerJoined(event.getEntity()));
     }
 
     @SubscribeEvent
     public static void onPlayerCloned(PlayerEvent.Clone event) {
         if(event.isWasDeath() && event.getEntity() instanceof ServerPlayer serverPlayer) {
-            SolarSystem.getInstance().ifPresent(solarSystem -> solarSystem.playerCloned(serverPlayer));
+            PSServer.getInstance().ifPresent(psServer -> psServer.playerCloned(serverPlayer));
         }
     }
 
     @SubscribeEvent
     public static void onDimensionChanged(PlayerEvent.PlayerChangedDimensionEvent event) {
-        SolarSystem.getInstance().ifPresent(solarSystem -> solarSystem.playerDimChanged(event.getEntity(), event.getTo()));
+        PSServer.getInstance().ifPresent(psServer -> psServer.playerDimChanged(event.getEntity(), event.getTo()));
     }
 }

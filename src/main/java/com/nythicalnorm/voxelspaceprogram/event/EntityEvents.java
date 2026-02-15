@@ -3,8 +3,8 @@ package com.nythicalnorm.voxelspaceprogram.event;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
-import com.nythicalnorm.voxelspaceprogram.dimensions.SpaceDimension;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
+import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -42,7 +42,7 @@ public class EntityEvents {
             event.setDistance(fallDistance/(float) multfactor);
         }
 
-        if (level.dimension() == SpaceDimension.SPACE_LEVEL_KEY) {
+        if (OrbitalBodyUtils.isSpaceLevel(level)) {
             event.setDistance(0);
         }
     }
@@ -92,7 +92,7 @@ public class EntityEvents {
     }
 
     private static void applyBlockUseVelocity(Player player, double force) {
-        if (player.level().dimension().equals(SpaceDimension.SPACE_LEVEL_KEY) && player.level().isClientSide() && !player.isShiftKeyDown()) {
+        if (OrbitalBodyUtils.isSpaceLevel(player.level()) && player.level().isClientSide() && !player.isShiftKeyDown()) {
             Vec3 lookAngle = player.getLookAngle().normalize();
             player.addDeltaMovement(lookAngle.scale(force));
         }

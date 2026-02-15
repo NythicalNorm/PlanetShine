@@ -25,7 +25,9 @@
     "daynightcycle.isDay.RestrictSunGoalMixin",
     "daynightcycle.isDay.StrollThroughVillageGoalMixin",
     "spaceentites.AbstractArrowSpaceMixin",
+    "spaceentites.BrushableBlockSpaceMixin",
     "spaceentites.EntitySpaceMixin",
+    "spaceentites.FallingBlockSpaceMixin",
     "spaceentites.ItemEntitySpaceMixin",
     "spaceentites.LivingEntitySpaceMixin",
     "spaceentites.LocalPlayerSpaceMixin",
@@ -36,6 +38,7 @@
     "CameraMixin",
     "LevelRendererMixin",
     "daynightcycle.FogRendererMixin",
+    "screen.DebugScreenOverlayMixin",
     "screen.ProgressScreenMixin",
     "screen.ReceivingLevelScreenMixin"
   ]

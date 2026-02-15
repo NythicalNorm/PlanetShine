@@ -18,11 +18,20 @@ public class ClientboundHostOrbitSet {
     }
 
     public void encode(FriendlyByteBuf friendlyByteBuf) {
-        spaceHostOrbitId.encodeToBuffer(friendlyByteBuf);
+        if (spaceHostOrbitId != null) {
+            friendlyByteBuf.writeBoolean(true);
+            spaceHostOrbitId.encodeToBuffer(friendlyByteBuf);
+        } else {
+            friendlyByteBuf.writeBoolean(false);
+        }
     }
 
     public ClientboundHostOrbitSet(FriendlyByteBuf friendlyByteBuf) {
-        this.spaceHostOrbitId = new OrbitId(friendlyByteBuf);
+        if (friendlyByteBuf.readBoolean()) {
+            this.spaceHostOrbitId = new OrbitId(friendlyByteBuf);
+        } else {
+            this.spaceHostOrbitId = null;
+        }
     }
 
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {

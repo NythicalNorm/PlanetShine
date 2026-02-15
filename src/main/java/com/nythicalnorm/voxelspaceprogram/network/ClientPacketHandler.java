@@ -1,9 +1,8 @@
 package com.nythicalnorm.voxelspaceprogram.network;
 
-import com.nythicalnorm.voxelspaceprogram.CelestialStateSupplier;
-import com.nythicalnorm.voxelspaceprogram.planetshine.networking.ClientTimeHandler;
+import com.nythicalnorm.voxelspaceprogram.PSClient;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitId;
-import com.nythicalnorm.voxelspaceprogram.solarsystem.PlanetsProvider;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
@@ -40,12 +39,12 @@ public class ClientPacketHandler {
         if (rootStar == null) {
             throw new IllegalStateException ("can't start client Solar system without a host star");
         }
-        PlanetsProvider planetsProvider = new PlanetsProvider(AllPlanetaryBodies, AllSpacecraftBodies, PlanetDimensions, rootStar);
+        SolarSystem solarSystem = new SolarSystem(AllPlanetaryBodies, AllSpacecraftBodies, PlanetDimensions, rootStar);
         ClientPlayerOrbitBody clientPlayerSpacecraftBody;
 
         if (playerData instanceof ClientPlayerOrbitBody plrSpacecraftBody) {
             if (playerParentOrbit != null) {
-                planetsProvider.playerJoinedOrbital(playerParentOrbit, playerData);
+                solarSystem.playerJoinedOrbital(playerData, playerParentOrbit);
                 plrSpacecraftBody.setPlayer(Minecraft.getInstance().player);
             }
             clientPlayerSpacecraftBody = plrSpacecraftBody;
@@ -54,44 +53,49 @@ public class ClientPacketHandler {
             playerSpacecraftBuilder.setPlayer(Minecraft.getInstance().player);
             clientPlayerSpacecraftBody = (ClientPlayerOrbitBody) playerSpacecraftBuilder.buildClientSide();
         }
-        CelestialStateSupplier css =  new CelestialStateSupplier(clientPlayerSpacecraftBody, planetsProvider);
+        PSClient css =  new PSClient(clientPlayerSpacecraftBody, solarSystem);
         playerHostOrbit.ifPresent(css::setHostOrbit);
         css.setCurrentTime(currentTime);
         css.setTimePassPerTick(timeWarp);
     }
 
     public static void OrbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements orbitalElements) {
-        CelestialStateSupplier.getInstance().ifPresent(celestialStateSupplier ->
-                celestialStateSupplier.orbitSOIChange(spacecraftID, newParentID, orbitalElements));
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.orbitSOIChange(spacecraftID, newParentID, orbitalElements));
     }
 
     public static void orbitRemove(OrbitId spacecraftID) {
-        CelestialStateSupplier.getInstance().ifPresent(celestialStateSupplier ->
-                celestialStateSupplier.orbitRemove(spacecraftID));
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.orbitRemove(spacecraftID));
     }
 
     public static void incomingLodTexture(ResourceKey<Level> dimensionID, int textureID, int textureSize, byte[] biomeTexture) {
-        CelestialStateSupplier.getInstance().ifPresent(celestialStateSupplier ->
-                celestialStateSupplier.getPlanetTexManager().incomingLodTexture(dimensionID, textureID, textureSize, biomeTexture));
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.getPlanetTexManager().incomingLodTexture(dimensionID, textureID, textureSize, biomeTexture));
     }
 
     public static void incomingPlanetTexture(OrbitId planetID, byte[] planetTexture) {
-        CelestialStateSupplier.getInstance().ifPresent(css ->
-                css.getPlanetTexManager().incomingPlanetTexture(css.getClientPlanet(planetID), planetTexture));
+        PSClient.getInstance().ifPresent(ps ->
+                ps.getPlanetTexManager().incomingPlanetTexture(ps.getClientPlanet(planetID), planetTexture));
     }
 
     public static void UpdateTimeState(long currenttime) {
-        CelestialStateSupplier.getInstance().ifPresent(css ->
-                ClientTimeHandler.UpdateState(currenttime));
+        PSClient.getInstance().ifPresent(ps ->
+                ps.clientTimeHandler.UpdateState(currenttime));
     }
 
     public static void timeWarpSetFromServer(boolean successfullyChanged, long setTimeWarpSpeed) {
-        CelestialStateSupplier.getInstance().ifPresent(celestialStateSupplier ->
-                celestialStateSupplier.timeWarpSetFromServer(successfullyChanged, setTimeWarpSpeed));
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.timeWarpSetFromServer(successfullyChanged, setTimeWarpSpeed));
     }
 
     public static void hostOrbitSet(OrbitId spaceHostOrbitId) {
-        CelestialStateSupplier.getInstance().ifPresent(celestialStateSupplier ->
-                celestialStateSupplier.setHostOrbit(spaceHostOrbitId));
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.setHostOrbit(spaceHostOrbitId));
+    }
+
+    public static void orbitChange(OrbitId spacecraftID, OrbitalElements orbitalElements) {
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.orbitChange(spacecraftID, orbitalElements));
     }
 }

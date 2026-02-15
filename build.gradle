@@ -225,6 +225,9 @@ dependencies {
     // compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
     // at runtime, use the full JEI jar for Forge
     // runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
+    // Clockwork
+//    runtimeOnly fg.deobf("org.valkyrienskies.kelvin:kelvin-forge:${minecraft_version}-${kelvin_version}")
+//    implementation(fg.deobf("maven.modrinth:84USeAvk:ZyJYZ6kU")) // Clockwork 0.5.4.4
 
     // mixin extras
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.3"))

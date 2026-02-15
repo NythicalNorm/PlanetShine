@@ -1,27 +1,28 @@
 package com.nythicalnorm.voxelspaceprogram.orbit;
 
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
 import org.joml.Vector3d;
 import org.junit.jupiter.api.Test;
 
 
 class OrbitalElementsTest {
+    double sunMass = 1.989E30;
+    double earthMass = 5.97219E24;
+
     OrbitalElements elements = new OrbitalElements(
-            149653496273.0d,4.657951002584728917e-6, Calcs.TimePerTickToTimePerMilliTick(6.2504793475201942954),
-            5.1970176873649567284,2.8619013937171278172, 1.704239718110438E-02);
+            149653496273.0d,4.657951002584728917e-6, TimeCalc.TimePerTickToTimePerMilliTick(6.2504793475201942954),
+            5.1970176873649567284,2.8619013937171278172, 1.704239718110438E-02, sunMass);
 
 
     OrbitalElements elementsNila = new OrbitalElements(
-            382599226,0.091470106618193394721,Calcs.TimePerTickToTimePerMilliTick(2.7140591915324141503),
-            5.4073390958703955178,2.162973108375887854,6.476694128611285E-02);
-    double sunMass = 1.989E30;
+            382599226,0.091470106618193394721, TimeCalc.TimePerTickToTimePerMilliTick(2.7140591915324141503),
+            5.4073390958703955178,2.162973108375887854,6.476694128611285E-02, earthMass);
 
 
+    //this test is broken for some reason
    @Test
    void conversionTest1() {
-       //elements.setOrbitalPeriod(sunMass);
-       elementsNila.setOrbitalPeriod(5.97219E24);
        long currentnanotime = System.nanoTime();
 
        for (int i = 0; i < 100; i++) {
@@ -30,29 +31,26 @@ class OrbitalElementsTest {
            Vector3d pos = stateVectors[0];
            Vector3d vel = stateVectors[1];
 
-           OrbitalElements orbitFromState = new OrbitalElements(pos, vel, timeElapsed, 5.97219E24);
+           OrbitalElements orbitFromState = new OrbitalElements(pos, vel, timeElapsed, earthMass);
 
            System.out.println("---------------" + timeElapsed + "---------------");
 
-           double semiMajor = Math.abs(elementsNila.SemiMajorAxis - orbitFromState.SemiMajorAxis);
+           double semiMajor = Math.abs(elementsNila.getSemiMajorAxis() - orbitFromState.getSemiMajorAxis());
            System.out.println("Semi Major Axis Diff: " + semiMajor);
 
-           double eccentricity = Math.abs(elementsNila.Eccentricity - orbitFromState.Eccentricity);
+           double eccentricity = Math.abs(elementsNila.getEccentricity() - orbitFromState.getEccentricity());
            System.out.println("Eccentricity Diff: " + eccentricity);
 
-           double inclination = Math.abs(elementsNila.Inclination - orbitFromState.Inclination);
+           double inclination = Math.abs(elementsNila.getInclination() - orbitFromState.getInclination());
            System.out.println("Inclination Diff: " + inclination);
 
-           double argumentofperi = Math.abs(elementsNila.ArgumentOfPeriapsis - orbitFromState.ArgumentOfPeriapsis);
+           double argumentofperi = Math.abs(elementsNila.getArgumentOfPeriapsis() - orbitFromState.getArgumentOfPeriapsis());
            System.out.println("Argument Of Periapsis Diff: " + argumentofperi);
 
-           double longitudeoftheascendingnode = Math.abs(elementsNila.LongitudeOfAscendingNode - orbitFromState.LongitudeOfAscendingNode);
+           double longitudeoftheascendingnode = Math.abs(elementsNila.getLongitudeOfAscendingNode() - orbitFromState.getLongitudeOfAscendingNode());
            System.out.println("Longitude Of Ascending Node Diff: " + longitudeoftheascendingnode);
 
-           double meanangularmotion = Math.abs(elementsNila.MeanAngularMotion - orbitFromState.MeanAngularMotion);
-           System.out.println("Mean Angular Motion Diff: " + meanangularmotion);
-
-           double periapsistime = Math.abs(elementsNila.periapsisTime - orbitFromState.periapsisTime);
+           double periapsistime = Math.abs(elementsNila.getPeriapsisTime() - orbitFromState.getPeriapsisTime());
            System.out.println("periapsis Time Diff: " + periapsistime);
        }
 
@@ -88,7 +86,7 @@ class OrbitalElementsTest {
         System.out.println("--------------- Original ---------------");
         System.out.println("posX: " + position.x + " posY: " + position.y + " posZ: " + position.z);
         System.out.println("velX: " + velocity.x + " velY: " + velocity.y + " velZ: " + velocity.z);
-        System.out.println("Eccentricity: " + orbitFromState.Eccentricity);
+        System.out.println("Eccentricity: " + orbitFromState.getEccentricity());
 
         for (int i = 0; i < 100; i++) {
             long time = i;
@@ -125,7 +123,6 @@ class OrbitalElementsTest {
 
    @Test
    void OrbitalElementsToStateVector() {
-       elements.setOrbitalPeriod(sunMass);
        long currentnanotime = System.nanoTime();
 
        for (int i = 0; i < 1000000; i++) {
@@ -141,7 +138,6 @@ class OrbitalElementsTest {
 
     @Test
     void StateVectorToOrbitalElements() {
-        elements.setOrbitalPeriod(sunMass);
         long currentnanotime = System.nanoTime();
         Vector3d posInit = new Vector3d(-2.9936153959992264E10, -606297.1566449205, 1.4402476049850812E11);
         Vector3d velInit = new Vector3d(-29659.438335282175, 0.06573780798998548, -6164.840027386336);

@@ -1,19 +1,17 @@
 package com.nythicalnorm.voxelspaceprogram.spacecraft.player;
 
-import com.nythicalnorm.voxelspaceprogram.dimensions.SpaceDimension;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitalBodyTypesHolder;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitId;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.voxelspaceprogram.spacecraft.physics.PhysicsContext;
-import com.nythicalnorm.voxelspaceprogram.spacecraft.physics.PlayerPhysicsPlanet;
-import com.nythicalnorm.voxelspaceprogram.spacecraft.physics.PlayerPhysicsSpace;
+import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.OrbitHostSpace;
+import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.ShipHostSpace;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3f;
+import org.joml.Vector3d;
 
 public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     protected static final float JetpackRotationalForce = 0.1f;
@@ -21,8 +19,8 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     protected static final double JetpackThrottleForce = 25d;
     protected Player player;
 
-    public AbstractPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
-        super(playerSpacecraftBuilder, playerSpacecraftBuilder.angularVelocity);
+    public AbstractPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder, boolean isClientSide) {
+        super(playerSpacecraftBuilder, isClientSide);
         this.player = playerSpacecraftBuilder.player;
         if (this.player != null) {
             ((PlayerOrbitAccessor)player).setOrbit(this);
@@ -35,14 +33,8 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     }
 
     @Override
-    public PhysicsContext getPhysicsContext() {
-        //temporary dimension check will be changed to allow for different contexts
-        if (player.level().dimension() == SpaceDimension.SPACE_LEVEL_KEY) {
-            return new PlayerPhysicsSpace(player, this);
-        }
-        else {
-            return new PlayerPhysicsPlanet(player, this);
-        }
+    public OrbitHostSpace createHostSpace(Vector3d posNew) {
+        return new ShipHostSpace(this.id, posNew, this);
     }
 
     public void setPlayer(@NotNull Player player) {
@@ -64,12 +56,6 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
             this.player = player;
             this.displayName = player.getDisplayName();
             this.id = new OrbitId(player);
-        }
-
-        Vector3f angularVelocity = new Vector3f();
-
-        public void setAngularVelocity(Vector3f angularVelocity) {
-            this.angularVelocity = angularVelocity;
         }
 
         @Override

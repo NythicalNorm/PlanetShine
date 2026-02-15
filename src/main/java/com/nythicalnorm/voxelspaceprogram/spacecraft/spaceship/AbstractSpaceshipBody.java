@@ -5,17 +5,19 @@ import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitalBodyTypesHolder;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.voxelspaceprogram.spacecraft.physics.PhysicsContext;
+import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.OrbitHostSpace;
+import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.PlayerHostSpace;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
 
 public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     protected Ship ship;
 
-    public AbstractSpaceshipBody(ShipOrbitBuilder shipOrbitBuilder) {
-        super(shipOrbitBuilder, null);
+    public AbstractSpaceshipBody(ShipOrbitBuilder shipOrbitBuilder, boolean isClientSide) {
+        super(shipOrbitBuilder, isClientSide);
     }
 
     @Override
@@ -24,8 +26,8 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     }
 
     @Override
-    public PhysicsContext getPhysicsContext() {
-        return null;
+    public OrbitHostSpace createHostSpace(Vector3d posNew) {
+        return new PlayerHostSpace(this.id, posNew, this);
     }
 
     public void setShip(@NotNull Ship ship) {

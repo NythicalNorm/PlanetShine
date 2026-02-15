@@ -1,11 +1,10 @@
 package com.nythicalnorm.voxelspaceprogram.spacecraft.player;
 
+import com.nythicalnorm.voxelspaceprogram.PSClient;
 import com.nythicalnorm.voxelspaceprogram.network.PacketHandler;
-import com.nythicalnorm.voxelspaceprogram.network.spacecraft.ServerboundSpacecraftMove;
+import com.nythicalnorm.voxelspaceprogram.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.voxelspaceprogram.spacecraft.SpacecraftControlState;
-import com.nythicalnorm.voxelspaceprogram.spacecraft.physics.PhysicsContext;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.PlanetBodyCalc;
 import com.nythicalnorm.voxelspaceprogram.util.DayNightCycleHandler;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -22,9 +21,11 @@ import org.joml.Vector3f;
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     private float sunAngle = 0f;
+    private Vector3d clientDeltavelLast;
 
     public ClientPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
-        super(playerSpacecraftBuilder);
+        super(playerSpacecraftBuilder, true);
+        clientDeltavelLast = new Vector3d();
     }
 
     public void updatePlayerPosRot(Player player, CelestialBody currentPlanetOn) {
@@ -38,7 +39,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
         this.rotation = new Quaternionf(new AxisAngle4f(Mth.HALF_PI,1f,0f,0f));
         Vector3f playerRelativePos = new Vector3f((float) relativeOrbitalPos.x, (float) relativeOrbitalPos.y, (float) relativeOrbitalPos.z);
         playerRelativePos.normalize();
-        Vector3f upVector = Calcs.getUpVectorForPlanetRot(new Vector3f(playerRelativePos), currentPlanet);
+        Vector3f upVector = PlanetBodyCalc.getUpVectorForPlanetRot(new Vector3f(playerRelativePos), currentPlanet);
         this.rotation.lookAlong(playerRelativePos, upVector);
     }
 
@@ -46,39 +47,31 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
         double seaLevel = level.getMinBuildHeight() + 127;
         position = new Vec3(position.x, position.y - seaLevel, position.z);
 
-        relativeOrbitalPos = Calcs.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false);
-        Vector3d newAbs = currentPlanetOn.getAbsolutePos();
+        relativeOrbitalPos = PlanetBodyCalc.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false);
+        Vector3d newAbs = new Vector3d(currentPlanetOn.getAbsolutePos());
         absoluteOrbitalPos = newAbs.add(relativeOrbitalPos);
     }
 
     public void processLocalMovement(ItemStack jetpackItem, float inputAD, float inputSW, float inputQE, float inputShiftCTRL, float throttle, boolean SAS, boolean RCS, boolean inDockingMode) {
-        if (!RCS) {
-            return;
-        }
-        PhysicsContext currentContext = getPhysicsContext();
-        Vector3f angularAcceleration = new Vector3f();
-        double accelerationX = 0d;
-        double accelerationY = 0d;
-        double accelerationZ = 0d;
 
+    }
 
-        if (inDockingMode) {
-            accelerationX = inputAD*JetpackTranslationForce;
-            accelerationY = inputShiftCTRL*JetpackTranslationForce;
-            accelerationZ = inputSW*JetpackTranslationForce;
-        } else {
-            angularAcceleration = new Vector3f(inputAD, inputQE, inputSW);
-            angularAcceleration.mul((JetpackRotationalForce));
-            accelerationZ = inputShiftCTRL;
-        }
-
-        if (currentContext.applyAcceleration(accelerationX, accelerationY, accelerationZ, angularAcceleration)) {
-            SpacecraftControlState controlState = new SpacecraftControlState(throttle, SAS, RCS, inDockingMode, this.relativeOrbitalPos, this.relativeVelocity, this.rotation, this.angularVelocity);
-            PacketHandler.sendToServer(new ServerboundSpacecraftMove(this.id, controlState));
-        }
+    public void processHostMove(Vec3 deltaMovement) {
+        clientDeltavelLast.add(deltaMovement.x, deltaMovement.y, deltaMovement.z);
     }
 
     public float getSunAngle() {
         return sunAngle;
+    }
+
+    public void sendMovementPacket() {
+        if (PSClient.get().isTimeWarping()) {
+            return;
+        }
+
+        if (clientDeltavelLast.length() > tolerance) {
+            PacketHandler.sendToServer(new ServerboundPlayerHostVelUpdate(this.id, clientDeltavelLast));
+            clientDeltavelLast.zero();
+        }
     }
 }

@@ -1,7 +1,7 @@
 package com.nythicalnorm.voxelspaceprogram.storage;
 
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
-import com.nythicalnorm.voxelspaceprogram.solarsystem.PlanetsProvider;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.ServerCelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
@@ -20,11 +20,11 @@ public class SpacecraftDataStorage {
     public static final String modSaveDirPath = "voxelspaceprogram";
     private final Path modSaveFolder;
 
-    public SpacecraftDataStorage(MinecraftServer server, PlanetsProvider planetsProvider) {
+    public SpacecraftDataStorage(MinecraftServer server, SolarSystem solarSystem) {
         this.modSaveFolder = server.getWorldPath(LevelResource.ROOT).resolve(SpacecraftDataStorage.modSaveDirPath);
         getOrCreateDir(modSaveFolder);
 
-        for(CelestialBody celestialBody: planetsProvider.getAllPlanetaryBodies().values()) {
+        for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
             String fileName = celestialBody.getName().concat(".dat");
             File dataFile = new File(this.modSaveFolder.resolve(fileName).toUri());
             ((ServerCelestialBody) celestialBody).setPlanetDataFile(dataFile);
@@ -35,8 +35,8 @@ public class SpacecraftDataStorage {
         return modSaveFolder;
     }
 
-    public void readSpacecraftData(PlanetsProvider planetsProvider) {
-        for(CelestialBody celestialBody: planetsProvider.getAllPlanetaryBodies().values()) {
+    public void readSpacecraftData(SolarSystem solarSystem) {
+        for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
             File planetFileLoc = ((ServerCelestialBody) celestialBody).getPlanetDataFile();
             if (planetFileLoc.exists()) {
                 ListTag spacecraftList = readList(planetFileLoc);
@@ -47,15 +47,15 @@ public class SpacecraftDataStorage {
                 for (Tag tag : spacecraftList) {
                     if (tag instanceof CompoundTag compoundTag) {
                         OrbitalBody orbitalBody = NBTEncoders.getOrbitalBody(compoundTag);
-                        planetsProvider.playerJoinedOrbital(celestialBody, orbitalBody);
+                        solarSystem.playerJoinedOrbital(celestialBody, orbitalBody);
                     }
                 }
             }
         }
     }
 
-    public void save(PlanetsProvider planetsProvider) {
-        for(CelestialBody celestialBody: planetsProvider.getAllPlanetaryBodies().values()) {
+    public void save(SolarSystem solarSystem) {
+        for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
             File planetFileLoc = ((ServerCelestialBody) celestialBody).getPlanetDataFile();
             ListTag spacecraftTags = new ListTag();
 

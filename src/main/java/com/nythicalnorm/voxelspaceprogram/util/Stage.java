@@ -1,38 +1,39 @@
 package com.nythicalnorm.voxelspaceprogram.util;
 
-import com.nythicalnorm.voxelspaceprogram.solarsystem.PlanetsProvider;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
 
 import java.util.List;
 
 public abstract class Stage {
     public static final long WORLD_START_TIME = 0;
     public static final List<Long> timeWarpSettings = List.of(1L, 10L, 100L, 1000L, 10000L, 100000L, 1000000L);
-    public static PlanetsProvider anyPlanetsProvider;
+    public static SolarSystem anySolarSystem;
 
     protected long currentTime = WORLD_START_TIME; // time passed since start in 1000 times currentTick, in milliTicks if you will.
-    protected long timePassPerTick = Calcs.TickToMilliTick;
+    protected long timePassPerTick = TimeCalc.TickToMilliTick;
     protected int currentTimeWarpSetting = 0;
-    protected final PlanetsProvider planetsProvider;
+    protected final SolarSystem solarSystem;
 
-    protected Stage(PlanetsProvider planetsProvider) {
-        this.planetsProvider = planetsProvider;
-        if (anyPlanetsProvider == null) {
-            anyPlanetsProvider = planetsProvider;
+    protected Stage(SolarSystem solarSystem) {
+        this.solarSystem = solarSystem;
+        if (anySolarSystem == null) {
+            anySolarSystem = solarSystem;
         }
     }
 
-    // Returns the server planets provider when on Singleplayer & on Dedicated Server,
-    // and returns the client planets provider in Multiplayer client.
-    public static PlanetsProvider getAnyPlanetsProvider() {
-        return anyPlanetsProvider;
+    // Returns the server solar system when on Singleplayer & on Dedicated Server,
+    // and returns the client solar system in Multiplayer client.
+    public static SolarSystem getAnySolarSystem() {
+        return anySolarSystem;
     }
 
     protected static void close() {
-        anyPlanetsProvider = null;
+        anySolarSystem = null;
     }
 
-    public PlanetsProvider getPlanetsProvider() {
-        return planetsProvider;
+    public SolarSystem getSolarSystem() {
+        return solarSystem;
     }
 
     public long getCurrentTime() {
@@ -40,7 +41,7 @@ public abstract class Stage {
     }
 
     public double getCurrentTimeInSec() {
-        return Calcs.timeLongToDouble(currentTime);
+        return TimeCalc.timeLongToDouble(currentTime);
     }
 
     public int getCurrentTimeWarpSetting() {
@@ -51,12 +52,16 @@ public abstract class Stage {
         this.currentTime = currentTime;
     }
 
+    public boolean isTimeWarping() {
+        return TimeCalc.TimePerMilliTickToTick(timePassPerTick) != timeWarpSettings.get(0);
+    }
+
     public long getTimePassPerTick() {
         return timePassPerTick;
     }
 
     public void setTimePassPerTick(long timePassPerTick) {
         this.timePassPerTick = timePassPerTick;
-        currentTimeWarpSetting = timeWarpSettings.indexOf(Calcs.TimePerMilliTickToTick(getTimePassPerTick()));
+        currentTimeWarpSetting = timeWarpSettings.indexOf(TimeCalc.TimePerMilliTickToTick(getTimePassPerTick()));
     }
 }

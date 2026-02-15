@@ -8,7 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.nythicalnorm.voxelspaceprogram.solarsystem.PlanetsProvider;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
 import com.nythicalnorm.voxelspaceprogram.util.Stage;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -43,9 +43,9 @@ public class PlanetArgument implements ArgumentType<String> {
         String parsedBody = null;
         if (reader.canRead()) {
             String planetName = reader.readString();
-            PlanetsProvider planetsProvider = Stage.getAnyPlanetsProvider();
+            SolarSystem solarSystem = Stage.getAnySolarSystem();
 
-            if (!planetName.isEmpty() && planetsProvider.getPlanet(planetName) != null) {
+            if (!planetName.isEmpty() && solarSystem.getPlanet(planetName) != null) {
                 parsedBody = planetName;
             }
         }
@@ -59,7 +59,7 @@ public class PlanetArgument implements ArgumentType<String> {
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        Iterable<String> planets = Stage.getAnyPlanetsProvider().getAllPlanetNames();
+        Iterable<String> planets = Stage.getAnySolarSystem().getAllPlanetNames();
         return context.getSource() instanceof SharedSuggestionProvider ? SharedSuggestionProvider.suggest(planets, builder) : Suggestions.empty();
     }
 

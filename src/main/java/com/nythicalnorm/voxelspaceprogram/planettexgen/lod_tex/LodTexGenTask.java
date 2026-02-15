@@ -2,7 +2,7 @@ package com.nythicalnorm.voxelspaceprogram.planettexgen.lod_tex;
 
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
 import com.nythicalnorm.voxelspaceprogram.planettexgen.TexGenTask;
-import com.nythicalnorm.voxelspaceprogram.util.LodTexUtils;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.LodTexCalc;
 import net.minecraft.Util;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -35,7 +35,7 @@ public class LodTexGenTask extends TexGenTask {
     }
 
     public BufferedImage generateBiomeTex() {
-        int textureRes = LodTexUtils.textureResolution;
+        int textureRes = LodTexCalc.textureResolution;
 
         BufferedImage genTexture = new BufferedImage(textureRes, textureRes, BufferedImage.TYPE_INT_RGB);
         long beforeTimes = Util.getNanos();

@@ -1,8 +1,8 @@
 package com.nythicalnorm.voxelspaceprogram.storage;
 
-import com.nythicalnorm.voxelspaceprogram.SolarSystem;
-import com.nythicalnorm.voxelspaceprogram.util.Calcs;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.util.Stage;
+import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.saveddata.SavedData;
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +13,10 @@ public class VSPCommonSaveData extends SavedData {
 
     public VSPCommonSaveData() {
         currentTime = Stage.WORLD_START_TIME;
-        timeWarp = Calcs.TickToMilliTick;
-        if (SolarSystem.get() != null) {
-            currentTime = SolarSystem.get().getCurrentTime();
-            timeWarp = SolarSystem.get().getTimePassPerTick();
+        timeWarp = TimeCalc.TickToMilliTick;
+        if (PSServer.get() != null) {
+            currentTime = PSServer.get().getCurrentTime();
+            timeWarp = PSServer.get().getTimePassPerTick();
         }
     }
 
@@ -37,8 +37,8 @@ public class VSPCommonSaveData extends SavedData {
         long currTime = pCompoundTag.getLong("current_time");
         long currTimeWarp = pCompoundTag.getLong("current_time_warp");
 
-        if (!Stage.timeWarpSettings.contains(Calcs.TimePerMilliTickToTick(currTimeWarp))) {
-            currTimeWarp = Calcs.TickToMilliTick;
+        if (!Stage.timeWarpSettings.contains(TimeCalc.TimePerMilliTickToTick(currTimeWarp))) {
+            currTimeWarp = TimeCalc.TickToMilliTick;
         }
 
         return new VSPCommonSaveData(currTime, currTimeWarp);
@@ -46,14 +46,14 @@ public class VSPCommonSaveData extends SavedData {
 
     @Override
     public @NotNull CompoundTag save(CompoundTag pCompoundTag) {
-        SolarSystem solarSystem = SolarSystem.get();
-        pCompoundTag.putLong("current_time", solarSystem.getCurrentTime());
-        pCompoundTag.putLong("current_time_warp", solarSystem.getTimePassPerTick());
+        PSServer psServer = PSServer.get();
+        pCompoundTag.putLong("current_time", psServer.getCurrentTime());
+        pCompoundTag.putLong("current_time_warp", psServer.getTimePassPerTick());
         return pCompoundTag;
     }
 
     @Override
     public boolean isDirty() {
-        return SolarSystem.get() != null;
+        return PSServer.get() != null;
     }
 }
