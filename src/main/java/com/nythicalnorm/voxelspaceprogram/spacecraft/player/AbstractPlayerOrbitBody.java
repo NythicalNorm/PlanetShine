@@ -20,7 +20,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     protected Player player;
 
     public AbstractPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder, boolean isClientSide) {
-        super(playerSpacecraftBuilder, isClientSide);
+        super(playerSpacecraftBuilder, playerSpacecraftBuilder.currentHostSpace, isClientSide);
         this.player = playerSpacecraftBuilder.player;
         if (this.player != null) {
             ((PlayerOrbitAccessor)player).setOrbit(this);
@@ -48,6 +48,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
 
     public static class PlayerOrbitBuilder extends OrbitalBody.Builder<AbstractPlayerOrbitBody> {
         Player player = null;
+        OrbitId currentHostSpace;
 
         public PlayerOrbitBuilder() {
         }
@@ -67,6 +68,10 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
         @Override
         public AbstractPlayerOrbitBody buildClientSide() {
             return new ClientPlayerOrbitBody(this);
+        }
+
+        public void setHostSpace(OrbitId orbitId) {
+            this.currentHostSpace = orbitId;
         }
     }
 }

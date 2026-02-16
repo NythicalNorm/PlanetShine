@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
-public class MapRenderer {
+public class MapRenderer { // this is full of memory leaks like chock-full of them need to fix.
     public static final float SCALE_FACTOR = 1/1000000000f;
     private static MapRenderable renderTree;
     private static OrbitalBody currentFocusedBody;

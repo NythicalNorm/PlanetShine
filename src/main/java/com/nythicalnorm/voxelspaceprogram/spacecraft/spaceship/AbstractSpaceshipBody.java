@@ -17,7 +17,7 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     protected Ship ship;
 
     public AbstractSpaceshipBody(ShipOrbitBuilder shipOrbitBuilder, boolean isClientSide) {
-        super(shipOrbitBuilder, isClientSide);
+        super(shipOrbitBuilder, shipOrbitBuilder.currentHostSpace, isClientSide);
     }
 
     @Override
@@ -40,6 +40,7 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
 
     public static class ShipOrbitBuilder extends Builder<AbstractSpaceshipBody> {
         Ship ship = null;
+        OrbitId currentHostSpace;
 
         public ShipOrbitBuilder() {
         }
@@ -58,6 +59,10 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
         @Override
         public AbstractSpaceshipBody buildClientSide() {
             return new ClientSpaceshipBody(this);
+        }
+
+        public void setHostSpace(OrbitId orbitId) {
+            this.currentHostSpace = orbitId;
         }
     }
 }

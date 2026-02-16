@@ -45,7 +45,7 @@ public class PSServer extends Stage {
     private static PSServer instance;
     private final MinecraftServer server;
     private PlanetTexHandler planetTexHandler;
-    private final EntityShipManager entityShipManager;
+    private EntityShipManager entityShipManager;
     private final SpacecraftDataStorage spacecraftDataStorage;
     private long serverRunningTicks; // in VSPhysTicks
 
@@ -56,7 +56,6 @@ public class PSServer extends Stage {
         BiomeColorHolder.init();
         serverRunningTicks = 0;
         spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
-        entityShipManager = new EntityShipManager(this, new Object2ObjectOpenHashMap<>());
     }
 
     public static PSServer get() {
@@ -84,6 +83,7 @@ public class PSServer extends Stage {
         serverRunningTicks++;
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
         currentTime = currentTime + timePassPerTick;
+        entityShipManager.onPhysTick();
 
         if (serverRunningTicks % 3 == 0) {
             PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
@@ -101,6 +101,8 @@ public class PSServer extends Stage {
         setTimePassPerTick(vspCommonSaveData.getTimeWarp());
         spacecraftDataStorage.readSpacecraftData(solarSystem);
         this.planetTexHandler = new PlanetTexHandler();
+
+        this.entityShipManager = new EntityShipManager(this, new Object2ObjectOpenHashMap<>());
         server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
     }
 
@@ -168,9 +170,7 @@ public class PSServer extends Stage {
         OrbitHostSpace playerHostSpace = entityShipManager.getOrCreateHostSpace(playerOrbitBody);
         playerOrbitBody.setHostSpace(playerHostSpace.getOrbitIdOfHost());
 
-        if (!OrbitalBodyUtils.isSpaceLevel(player.level())) {
-            entityShipManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY), playerHostSpace.getOriginPos());
-        }
+        entityShipManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY), playerHostSpace.getOriginPos());
     }
 
     public void playerCloned(ServerPlayer player) {

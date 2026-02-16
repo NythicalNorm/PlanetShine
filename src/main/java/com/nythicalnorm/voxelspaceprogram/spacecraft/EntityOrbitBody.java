@@ -21,9 +21,9 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected ConcurrentLinkedDeque<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
     protected final boolean isClientSide;
 
-    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, boolean isClientSide) {
+    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId currentHostSpace, boolean isClientSide) {
         super(orbitalBuilder);
-        this.currentHostSpace = null;
+        this.currentHostSpace = currentHostSpace;
         this.isClientSide = isClientSide;
     }
 

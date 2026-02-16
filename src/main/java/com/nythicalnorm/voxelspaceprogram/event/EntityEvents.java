@@ -2,6 +2,7 @@ package com.nythicalnorm.voxelspaceprogram.event;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -48,8 +50,16 @@ public class EntityEvents {
     }
 
     @SubscribeEvent // on the mod event bus
-    public static void createDefaultAttributes(EntityJoinLevelEvent event) {
+    public static void entityJoinEvent(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide()) {
+            return;
+        }
+
         Entity entity = event.getEntity();
+        if (OrbitalBodyUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
+            PSServer.get().getEntityShipManager().spaceEntitySpawn(entity);
+        }
+
         if (entity instanceof LivingEntity) {
             AttributeMap entityAttributes = ((LivingEntity)entity).getAttributes();
             CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) event.getLevel();
@@ -62,7 +72,7 @@ public class EntityEvents {
                 tempGravity = planetAccessor.getCelestialBody().getEntityAccelerationDueToGravity();
             }
 
-            AttributeModifier gravityModifier = new AttributeModifier(gravityUUID, "VoxelSpaceProgram.PlanetGravity",
+            AttributeModifier gravityModifier = new AttributeModifier(gravityUUID, "voxelspaceprogram.planetgravity",
                     tempGravity - ForgeMod.ENTITY_GRAVITY.get().getDefaultValue(), AttributeModifier.Operation.ADDITION); // Add -0;
 
             if (entityAttributes.hasAttribute(ForgeMod.ENTITY_GRAVITY.get())) {
@@ -76,6 +86,18 @@ public class EntityEvents {
                     entityAttributes.getInstance(ForgeMod.ENTITY_GRAVITY.get()).addTransientModifier(gravityModifier);
                 }
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void entityLeaveEvent(EntityLeaveLevelEvent event) {
+        if (event.getLevel().isClientSide()) {
+            return;
+        }
+
+        Entity entity = event.getEntity();
+        if (OrbitalBodyUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
+            PSServer.get().getEntityShipManager().spaceEntityLeave(entity);
         }
     }
 

@@ -54,7 +54,7 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
         String typeName = OrbitalBodyTypesHolder.getOrbitalBodyTypeName(orbit);
         tag.putString("type_name", typeName);
 
-        orbit.id.encodeToNBT(tag);
+        orbit.id.encodeToNBT(tag, "orbit_id");
 
         String componentString = Component.Serializer.toJson(orbit.displayName);
         tag.putString("display_name", componentString);
@@ -72,7 +72,7 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
     }
 
     public M decodeNBT(M orbit, CompoundTag tag) {
-        orbit.setId(new OrbitId(tag));
+        orbit.setId(new OrbitId(tag, "orbit_id"));
         Component displayName = Component.Serializer.fromJson(tag.getString("display_name"));
         orbit.setDisplayName(displayName);
 

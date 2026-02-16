@@ -40,6 +40,7 @@
     "daynightcycle.FogRendererMixin",
     "screen.DebugScreenOverlayMixin",
     "screen.ProgressScreenMixin",
-    "screen.ReceivingLevelScreenMixin"
+    "screen.ReceivingLevelScreenMixin",
+    "spaceentites.PlayerRendererSpaceMixin"
   ]
 }

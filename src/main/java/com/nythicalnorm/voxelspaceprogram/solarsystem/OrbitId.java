@@ -73,17 +73,17 @@ public class OrbitId {
         friendlyByteBuf.writeLong(this.leastSignificantBits);
     }
 
-    public OrbitId(CompoundTag nbt) {
-        CompoundTag idBits = nbt.getCompound("orbit_id");
+    public OrbitId(CompoundTag nbt, String fieldName) {
+        CompoundTag idBits = nbt.getCompound(fieldName);
         this.mostSignificantBits = idBits.getLong("most");
         this.leastSignificantBits = idBits.getLong("least");
     }
 
-    public void encodeToNBT(CompoundTag tag) {
+    public void encodeToNBT(CompoundTag tag, String fieldName) {
         CompoundTag idBits = new CompoundTag();
         idBits.putLong("most", mostSignificantBits);
         idBits.putLong("least", leastSignificantBits);
 
-        tag.put("orbit_id", idBits);
+        tag.put(fieldName, idBits);
     }
 }

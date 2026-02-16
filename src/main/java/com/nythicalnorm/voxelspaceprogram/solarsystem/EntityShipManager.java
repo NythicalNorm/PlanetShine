@@ -14,12 +14,14 @@ import com.nythicalnorm.voxelspaceprogram.spacecraft.spaceship.ServerSpaceshipBo
 import com.nythicalnorm.voxelspaceprogram.spacecraft.vs.ShipTeleporter;
 import com.nythicalnorm.voxelspaceprogram.util.calculations.PlanetBodyCalc;
 import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
@@ -28,6 +30,7 @@ import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
+import java.lang.Math;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -37,49 +40,75 @@ public class EntityShipManager {
 
     private final PSServer psServer;
     private final ShipTeleporter shipTeleporter;
-    private final Map<OrbitId, OrbitHostSpace> loadedHostSpaces;
+    private final Map<Vector2ic, OrbitHostSpace> loadedHostSpaces;
+    private final Map<OrbitId, Vector2ic> allRegisteredHostSpaces;
 
     private static final int HOST_SPACE_GAP_SIZE = 16000;
     private static final int HOST_SPACE_DIAMETER = 8000;
     private static final double teleportToGroundHeight = 1000d;
 
-    public EntityShipManager(PSServer psServer, Map<OrbitId, OrbitHostSpace> loadedHostSpaces) {
+    public EntityShipManager(PSServer psServer, Map<OrbitId, Vector2ic> allRegisteredHostSpaces) {
         this.psServer = psServer;
         shipTeleporter = new ShipTeleporter(psServer.getSpaceLevel(), this);
-        this.loadedHostSpaces = loadedHostSpaces;
+        this.allRegisteredHostSpaces = allRegisteredHostSpaces;
+        this.loadedHostSpaces = new Object2ObjectOpenHashMap<>();
     }
 
     public OrbitHostSpace getOrCreateHostSpace(EntityOrbitBody entityOrbitBody){
-        OrbitHostSpace hostSpace = loadedHostSpaces.get(entityOrbitBody.getOrbitId());
-        if (hostSpace == null) {
-            Vector3d posNew = genNewHostSpaceLoc(loadedHostSpaces.size());
-            hostSpace = entityOrbitBody.createHostSpace(posNew); //new OrbitHostSpace(entityOrbitBody.getOrbitId(), posNew, entityOrbitBody);
-            loadedHostSpaces.put(entityOrbitBody.getOrbitId(), hostSpace);
-        }
-        return hostSpace;
+        Vector2ic hostSpaceLoc = allRegisteredHostSpaces.computeIfAbsent(entityOrbitBody.getOrbitId(),
+                k -> genNewHostSpaceLoc(allRegisteredHostSpaces.size()));
+
+        Vector3d posNew = new Vector3d(hostSpaceLoc.x(), 128, hostSpaceLoc.y());
+
+        return loadedHostSpaces.computeIfAbsent(hostSpaceLoc,
+                k -> entityOrbitBody.createHostSpace(posNew));
     }
 
-    private Vector3d genNewHostSpaceLoc(int alreadyGenerated) {
+    private OrbitHostSpace getHostSpaceAt(Vec3 spaceDimPos) {
+        int x = (int) (Math.round(spaceDimPos.x / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+        int z = (int) (Math.round(spaceDimPos.z / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+        Vector2ic pos = new Vector2i(x,z);
+        return loadedHostSpaces.get(pos);
+    }
+
+    private Vector2i genNewHostSpaceLoc(int alreadyGenerated) {
         int totalXDist = 56_000_000;
         int startPosX = -28_000_000;
-        int startPosZ = 0;
+        int startPosZ = -10_000_000;
         int posPerXSlice = totalXDist / HOST_SPACE_GAP_SIZE;
-        alreadyGenerated = alreadyGenerated + (posPerXSlice / 2); // beginning at origin in the first slice, cause its probably less bugs at low pos.
+        //alreadyGenerated = alreadyGenerated + (posPerXSlice / 2); // beginning at origin in the first slice, cause its probably less bugs at low pos.
 
-        double x = startPosX + ((alreadyGenerated % totalXDist) * HOST_SPACE_GAP_SIZE);
-        double z = startPosZ + (((double) alreadyGenerated / posPerXSlice) * HOST_SPACE_GAP_SIZE);
-        return new Vector3d(x, 128d, z);
+        int x = startPosX + ((alreadyGenerated % posPerXSlice) * HOST_SPACE_GAP_SIZE);
+        int z = startPosZ + ((alreadyGenerated / posPerXSlice) * HOST_SPACE_GAP_SIZE);
+        return new Vector2i(x, z);
     }
 
     public void onGameTick() {
-        updateHostSpaceEntities();
+        for (OrbitHostSpace hostSpace : loadedHostSpaces.values()) {
+            hostSpace.OnGameTick();
+        }
+
         checkShipTeleportToSpace();
         checkEntityTeleportToPlanet();
     }
 
-    private void updateHostSpaceEntities() {
+    public void onPhysTick() {
         for (OrbitHostSpace hostSpace : loadedHostSpaces.values()) {
-            hostSpace.OnGameTick();
+            hostSpace.onPhysTick();
+        }
+    }
+
+    public void spaceEntitySpawn(Entity entity) {
+        OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
+        if (entityHostSpace != null) {
+            entityHostSpace.addEntityToHostSpace(entity);
+        }
+    }
+
+    public void spaceEntityLeave(Entity entity) {
+        OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
+        if (entityHostSpace != null) {
+            entityHostSpace.removeEntityToHostSpace(entity);
         }
     }
 
@@ -87,7 +116,10 @@ public class EntityShipManager {
         EntityOrbitBody entityOrbitBody = psServer.getSolarSystem().getSpacecraftOrbit(playerBodyID);
         if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody && playerOrbitBody.getPlayerEntity().equals(sender)) {
             OrbitHostSpace playerHostSpace = getOrCreateHostSpace(playerOrbitBody);
-            playerHostSpace.applyHostVelocity(addedVel);
+            if (!psServer.isTimeWarping()) {
+                playerOrbitBody.addVelocityForUpdate(addedVel);
+                playerHostSpace.applyHostVelocity(addedVel);
+            }
         }
     }
 
