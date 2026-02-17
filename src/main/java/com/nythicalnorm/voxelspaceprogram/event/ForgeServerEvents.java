@@ -5,6 +5,7 @@ import com.nythicalnorm.voxelspaceprogram.commands.NSPTeleportCommand;
 import com.nythicalnorm.voxelspaceprogram.PSServer;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.planet.PlanetTimeAccessor;
 import com.nythicalnorm.voxelspaceprogram.storage.PlanetDataResolver;
 import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import net.minecraft.server.level.ServerLevel;
@@ -14,7 +15,9 @@ import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.SleepingTimeCheckEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
@@ -46,7 +49,7 @@ public class ForgeServerEvents {
             if (PSServer.get() != null) {
                 CelestialBody planetaryBody = PSServer.get().getSolarSystem().getDimensionOfPlanet(serverLevel.dimension());
                 if (planetaryBody != null && serverLevel instanceof CelestialBodyAccessor celestialBodyAccessor) {
-                    celestialBodyAccessor.setCelestialBody(planetaryBody);
+                    celestialBodyAccessor.ps$setCelestialBody(planetaryBody);
                 }
             }
         }
@@ -63,8 +66,12 @@ public class ForgeServerEvents {
 
     @SubscribeEvent
     public static void onPlayerLoggedInEvent(PlayerEvent.PlayerLoggedInEvent event) {
-        VoxelSpaceProgram.log("Hello");
         PSServer.getInstance().ifPresent(psServer -> psServer.playerJoined(event.getEntity()));
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOutEvent(PlayerEvent.PlayerLoggedOutEvent event) {
+        PSServer.getInstance().ifPresent(psServer -> psServer.playerLeft(event.getEntity()));
     }
 
     @SubscribeEvent
@@ -77,5 +84,21 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void onDimensionChanged(PlayerEvent.PlayerChangedDimensionEvent event) {
         PSServer.getInstance().ifPresent(psServer -> psServer.playerDimChanged(event.getEntity(), event.getTo()));
+    }
+
+    //serverside Only Starting from here to
+    @SubscribeEvent
+    public static void OnSleepingTimeCheckEvent(SleepingTimeCheckEvent event) {
+        if (event.getEntity().level() instanceof PlanetTimeAccessor planetTimeAccessor && planetTimeAccessor.ps$DaylightDataExists()){
+            if (planetTimeAccessor.ps$isDay(event.getEntity().position().x(), event.getEntity().position().z())) {
+                event.setResult(Event.Result.DENY);
+            }
+            else {
+                event.setResult(Event.Result.ALLOW);
+            }
+        }
+        else {
+            event.setResult(Event.Result.DEFAULT);
+        }
     }
 }

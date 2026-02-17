@@ -51,7 +51,7 @@ public class OrbitalElements {
         this.MeanAngularMotion = orbitalElements.MeanAngularMotion;
         this.orbitRotation = new Quaterniond();
 
-        setOrbitRotationFromElements(-this.ArgumentOfPeriapsis, -this.Inclination, -this.LongitudeOfAscendingNode);
+        setOrbitRotationFromElements(this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);
     }
 
     public OrbitalElements(Vector3d pos, Vector3d vel, long TimeElapsed, double parentMass) {
@@ -230,10 +230,10 @@ public class OrbitalElements {
         // This is flipped from the paper because of Minecraft's x-z coordinate system where the z is upside down relative to the x
         trueAnomoly = position.dot(velocity) < 0 ? twoPI - trueAnomoly : trueAnomoly;
         // All the acos functions are clamped because of imprecision, even though they're doubles they have values >1 & <-1 in a few cases which gives a NaN value.
-        this.Inclination = Math.acos(Mth.clamp(-momentumVectorH.y/momentumVectorH.length(), -1, 1));
+        this.Inclination = twoPI - Math.acos(Mth.clamp(-momentumVectorH.y/momentumVectorH.length(), -1, 1));
 
         this.LongitudeOfAscendingNode = Math.acos(Mth.clamp(pointingAscendingNode.x/pointAscendingNodeLength, -1, 1));
-        this.LongitudeOfAscendingNode = pointingAscendingNode.z < 0 ? twoPI - LongitudeOfAscendingNode : LongitudeOfAscendingNode;
+        this.LongitudeOfAscendingNode = pointingAscendingNode.z > 0 ? twoPI - LongitudeOfAscendingNode : LongitudeOfAscendingNode;
 
         this.ArgumentOfPeriapsis = Math.acos(Mth.clamp(pointingAscendingNode.dot(eccentricityVector)/
                 (pointAscendingNodeLength*Eccentricity), -1, 1));
@@ -245,10 +245,10 @@ public class OrbitalElements {
             this.ArgumentOfPeriapsis = Math.atan2(eccentricityVector.z, eccentricityVector.x);
         }
 
-        this.ArgumentOfPeriapsis = eccentricityVector.y < 0 ? twoPI - ArgumentOfPeriapsis : ArgumentOfPeriapsis;
+        this.ArgumentOfPeriapsis = eccentricityVector.y > 0 ? twoPI - ArgumentOfPeriapsis : ArgumentOfPeriapsis;
 
         // need to negate the input rotation so that when transforming the pos,vel in the positionInOrbit method it applies the rotation correctly
-        setOrbitRotationFromElements(-this.ArgumentOfPeriapsis, -this.Inclination, -this.LongitudeOfAscendingNode);
+        setOrbitRotationFromElements(this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);
 
         // vis viva equation
         this.SemiMajorAxis = 1 / ((2 / PosMagnitude) - (VelMagnitude * VelMagnitude) / Mu);

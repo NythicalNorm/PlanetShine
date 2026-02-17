@@ -29,8 +29,8 @@ public class LocalPlayerSpaceMixin {
     public void playerMoveCheck(MoverType pType, Vec3 pPos, CallbackInfo ci) {
         PlayerOrbitAccessor playerOrbit = (PlayerOrbitAccessor) this;
 
-        if (playerOrbit.getOrbit() != null && playerOrbit.getOrbit().isHostOfItsSpace()) {
-            ((ClientPlayerOrbitBody)playerOrbit.getOrbit()).processHostMove(pPos);
+        if (playerOrbit.getOrbitalBody() != null && playerOrbit.getOrbitalBody().isHostOfItsSpace()) {
+            ((ClientPlayerOrbitBody)playerOrbit.getOrbitalBody()).processHostMove(pPos);
             ((Player)(Object)this).setDeltaMovement(Vec3.ZERO);
             ci.cancel();
         }
@@ -39,8 +39,8 @@ public class LocalPlayerSpaceMixin {
     @Inject(method = "sendPosition", at = @At(value = "HEAD"))
     public void sendVelocity(CallbackInfo ci) {
         PlayerOrbitAccessor playerOrbit = (PlayerOrbitAccessor) this;
-        if (playerOrbit.getOrbit().getOrbitalElements() != null && playerOrbit.getOrbit().isHostOfItsSpace()) {
-            ((ClientPlayerOrbitBody)playerOrbit.getOrbit()).sendMovementPacket();
+        if (playerOrbit.getOrbitalBody().getOrbitalElements() != null && playerOrbit.getOrbitalBody().isHostOfItsSpace()) {
+            ((ClientPlayerOrbitBody)playerOrbit.getOrbitalBody()).sendMovementPacket();
         }
     }
 }

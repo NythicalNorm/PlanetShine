@@ -1,6 +1,6 @@
 package com.nythicalnorm.voxelspaceprogram.spacecraft.vs;
 
-import com.nythicalnorm.voxelspaceprogram.solarsystem.EntityShipManager;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.HostSpaceManager;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.ServerCelestialBody;
 import net.minecraft.server.MinecraftServer;
@@ -22,7 +22,7 @@ public class ShipTeleporter {
     public static final double shipExtraRange = 20;
     private final ServerLevel spaceLevel;
 
-    public ShipTeleporter(ServerLevel spaceLevel, EntityShipManager entityShipManager) {
+    public ShipTeleporter(ServerLevel spaceLevel, HostSpaceManager hostSpaceManager) {
         this.spaceLevel = spaceLevel;
     }
 

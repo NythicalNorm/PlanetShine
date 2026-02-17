@@ -34,8 +34,8 @@ public class EntityEvents {
         Level level = event.getEntity().level();
         CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) level;
 
-        if (planetAccessor.isPlanet()){
-            double planetAcceleration = planetAccessor.getCelestialBody().getEntityAccelerationDueToGravity();
+        if (planetAccessor.ps$isPlanet()){
+            double planetAcceleration = planetAccessor.ps$getCelestialBody().getEntityAccelerationDueToGravity();
 
             if (planetAcceleration <= 0){
                 event.setCanceled(true);
@@ -66,10 +66,10 @@ public class EntityEvents {
 
             //Optional<Double> levelGravity = PlanetDimensions.getAccelerationDueToGravityAt(entity.level());
             double tempGravity = 0;
-            boolean applyGravityModifier = planetAccessor.isPlanet();
+            boolean applyGravityModifier = planetAccessor.ps$isPlanet();
 
             if (applyGravityModifier) {
-                tempGravity = planetAccessor.getCelestialBody().getEntityAccelerationDueToGravity();
+                tempGravity = planetAccessor.ps$getCelestialBody().getEntityAccelerationDueToGravity();
             }
 
             AttributeModifier gravityModifier = new AttributeModifier(gravityUUID, "voxelspaceprogram.planetgravity",

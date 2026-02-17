@@ -7,6 +7,7 @@ import com.nythicalnorm.voxelspaceprogram.rendering.PSRenderer;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.ClientCelestialBody;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.planet.DaylightRegion;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitId;
@@ -20,6 +21,7 @@ import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import com.nythicalnorm.voxelspaceprogram.util.Stage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,7 @@ public class PSClient extends Stage {
     private final @NotNull ClientPlayerOrbitBody playerOrbit;
     private CelestialBody currentPlanetOn;
     private ClientPlayerOrbitBody controllingBody;
+    private final DaylightRegion daylightRegion;
     public ClientTimeHandler clientTimeHandler;
 
     private final PSScreenManager screenManager;
@@ -53,6 +56,7 @@ public class PSClient extends Stage {
         }
         this.solarSystem.getRootStar().initCalcs();
         clientTimeHandler = new ClientTimeHandler();
+        this.daylightRegion = new DaylightRegion();
     }
 
     public static Optional<PSClient> getInstance() {
@@ -74,8 +78,10 @@ public class PSClient extends Stage {
         this.getPlayerOrbit().setHostSpace(orbitId);
     }
 
-    public float getSunAngle() {
-        return playerOrbit.getSunAngle();
+    public float getSunAngleOpacity() {
+        float angle = this.daylightRegion.getSunAngle();
+        angle = angle < 0.5f ? angle * 2f : (1.0f - angle) * 2f;
+        return angle;
     }
 
     public static void close() {
@@ -97,24 +103,30 @@ public class PSClient extends Stage {
     public void onClientLevelLoad(ClientLevel clientLevel) {
         CelestialBody celestialBody = solarSystem.getDimensionOfPlanet(clientLevel.dimension());
         if (celestialBody != null) {
-            ((CelestialBodyAccessor) clientLevel).setCelestialBody(celestialBody);
+            ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);
             currentPlanetOn = celestialBody;
         } else {
             currentPlanetOn = null;
         }
     }
 
-    public void UpdateOrbitalBodies(float partialTick) {
+    public void renderTick(float partialTick) {
         this.setCurrentTime(clientTimeHandler.calculateCurrentTime(partialTick));
-        solarSystem.UpdatePlanets(this.getCurrentTime(), this.isTimeWarping());
+        this.solarSystem.UpdatePlanets(this.getCurrentTime(), this.isTimeWarping());
 
         if (!weInSpaceDim()) {
             playerOrbit.setParent(null);
         }
 
-        if (currentPlanetOn != null) {
-            playerOrbit.updatePlayerPosRot(minecraft.player, currentPlanetOn);
+        if (currentPlanetOn != null && playerOrbit.getPlayerEntity() != null) {
+            playerOrbit.updatePlayerPosRot(currentPlanetOn);
+            BlockPos playerPos = playerOrbit.getPlayerEntity().blockPosition();
+            this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getPlayerEntity().level());
         }
+    }
+
+    public DaylightRegion getDaylightRegion() {
+        return daylightRegion;
     }
 
     public @NotNull ClientPlayerOrbitBody getPlayerOrbit() {
@@ -173,7 +185,7 @@ public class PSClient extends Stage {
             return false;
         }
         CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) minecraft.level;
-        return planetAccessor.isPlanet() || OrbitalBodyUtils.isSpaceLevel(minecraft.level);
+        return planetAccessor.ps$isPlanet() || OrbitalBodyUtils.isSpaceLevel(minecraft.level);
     }
 
     public Optional<CelestialBody> getCurrentPlanet() {

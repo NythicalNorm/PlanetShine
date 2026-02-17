@@ -1,28 +1,36 @@
 package com.nythicalnorm.voxelspaceprogram.storage;
 
 import com.nythicalnorm.voxelspaceprogram.VoxelSpaceProgram;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.HostSpaceManager;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitId;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.ServerCelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
+import org.joml.Vector2i;
+import org.joml.Vector2ic;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class SpacecraftDataStorage {
     public static final String modSaveDirPath = "voxelspaceprogram";
+    public final File hostOrbitSaveFile;
     private final Path modSaveFolder;
 
     public SpacecraftDataStorage(MinecraftServer server, SolarSystem solarSystem) {
         this.modSaveFolder = server.getWorldPath(LevelResource.ROOT).resolve(SpacecraftDataStorage.modSaveDirPath);
         getOrCreateDir(modSaveFolder);
+        this.hostOrbitSaveFile = new File(this.modSaveFolder.resolve("host_spaces.dat").toUri());
 
         for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
             String fileName = celestialBody.getName().concat(".dat");
@@ -54,7 +62,28 @@ public class SpacecraftDataStorage {
         }
     }
 
-    public void save(SolarSystem solarSystem) {
+    public Map<OrbitId, Vector2ic> readHostSpaces() {
+        Map<OrbitId, Vector2ic> allRegisteredHostSpaces = new Object2ObjectOpenHashMap<>();
+
+        if (hostOrbitSaveFile.exists()) {
+            ListTag hostList = readList(hostOrbitSaveFile);
+            if (hostList == null) {
+                return allRegisteredHostSpaces;
+            }
+
+            for (Tag tag : hostList) {
+                if (tag instanceof CompoundTag compoundTag) {
+                    OrbitId id = new OrbitId(compoundTag, "orbit_id");
+                    Vector2i pos = NBTEncoders.getVector2i(compoundTag.getCompound("pos"));
+                    allRegisteredHostSpaces.put(id, pos);
+                }
+            }
+        }
+
+        return allRegisteredHostSpaces;
+    }
+
+    public void saveSpacecraft(SolarSystem solarSystem) {
         for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
             File planetFileLoc = ((ServerCelestialBody) celestialBody).getPlanetDataFile();
             ListTag spacecraftTags = new ListTag();
@@ -67,6 +96,22 @@ public class SpacecraftDataStorage {
             }
 
             writeList(planetFileLoc, spacecraftTags);
+        }
+    }
+
+    public void saveHostSpaces(HostSpaceManager hostSpaceManager) {
+        if (hostSpaceManager.isDirty()) {
+            Map<OrbitId, Vector2ic> registeredHostSpaces = hostSpaceManager.getDataToSave();
+            ListTag hostOrbit = new ListTag();
+
+            for (Map.Entry<OrbitId, Vector2ic> entry : registeredHostSpaces.entrySet()) {
+                CompoundTag entryTag = new CompoundTag();
+                entry.getKey().encodeToNBT(entryTag, "orbit_id");
+                entryTag.put("pos", NBTEncoders.putVector2i(entry.getValue()));
+
+                hostOrbit.add(entryTag);
+            }
+            writeList(hostOrbitSaveFile, hostOrbit);
         }
     }
 
@@ -91,7 +136,7 @@ public class SpacecraftDataStorage {
                     FileInputStream fileinputstream = new FileInputStream(dataFileLoc);
                     DataInputStream datainputstream = new DataInputStream(fileinputstream)
             ) {
-                listTag = ListTag.TYPE.load(datainputstream, 500, NbtAccounter.UNLIMITED);
+                listTag = ListTag.TYPE.load(datainputstream, 0, NbtAccounter.UNLIMITED);
             } catch (IOException exception) {
                 VoxelSpaceProgram.logError("Can't load planetData file from " + dataFileLoc.getPath() + ", is it corrupted? :( sowwy.. ");
                 exception.printStackTrace();

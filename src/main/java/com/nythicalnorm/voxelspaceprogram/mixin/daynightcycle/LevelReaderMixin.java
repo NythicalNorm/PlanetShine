@@ -1,14 +1,10 @@
 package com.nythicalnorm.voxelspaceprogram.mixin.daynightcycle;
 
-import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBodyAccessor;
-import com.nythicalnorm.voxelspaceprogram.util.DayNightCycleHandler;
-import com.nythicalnorm.voxelspaceprogram.util.SidedCallsUtil;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.planet.PlanetTimeAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.biome.BiomeManager;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,28 +25,18 @@ public interface LevelReaderMixin extends BlockAndTintGetter, CollisionGetter, S
      * the correct time for a timezone.
      */
     @Overwrite
-    default int getMaxLocalRawBrightness(BlockPos pPos) throws Exception {
+    default int getMaxLocalRawBrightness(BlockPos pPos) {
         Integer darkLevelFromPlanet = null;
 
-        if (this instanceof Level level) {
-            if (level.isClientSide()) {
-                Float result = DistExecutor.safeCallWhenOn(Dist.CLIENT, () -> SidedCallsUtil::getPlayerSunAngle).call();
-                if (result != null) {
-                    darkLevelFromPlanet = DayNightCycleHandler.getDarknessLightLevel(result, level);
-                }
-            }
-            else {
-                CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) level;
-                if (planetAccessor.isPlanet()) {
-                   darkLevelFromPlanet = DayNightCycleHandler.getDarknessLightLevel(pPos, level);
-                }
+        if (this instanceof Level) {
+            if (this instanceof PlanetTimeAccessor planetTimeAccessor) {
+               darkLevelFromPlanet = planetTimeAccessor.ps$getDarknessAmount(pPos.getX(), pPos.getZ());
             }
         }
         else if (this instanceof WorldGenRegion worldGenRegion) {
             Level level = worldGenRegion.getLevel();
-            CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) level;
-            if (planetAccessor.isPlanet()) {
-                darkLevelFromPlanet = DayNightCycleHandler.getDarknessLightLevel(pPos, level);
+            if (level instanceof PlanetTimeAccessor planetTimeAccessor) {
+                darkLevelFromPlanet = planetTimeAccessor.ps$getDarknessAmount(pPos.getX(), pPos.getZ());
             }
         }
         return getMaxLocalRawBrightness(pPos, Objects.requireNonNullElseGet(darkLevelFromPlanet, this::getSkyDarken));

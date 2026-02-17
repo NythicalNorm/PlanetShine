@@ -72,7 +72,7 @@ public class PSRenderer {
             return;
         }
 
-        css.UpdateOrbitalBodies(partialTick);
+        css.renderTick(partialTick);
 
         if (css.getScreenManager().doPlanetShineDraw()) {
             return;
@@ -206,7 +206,7 @@ public class PSRenderer {
 
     private static void drawSunriseDisc(PoseStack poseStack, ClientLevel level) {
         RenderSystem.enableBlend();
-        float[] sunriseColor = level.effects().getSunriseColor(PSClient.get().getPlayerOrbit().getSunAngle(),0f);
+        float[] sunriseColor = level.effects().getSunriseColor(PSClient.get().getDaylightRegion().getSunAngle(),0f);
         Vector3f sunPos = getSunPosOverworld();
 
         if (sunriseColor == null || sunPos == null) {

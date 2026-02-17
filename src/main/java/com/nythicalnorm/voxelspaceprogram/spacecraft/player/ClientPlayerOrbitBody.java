@@ -5,9 +5,7 @@ import com.nythicalnorm.voxelspaceprogram.network.PacketHandler;
 import com.nythicalnorm.voxelspaceprogram.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.util.calculations.PlanetBodyCalc;
-import com.nythicalnorm.voxelspaceprogram.util.DayNightCycleHandler;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -20,7 +18,6 @@ import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
-    private float sunAngle = 0f;
     private Vector3d clientDeltavelLast;
 
     public ClientPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
@@ -28,10 +25,9 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
         clientDeltavelLast = new Vector3d();
     }
 
-    public void updatePlayerPosRot(Player player, CelestialBody currentPlanetOn) {
-        updatePlanetPos(player.level(), player.position(), currentPlanetOn);
+    public void updatePlayerPosRot(CelestialBody currentPlanetOn) {
+        updatePlanetPos(getPlayerEntity().level(), getPlayerEntity().position(), currentPlanetOn);
         updatePlanetRot(new Quaternionf(), currentPlanetOn);
-        sunAngle = DayNightCycleHandler.getSunAngle(this.relativeOrbitalPos, this.absoluteOrbitalPos);
     }
 
     private void updatePlanetRot(Quaternionf existingrotation, CelestialBody currentPlanet) {
@@ -61,7 +57,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     public float getSunAngle() {
-        return sunAngle;
+        return 0f;
     }
 
     public void sendMovementPacket() {

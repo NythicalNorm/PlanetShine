@@ -12,6 +12,7 @@ import com.nythicalnorm.voxelspaceprogram.spacecraft.player.AbstractPlayerOrbitB
 import com.nythicalnorm.voxelspaceprogram.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.vs.ShipTeleporter;
+import com.nythicalnorm.voxelspaceprogram.storage.IDataSavable;
 import com.nythicalnorm.voxelspaceprogram.util.calculations.PlanetBodyCalc;
 import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -20,6 +21,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +38,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
-public class EntityShipManager {
+public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     private final PSServer psServer;
     private final ShipTeleporter shipTeleporter;
@@ -44,10 +46,11 @@ public class EntityShipManager {
     private final Map<OrbitId, Vector2ic> allRegisteredHostSpaces;
 
     private static final int HOST_SPACE_GAP_SIZE = 16000;
-    private static final int HOST_SPACE_DIAMETER = 8000;
+    private static final int HOST_SPACE_DIAMETER = HOST_SPACE_GAP_SIZE / 2;
     private static final double teleportToGroundHeight = 1000d;
+    private boolean isDirty = false;
 
-    public EntityShipManager(PSServer psServer, Map<OrbitId, Vector2ic> allRegisteredHostSpaces) {
+    public HostSpaceManager(PSServer psServer, Map<OrbitId, Vector2ic> allRegisteredHostSpaces) {
         this.psServer = psServer;
         shipTeleporter = new ShipTeleporter(psServer.getSpaceLevel(), this);
         this.allRegisteredHostSpaces = allRegisteredHostSpaces;
@@ -55,8 +58,10 @@ public class EntityShipManager {
     }
 
     public OrbitHostSpace getOrCreateHostSpace(EntityOrbitBody entityOrbitBody){
-        Vector2ic hostSpaceLoc = allRegisteredHostSpaces.computeIfAbsent(entityOrbitBody.getOrbitId(),
-                k -> genNewHostSpaceLoc(allRegisteredHostSpaces.size()));
+        Vector2ic hostSpaceLoc = allRegisteredHostSpaces.computeIfAbsent(entityOrbitBody.getOrbitId(), (k) -> {
+            this.markDirty(true);
+            return genNewHostSpaceLoc(allRegisteredHostSpaces.size());
+        });
 
         Vector3d posNew = new Vector3d(hostSpaceLoc.x(), 128, hostSpaceLoc.y());
 
@@ -68,7 +73,9 @@ public class EntityShipManager {
         int x = (int) (Math.round(spaceDimPos.x / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         int z = (int) (Math.round(spaceDimPos.z / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         Vector2ic pos = new Vector2i(x,z);
-        return loadedHostSpaces.get(pos);
+        OrbitHostSpace hostSpace = loadedHostSpaces.get(pos);
+
+        return hostSpace;
     }
 
     private Vector2i genNewHostSpaceLoc(int alreadyGenerated) {
@@ -100,6 +107,14 @@ public class EntityShipManager {
 
     public void spaceEntitySpawn(Entity entity) {
         OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
+        if (entityHostSpace == null && entity instanceof Player player) {
+            AbstractPlayerOrbitBody entityOrbitBody = (AbstractPlayerOrbitBody) psServer.getSolarSystem().getSpacecraftOrbit(new OrbitId(player));
+            if (entityOrbitBody != null) {
+                entityOrbitBody.setPlayer(player);
+                entityHostSpace = getOrCreateHostSpace(entityOrbitBody);
+            }
+        }
+
         if (entityHostSpace != null) {
             entityHostSpace.addEntityToHostSpace(entity);
         }
@@ -189,5 +204,20 @@ public class EntityShipManager {
         builder.setOrbitalElements(new OrbitalElements(relativesShipPosition, velocity, psServer.getCurrentTime(), celestialBody.getMass()));
 
         return (ServerSpaceshipBody) builder.build();
+    }
+
+    @Override
+    public boolean isDirty() {
+        return isDirty;
+    }
+
+    @Override
+    public void markDirty(boolean state) {
+        this.isDirty = state;
+    }
+
+    @Override
+    public Map<OrbitId, Vector2ic> getDataToSave() {
+        return allRegisteredHostSpaces;
     }
 }

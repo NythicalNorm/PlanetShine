@@ -8,7 +8,7 @@ import com.nythicalnorm.voxelspaceprogram.network.orbitaldata.ClientboundLoginSo
 import com.nythicalnorm.voxelspaceprogram.network.time.ClientboundSolarSystemTimeUpdate;
 import com.nythicalnorm.voxelspaceprogram.network.time.ClientboundTimeWarpUpdate;
 import com.nythicalnorm.voxelspaceprogram.planettexgen.lod_tex.BiomeColorHolder;
-import com.nythicalnorm.voxelspaceprogram.solarsystem.EntityShipManager;
+import com.nythicalnorm.voxelspaceprogram.solarsystem.HostSpaceManager;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
@@ -17,6 +17,7 @@ import com.nythicalnorm.voxelspaceprogram.solarsystem.SolarSystem;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.OrbitId;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.voxelspaceprogram.spacecraft.player.PlayerOrbitAccessor;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.voxelspaceprogram.storage.SpacecraftDataStorage;
 import com.nythicalnorm.voxelspaceprogram.storage.VSPCommonSaveData;
@@ -24,7 +25,6 @@ import com.nythicalnorm.voxelspaceprogram.storage.VSPDataPackManager;
 import com.nythicalnorm.voxelspaceprogram.util.OrbitalBodyUtils;
 import com.nythicalnorm.voxelspaceprogram.util.Stage;
 import com.nythicalnorm.voxelspaceprogram.util.calculations.TimeCalc;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -45,7 +45,7 @@ public class PSServer extends Stage {
     private static PSServer instance;
     private final MinecraftServer server;
     private PlanetTexHandler planetTexHandler;
-    private EntityShipManager entityShipManager;
+    private HostSpaceManager hostSpaceManager;
     private final SpacecraftDataStorage spacecraftDataStorage;
     private long serverRunningTicks; // in VSPhysTicks
 
@@ -83,7 +83,7 @@ public class PSServer extends Stage {
         serverRunningTicks++;
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
         currentTime = currentTime + timePassPerTick;
-        entityShipManager.onPhysTick();
+        hostSpaceManager.onPhysTick();
 
         if (serverRunningTicks % 3 == 0) {
             PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
@@ -91,7 +91,7 @@ public class PSServer extends Stage {
     }
 
     public void OnGameTick() {
-        entityShipManager.onGameTick();
+        hostSpaceManager.onGameTick();
     }
 
     public void serverStarted() {
@@ -102,12 +102,13 @@ public class PSServer extends Stage {
         spacecraftDataStorage.readSpacecraftData(solarSystem);
         this.planetTexHandler = new PlanetTexHandler();
 
-        this.entityShipManager = new EntityShipManager(this, new Object2ObjectOpenHashMap<>());
+        this.hostSpaceManager = new HostSpaceManager(this, spacecraftDataStorage.readHostSpaces());
         server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
     }
 
     public void saveSolarSys() {
-        spacecraftDataStorage.save(solarSystem);
+        spacecraftDataStorage.saveSpacecraft(this.solarSystem);
+        spacecraftDataStorage.saveHostSpaces(this.hostSpaceManager);
     }
 
     public void ChangeTimeWarp(long proposedSetTimeWarpSpeed, ServerPlayer player) {
@@ -132,15 +133,21 @@ public class PSServer extends Stage {
             }
         } else if (OrbitalBodyUtils.isSpaceLevel(entity.level())) {
             Vec3 spawnPosition = server.overworld().getSharedSpawnPos().getCenter();
-            entityShipManager.teleportEntity(entity, server.overworld(), spawnPosition.x, spawnPosition.y, spawnPosition.z);
+            hostSpaceManager.teleportEntity(entity, server.overworld(), spawnPosition.x, spawnPosition.y, spawnPosition.z);
         }
 
-        Optional<OrbitId> playerHostSpace = playerSpacecraftBody != null ? playerSpacecraftBody.getCurrentHostSpace() : Optional.empty();
-        PacketHandler.sendToPlayer(new ClientboundLoginSolarSystemState(playerSpacecraftBody, playerHostSpace, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick()), (ServerPlayer) entity);
+        PacketHandler.sendToPlayer(new ClientboundLoginSolarSystemState(playerSpacecraftBody, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick()), (ServerPlayer) entity);
 
         if (planetTexHandler != null) {
             planetTexHandler.sendAllTexToPlayer((ServerPlayer) entity, solarSystem.getAllPlanetaryBodies());
             server.execute(() -> PlanetTexHandler.sendBiomeTexToPlayer((ServerPlayer) entity, solarSystem.getDimensionOfPlanet(entity.level().dimension())));
+        }
+    }
+
+    public void playerLeft(Player player) {
+        AbstractPlayerOrbitBody playerOrbitBody = ((PlayerOrbitAccessor)player).getOrbitalBody();
+        if (playerOrbitBody != null) {
+            playerOrbitBody.playerLeft();
         }
     }
 
@@ -167,10 +174,10 @@ public class PSServer extends Stage {
             PacketHandler.sendToPlayer(new ClientboundOrbitSOIChange(PlayerID, body.getOrbitId(), elements), player);
         }
 
-        OrbitHostSpace playerHostSpace = entityShipManager.getOrCreateHostSpace(playerOrbitBody);
+        OrbitHostSpace playerHostSpace = hostSpaceManager.getOrCreateHostSpace(playerOrbitBody);
         playerOrbitBody.setHostSpace(playerHostSpace.getOrbitIdOfHost());
 
-        entityShipManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY), playerHostSpace.getOriginPos());
+        hostSpaceManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY), playerHostSpace.getOriginPos());
     }
 
     public void playerCloned(ServerPlayer player) {
@@ -197,8 +204,8 @@ public class PSServer extends Stage {
         return server.getLevel(SpaceDimension.SPACE_LEVEL_KEY);
     }
 
-    public EntityShipManager getEntityShipManager() {
-        return entityShipManager;
+    public HostSpaceManager getEntityShipManager() {
+        return hostSpaceManager;
     }
 
     public String getSpaceLevelString() {

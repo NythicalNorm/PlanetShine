@@ -9,10 +9,10 @@
   },
   "mixins": [
     "ClimateMixin",
-    "daynightcycle.LevelMixin",
+    "LevelMixin",
     "daynightcycle.LevelReaderMixin",
     "daynightcycle.LevelTimeAccessMixin",
-    "daynightcycle.WorldGenRegionMixin",
+    "daynightcycle.ServerLevelMixin",
     "daynightcycle.isDay.DrownedMixin",
     "daynightcycle.isDay.EnderManMixin",
     "daynightcycle.isDay.FleeSunGoalMixin",
@@ -37,6 +37,7 @@
   "client": [
     "CameraMixin",
     "LevelRendererMixin",
+    "daynightcycle.ClientLevelMixin",
     "daynightcycle.FogRendererMixin",
     "screen.DebugScreenOverlayMixin",
     "screen.ProgressScreenMixin",

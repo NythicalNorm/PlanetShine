@@ -6,7 +6,7 @@ import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.OrbitHostSpace;
-import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.ShipHostSpace;
+import com.nythicalnorm.voxelspaceprogram.spacecraft.hostspace.PlayerHostSpace;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -23,7 +23,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
         super(playerSpacecraftBuilder, playerSpacecraftBuilder.currentHostSpace, isClientSide);
         this.player = playerSpacecraftBuilder.player;
         if (this.player != null) {
-            ((PlayerOrbitAccessor)player).setOrbit(this);
+            ((PlayerOrbitAccessor)player).setOrbitalBody(this);
         }
     }
 
@@ -34,12 +34,20 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
 
     @Override
     public OrbitHostSpace createHostSpace(Vector3d posNew) {
-        return new ShipHostSpace(this.id, posNew, this);
+        return new PlayerHostSpace(this.id, posNew, this);
     }
 
     public void setPlayer(@NotNull Player player) {
         this.player = player;
-        ((PlayerOrbitAccessor)player).setOrbit(this);
+        ((PlayerOrbitAccessor)player).setOrbitalBody(this);
+    }
+
+    public void playerLeft() {
+        this.player = null;
+    }
+
+    public boolean isPlayerLoggedIn() {
+        return this.player != null;
     }
 
     public Player getPlayerEntity() {

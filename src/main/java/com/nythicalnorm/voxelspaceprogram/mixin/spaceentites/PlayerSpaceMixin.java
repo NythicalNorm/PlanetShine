@@ -13,13 +13,13 @@ public class PlayerSpaceMixin implements PlayerOrbitAccessor {
 
     @Unique
     @Override
-    public AbstractPlayerOrbitBody getOrbit() {
+    public AbstractPlayerOrbitBody getOrbitalBody() {
         return playerOrbitBody;
     }
 
     @Unique
     @Override
-    public void setOrbit(AbstractPlayerOrbitBody abstractPlayerOrbitBody) {
+    public void setOrbitalBody(AbstractPlayerOrbitBody abstractPlayerOrbitBody) {
         this.playerOrbitBody = abstractPlayerOrbitBody;
     }
 

@@ -51,7 +51,6 @@ public class SpaceObjRenderer {
     public static void renderPlanets(SpaceRenderable[] renderPlanets, PSClient css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
         Optional<CelestialBody> planetOn = css.getCurrentPlanet();
         float currentAlbedo = 1.0f;
-        float starAlpha = 1.0f;
         CelestialBody currentPlanetIn = null;
         Optional<PlanetAtmosphere> atmosphere = Optional.empty();
 
@@ -59,15 +58,14 @@ public class SpaceObjRenderer {
             currentPlanetIn = planetOn.get();
 
             if (planetOn.get().getAtmosphere().hasAtmosphere()) {
-                currentAlbedo = css.getPlayerOrbit().getSunAngle() * 2;
+                currentAlbedo = css.getSunAngleOpacity();
                 atmosphere = Optional.of(planetOn.get().getAtmosphere());
-                starAlpha = 2*css.getPlayerOrbit().getSunAngle();
             }
         } else {
             AtmosphereRenderer.renderSpaceSky(poseStack, projectionMatrix);
         }
 
-        PSRenderer.drawStarBuffer(poseStack, projectionMatrix, starAlpha);
+        PSRenderer.drawStarBuffer(poseStack, projectionMatrix, currentAlbedo);
 
         for (SpaceRenderable plnt : renderPlanets) {
             if (plnt instanceof RenderablePlanet renPlanet) {

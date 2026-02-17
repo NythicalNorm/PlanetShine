@@ -5,10 +5,7 @@ import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.voxelspaceprogram.solarsystem.orbits.OrbitalElements;
 import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
-import org.joml.Vector3f;
+import org.joml.*;
 
 public class NBTEncoders {
     public static CompoundTag putVector3d(Vector3dc vector) {
@@ -41,6 +38,16 @@ public class NBTEncoders {
                 tag.getFloat("y"),
                 tag.getFloat("z")
         );
+    }
+
+    public static CompoundTag putVector2i(Vector2ic vector) {
+        CompoundTag vector2iTag = new CompoundTag();
+        vector2iTag.putInt("x", vector.x());
+        vector2iTag.putInt("y", vector.y());
+        return vector2iTag;
+    }
+    public static Vector2i getVector2i(CompoundTag tag) {
+        return new Vector2i(tag.getInt("x"), tag.getInt("y"));
     }
 
     public static CompoundTag putQuaternionf(Quaternionf quaternionf) {
