@@ -201,25 +201,25 @@ dependencies {
 
     implementation         fg.deobf("org.valkyrienskies:valkyrienskies-120-forge:${vs2_version}") {transitive = false}
 
-    implementation(fg.deobf("dev.architectury:architectury-forge:9.1.12"))
     // Drive by Wire - With deobfuscation for development environment
     //runtimeOnly fg.deobf("curse.maven:drive-by-wire-1192722:6224008")
     // Add your CurseForge mods here using the template above:
     // runtimeOnly fg.deobf("curse.maven:MOD_SLUG-PROJECT_ID:FILE_ID")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    implementation fg.deobf("curse.maven:vlib-1265893:7378603")
-    implementation fg.deobf("curse.maven:lodestone-616457:6213794")
-    implementation fg.deobf("curse.maven:zero-point-labs-1369441:7387597")
-
-    implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false })
-    implementation(fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"))
-    compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}"))
-    runtimeOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"))
-    implementation(fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}"))
-
-    implementation fg.deobf("curse.maven:createaddition-439890:6901922")
-    implementation(fg.deobf("maven.modrinth:qS1ot7R2:RlsWa2L4")) // vmod
+//    implementation(fg.deobf("dev.architectury:architectury-forge:9.1.12"))
+//    implementation fg.deobf("curse.maven:vlib-1265893:7378603")
+//    implementation fg.deobf("curse.maven:lodestone-616457:6213794")
+//    implementation fg.deobf("curse.maven:zero-point-labs-1369441:7387597")
+//
+//    implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false })
+//    implementation(fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"))
+//    compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}"))
+//    runtimeOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"))
+//    implementation(fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}"))
+//
+//    implementation fg.deobf("curse.maven:createaddition-439890:6901922")
+//    implementation(fg.deobf("maven.modrinth:qS1ot7R2:RlsWa2L4")) // vmod
 
     // compile against the JEI API but do not include it at runtime
     // compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
@@ -304,6 +304,10 @@ mixin {
 //        }
 //    }
 //}
+
+java {
+    withSourcesJar() // Automatically creates and publishes the sources JAR
+}
 
 // Example configuration to allow publishing using the maven-publish plugin
 publishing {
