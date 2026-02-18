@@ -307,6 +307,12 @@ mixin {
 
 // Example configuration to allow publishing using the maven-publish plugin
 publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifact jar
+        }
+    }
+
     repositories {
         maven {
             name = "GitHubPackages"
