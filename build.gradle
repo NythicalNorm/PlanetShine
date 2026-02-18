@@ -309,6 +309,7 @@ mixin {
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
+            artifactId = mod_id
             from components.java
         }
     }
