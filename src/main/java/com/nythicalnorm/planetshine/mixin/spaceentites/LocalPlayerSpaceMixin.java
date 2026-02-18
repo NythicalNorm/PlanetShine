@@ -39,7 +39,7 @@ public class LocalPlayerSpaceMixin {
     @Inject(method = "sendPosition", at = @At(value = "HEAD"))
     public void sendVelocity(CallbackInfo ci) {
         PlayerOrbitAccessor playerOrbit = (PlayerOrbitAccessor) this;
-        if (playerOrbit.getOrbitalBody().getOrbitalElements() != null && playerOrbit.getOrbitalBody().isHostOfItsSpace()) {
+        if (playerOrbit.getOrbitalBody() != null && playerOrbit.getOrbitalBody().getOrbitalElements() != null && playerOrbit.getOrbitalBody().isHostOfItsSpace()) {
             ((ClientPlayerOrbitBody)playerOrbit.getOrbitalBody()).sendMovementPacket();
         }
     }
