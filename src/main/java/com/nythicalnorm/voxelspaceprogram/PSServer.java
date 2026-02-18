@@ -48,6 +48,7 @@ public class PSServer extends Stage {
     private HostSpaceManager hostSpaceManager;
     private final SpacecraftDataStorage spacecraftDataStorage;
     private long serverRunningTicks; // in VSPhysTicks
+    private volatile boolean sleepTimeWarping = false;
 
     public PSServer(MinecraftServer server, SolarSystem solarSystem) {
         super(solarSystem);
@@ -82,7 +83,11 @@ public class PSServer extends Stage {
     public void OnPhysTick(double delta) {
         serverRunningTicks++;
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
-        currentTime = currentTime + timePassPerTick;
+        if (!sleepTimeWarping) {
+            setCurrentTime(currentTime + timePassPerTick);
+        } else {
+            setCurrentTime(currentTime + TimeCalc.TimePerTickToTimePerMilliTick(timeWarpSettings.get(4)));
+        }
         hostSpaceManager.onPhysTick();
 
         if (serverRunningTicks % 3 == 0) {
@@ -119,6 +124,10 @@ public class PSServer extends Stage {
         server.getPlayerList().broadcastSystemMessage(Component.translatable("voxelspaceprogram.state.settimewarp",
                 proposedSetTimeWarpSpeed), true);
         PacketHandler.sendToAllClients(new ClientboundTimeWarpUpdate(true, timePassPerSec));
+    }
+
+    public void setSleepTimeWarping(boolean sleepTimeWarping) {
+        this.sleepTimeWarping = sleepTimeWarping;
     }
 
     public void playerJoined(Player entity) {

@@ -10,9 +10,9 @@ public abstract class Stage {
     public static final List<Long> timeWarpSettings = List.of(1L, 10L, 100L, 1000L, 10000L, 100000L, 1000000L);
     public static SolarSystem anySolarSystem;
 
-    protected long currentTime = WORLD_START_TIME; // time passed since start in 1000 times currentTick, in milliTicks if you will.
-    protected long timePassPerTick = TimeCalc.TickToMilliTick;
-    protected int currentTimeWarpSetting = 0;
+    protected volatile long currentTime = WORLD_START_TIME; // time passed since start in 1000 times currentTick, in milliTicks if you will.
+    protected volatile long timePassPerTick = TimeCalc.TickToMilliTick;
+    protected volatile int currentTimeWarpSetting = 0;
     protected final SolarSystem solarSystem;
 
     protected Stage(SolarSystem solarSystem) {
