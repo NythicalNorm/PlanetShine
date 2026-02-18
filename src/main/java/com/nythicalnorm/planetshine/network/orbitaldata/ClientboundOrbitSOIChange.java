@@ -1,0 +1,46 @@
+package com.nythicalnorm.planetshine.network.orbitaldata;
+
+import com.nythicalnorm.planetshine.network.ClientPacketHandler;
+import com.nythicalnorm.planetshine.network.NetworkEncoders;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+public class ClientboundOrbitSOIChange {
+    private final OrbitId spacecraftID;
+    private final OrbitId newParentID;
+    private final OrbitalElements orbitalElements;
+
+    public ClientboundOrbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements elements) {
+        this.spacecraftID = spacecraftID;
+        this.newParentID = newParentID;
+        this.orbitalElements = elements;
+    }
+
+    public void encode(FriendlyByteBuf friendlyByteBuf) {
+        spacecraftID.encodeToBuffer(friendlyByteBuf);
+        newParentID.encodeToBuffer(friendlyByteBuf);
+        NetworkEncoders.writeOrbitalElements(friendlyByteBuf, orbitalElements);
+    }
+
+    public ClientboundOrbitSOIChange(FriendlyByteBuf friendlyByteBuf) {
+        this.spacecraftID = new OrbitId(friendlyByteBuf);
+        this.newParentID = new OrbitId(friendlyByteBuf);
+        this.orbitalElements = NetworkEncoders.readOrbitalElements(friendlyByteBuf);
+    }
+
+    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
+        if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT ) {
+            NetworkEvent.Context context = contextSupplier.get();
+            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                    ClientPacketHandler.OrbitSOIChange(this.spacecraftID, this.newParentID, this.orbitalElements)));
+            context.setPacketHandled(true);
+        }
+    }
+}

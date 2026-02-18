@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:item/handheld",
+  "loader": "forge:separate_transforms",
+  "base": {
+    "parent": "planetshine:item/handheld_thruster_3d_stationary"
+  },
+
+  "perspectives": {
+    "gui": {
+      "parent": "planetshine:item/handheld_thruster_2d"
+    },
+    "ground": {
+      "parent": "planetshine:item/handheld_thruster_2d"
+    },
+    "fixed": {
+      "parent": "planetshine:item/handheld_thruster_2d"
+    }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "planetshine:inuse": 1
+      },
+      "model": "planetshine:item/handheld_thruster_3d"
+    }
+  ]
+}

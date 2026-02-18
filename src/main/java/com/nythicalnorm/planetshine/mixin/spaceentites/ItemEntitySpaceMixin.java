@@ -1,0 +1,21 @@
+package com.nythicalnorm.planetshine.mixin.spaceentites;
+
+import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import net.minecraft.world.entity.item.ItemEntity;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
+
+@Mixin(ItemEntity.class)
+public class ItemEntitySpaceMixin {
+    @ModifyConstant(method = "tick", constant = @Constant(floatValue = 0.98F))
+    public float changeFrictionMultiplier(float constant) {
+        ItemEntity itemEntity = ((ItemEntity)(Object) this);
+
+        if (itemEntity.level() != null && OrbitalBodyUtils.isSpaceLevel(itemEntity.level())) {
+            return 1.0F;
+        } else {
+            return constant;
+        }
+    }
+}

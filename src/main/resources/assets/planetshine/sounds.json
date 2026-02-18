@@ -1,0 +1,8 @@
+{
+  "propeller_start": {
+    "subtitles": "sounds.planetshine.propeller_start",
+    "sounds": [
+      "planetshine:propeller_start"
+    ]
+  }
+}

@@ -283,8 +283,8 @@ tasks.named('jar', Jar).configure {
 
 mixin {
     // MixinGradle Settings
-    add sourceSets.main, 'mixins.voxelspaceprogram.refmap.json'
-    config 'voxelspaceprogram.mixins.json'
+    add sourceSets.main, 'mixins.planetshine.refmap.json'
+    config 'planetshine.mixins.json'
 
     //debug.verbose = true
     //debug.export = true
@@ -299,7 +299,7 @@ mixin {
 //    sourceSets {
 //        main {
 //            java {
-//                exclude 'com/nythicalnorm/voxelspaceprogram/planettexgen/MapGenTestDisplay.java'
+//                exclude 'com/nythicalnorm/planetshine/planettexgen/MapGenTestDisplay.java'
 //            }
 //        }
 //    }

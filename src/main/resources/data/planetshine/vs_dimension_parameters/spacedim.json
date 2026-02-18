@@ -1,0 +1,9 @@
+[
+  {
+    "dimensionId": "minecraft:dimension:planetshine:spacedim",
+    "maxYPos": -1,
+    "seaLevel": 0,
+    "gravity": [0, 0, 0],
+    "priority": 1
+  }
+]

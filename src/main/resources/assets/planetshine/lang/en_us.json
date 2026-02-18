@@ -1,0 +1,36 @@
+{
+  "item.planetshine.handheld_thruster": "Handheld Thruster",
+  "item.planetshine.spacesuit_helmet": "Spacesuit Visor",
+
+  "creativetab.main_ps": "Planet Shine",
+  "block.planetshine.lunar_regolith": "Lunar Regolith",
+
+  "sounds.planetshine.propeller_start": "The Handheld Thruster turns on",
+
+  "planetshine.state.settimewarp": "Setting Time Warp to: %1$sx",
+  "planetshine.state.planetgen_start": "Starting Planet texture generation...",
+  "planetshine.state.planetgen_end": "planet %1$s's texture generation complete",
+
+  "key.category.planetshine.main": "Planet Shine",
+  "key.planetshine.increase_time_warp": "Increase Time Warp Speed",
+  "key.planetshine.decrease_time_warp": "Decrease Time Warp Speed",
+  "key.planetshine.open_solar_system_map": "Open Solar System Map",
+  "key.planetshine.use_player_jetpack_key": "Use your Spacesuit's jetpack",
+
+  "key.category.planetshine.spacecraft_control": "VSP Spacecraft Controls",
+  "key.planetshine.increase_throttle":  "Increase Engine Throttle",
+  "key.planetshine.decrease_throttle":  "Decrease Engine Throttle",
+
+  "key.planetshine.staging":  "Stage the Spacecraft",
+  "key.planetshine.rcs_toggle":  "Toggle the Reaction Control System",
+  "key.planetshine.sas_toggle":  "Toggle the Stability Assist System",
+  "key.planetshine.docking_mode_toggle":  "Toggle between the control Modes",
+  "key.planetshine.clockwise_spin":  "Increase the Roll (Spinning Clockwise)",
+  "key.planetshine.anti_clockwise_spin":  "Decrease the Roll (Spinning Anti-Clockwise)",
+
+  "planetshine.commands.dimTeleport": "Teleported to the Space Dimension",
+  "planetshine.commands.planet_invalid": "Invalid Planet at: ",
+
+  "planetshine.screen.time": "Year %1$s, Day %2$s, %3$s:%4$s",
+  "planetshine.screen.orbital_speed": "%1$s b/s"
+}
