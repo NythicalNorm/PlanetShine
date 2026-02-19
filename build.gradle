@@ -313,6 +313,7 @@ java {
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
+            groupId = "com.nythicalnorm"
             artifactId = mod_id
             from components.java
         }
