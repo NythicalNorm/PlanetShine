@@ -155,7 +155,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     private void checkEntityTeleportToPlanet() {
         psServer.getSolarSystem().getAllSpacecraftBodies().values().forEach(entityOrbitBody -> {
-            if (entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.getAltitude() < teleportToGroundHeight) {
+            if (entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.getAltitude(entityOrbitBody.getParent()) < teleportToGroundHeight) {
                 ServerLevel planetLevel = ((ServerCelestialBody)entityOrbitBody.getParent()).getLevel();
                 if (planetLevel != null) {
                     Vector2d pos = PlanetBodyCalc.vectorToPlanetDimPos(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent().getRotation());

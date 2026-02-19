@@ -125,9 +125,9 @@ public abstract class OrbitalBody {
         return false;
     }
 
-    public double getAltitude() {
-        if (this.parent != null) {
-            return this.relativeOrbitalPos.length() + 0.5d - this.parent.getRadius();
+    public double getAltitude(CelestialBody parentBody) {
+        if (parentBody != null) {
+            return this.relativeOrbitalPos.length() + 0.5d - parentBody.getRadius();
         } else {
             return this.relativeOrbitalPos.length() + 0.5d;
         }

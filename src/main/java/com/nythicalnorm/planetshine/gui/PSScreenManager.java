@@ -2,25 +2,25 @@ package com.nythicalnorm.planetshine.gui;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.gui.screen.MapSolarSystemScreen;
-import com.nythicalnorm.planetshine.gui.screen.PlayerSpacecraftScreen;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.DeathScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class PSScreenManager {
     private boolean isMapScreenOpen = false;
-    private PlayerSpacecraftScreen openSpacecraftScreen = null;
+    private Screen openSpacecraftScreen = null;
 
     public void setMapScreenOpen(boolean open) {
         this.isMapScreenOpen = open;
     }
 
-    public void setOpenSpacecraftScreen(PlayerSpacecraftScreen opened) {
+    public void setOpenSpacecraftScreen(Screen opened) {
         this.openSpacecraftScreen = opened;
     }
 
@@ -49,7 +49,7 @@ public class PSScreenManager {
         return openSpacecraftScreen != null;
     }
 
-    public PlayerSpacecraftScreen getSpacecraftScreen() {
+    public Screen getSpacecraftScreen() {
         return openSpacecraftScreen;
     }
 

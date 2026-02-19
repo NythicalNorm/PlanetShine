@@ -3,9 +3,8 @@ package com.nythicalnorm.planetshine.event;
 import com.nythicalnorm.planetshine.Item.PSItems;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.gui.screen.PlayerSpacecraftScreen;
 import com.nythicalnorm.planetshine.gui.screen.MapSolarSystemScreen;
-import com.nythicalnorm.planetshine.util.KeyBindings;
+import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -38,25 +37,22 @@ public class ForgeClientEvents {
 
     @SubscribeEvent
     public static void OnKeyInput (InputEvent.Key event) {
-        if (KeyBindings.INC_TIME_WARP_KEY.consumeClick()) {
+        if (PSKeyBinds.INC_TIME_WARP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent((psClient ->
                     psClient.TryChangeTimeWarp(true)));
-        } else if (KeyBindings.DEC_TIME_WARP_KEY.consumeClick()) {
+        } else if (PSKeyBinds.DEC_TIME_WARP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent((psClient ->
                     psClient.TryChangeTimeWarp(false)));
-        } else if (KeyBindings.OPEN_SOLAR_SYSTEM_MAP_KEY.consumeClick()) {
+        } else if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent(psClient -> {
                 if (psClient.doRender()) {
                     Minecraft.getInstance().setScreen(new MapSolarSystemScreen(false));
                 }
             });
         }
-        else if (KeyBindings.USE_PLAYER_JETPACK_KEY.consumeClick()) {
+        else if (PSKeyBinds.USE_PLAYER_JETPACK_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent(psClient -> {
-                if (psClient.doRender()) {
-                    Minecraft.getInstance().setScreen(new PlayerSpacecraftScreen(Minecraft.getInstance().player, psClient));
-                    psClient.setControllingBody(psClient.getPlayerOrbit());
-                }
+
             });
         }
     }

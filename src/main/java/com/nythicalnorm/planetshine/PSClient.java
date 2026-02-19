@@ -94,9 +94,6 @@ public class PSClient extends Stage {
     }
 
     public void tick() {
-        if (controllingBody != null && screenManager.isSpacecraftScreenOpen() && getCurrentTimeWarpSetting() == 0) {
-            screenManager.getSpacecraftScreen().sendInputs(controllingBody);
-        }
         clientTimeHandler.tick();
     }
 

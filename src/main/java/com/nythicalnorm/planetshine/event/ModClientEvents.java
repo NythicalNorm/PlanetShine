@@ -4,7 +4,7 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.rendering.generators.QuadSphereModelGenerator;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
-import com.nythicalnorm.planetshine.util.KeyBindings;
+import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import net.minecraft.Util;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -30,19 +30,10 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void OnKeyRegister (RegisterKeyMappingsEvent event) {
-        event.register(KeyBindings.INC_TIME_WARP_KEY);
-        event.register(KeyBindings.DEC_TIME_WARP_KEY);
-        event.register(KeyBindings.OPEN_SOLAR_SYSTEM_MAP_KEY);
-        event.register(KeyBindings.USE_PLAYER_JETPACK_KEY);
-
-        event.register(KeyBindings.INCREASE_THROTTLE_KEY);
-        event.register(KeyBindings.DECREASE_THROTTLE_KEY);
-        event.register(KeyBindings.STAGING_KEY);
-        event.register(KeyBindings.RCS_TOGGLE_KEY);
-        event.register(KeyBindings.SAS_TOGGLE_KEY);
-        event.register(KeyBindings.DOCKING_MODE_TOGGLE_KEY);
-        event.register(KeyBindings.CLOCKWISE_SPIN_KEY);
-        event.register(KeyBindings.ANTI_CLOCKWISE_SPIN_KEY);
+        event.register(PSKeyBinds.INC_TIME_WARP_KEY);
+        event.register(PSKeyBinds.DEC_TIME_WARP_KEY);
+        event.register(PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY);
+        event.register(PSKeyBinds.USE_PLAYER_JETPACK_KEY);
     }
 
     @SubscribeEvent

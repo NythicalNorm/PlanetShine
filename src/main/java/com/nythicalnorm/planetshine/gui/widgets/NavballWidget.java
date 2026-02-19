@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.math.Axis;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.gui.screen.PlayerSpacecraftScreen;
+import com.nythicalnorm.planetshine.gui.screen.ISpacecraftDataDisplay;
 import com.nythicalnorm.planetshine.rendering.generators.QuadSphereModelGenerator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -43,11 +43,10 @@ public class NavballWidget extends AbstractWidget {
         PSClient.getInstance().ifPresent(psClient -> renderNavBall(psClient, pGuiGraphics));
 
         pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos, yPos,0,0,94,86);
-        PlayerSpacecraftScreen spacecraftScreen = PSClient.getInstance().get().getScreenManager().getSpacecraftScreen();
 
-        if (spacecraftScreen != null) {
-            renderThrottleBar(pGuiGraphics, xPos, yPos, spacecraftScreen);
-            renderButtons(pGuiGraphics, xPos, yPos, spacecraftScreen);
+        if (PSClient.getInstance().get().getScreenManager().getSpacecraftScreen() instanceof ISpacecraftDataDisplay spacecraftDataDisplay) {
+            renderThrottleBar(pGuiGraphics, xPos, yPos, spacecraftDataDisplay);
+            renderButtons(pGuiGraphics, xPos, yPos, spacecraftDataDisplay);
             renderGForceBar(pGuiGraphics, xPos, yPos);
             renderRelativeVelocity(pGuiGraphics, xPos, yPos);
         }
@@ -90,7 +89,7 @@ public class NavballWidget extends AbstractWidget {
         RenderSystem.depthMask(true);
     }
 
-    private void renderButtons(GuiGraphics pGuiGraphics, int xPos, int yPos, PlayerSpacecraftScreen spacecraftScreen) {
+    private void renderButtons(GuiGraphics pGuiGraphics, int xPos, int yPos, ISpacecraftDataDisplay spacecraftScreen) {
         if (spacecraftScreen.isRCS()) {
             pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos + 17, yPos + 18, 96, 0, 12, 6);
         }
@@ -107,8 +106,7 @@ public class NavballWidget extends AbstractWidget {
         }
     }
 
-
-    private void renderThrottleBar(GuiGraphics graphics, int xPos, int yPos, PlayerSpacecraftScreen spacecraftScreen) {
+    private void renderThrottleBar(GuiGraphics graphics, int xPos, int yPos, ISpacecraftDataDisplay spacecraftScreen) {
             int barHeight = Math.round(Mth.lerp(spacecraftScreen.getThrottleSetting(), 0, 70));
             int pointerHeight = Mth.clamp(barHeight,1, 67);
             //drawing the blue bar

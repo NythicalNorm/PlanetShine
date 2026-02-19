@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.gui.widgets;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.gui.screen.PlayerSpacecraftScreen;
+import com.nythicalnorm.planetshine.gui.screen.ISpacecraftDataDisplay;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -28,18 +28,16 @@ public class LeftPanelWidget extends AbstractWidget {
 
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x, y,0,0,66,35);
 
-        PlayerSpacecraftScreen spacecraftScreen = PSClient.getInstance().get().getScreenManager().getSpacecraftScreen();
-
-        if (spacecraftScreen != null) {
-           if (spacecraftScreen.isDockingMode()) {
-               drawDockingMode(spacecraftScreen, pGuiGraphics, x, y);
+        if (PSClient.getInstance().get().getScreenManager().getSpacecraftScreen() instanceof  ISpacecraftDataDisplay spacecraftDataDisplay) {
+           if (spacecraftDataDisplay.isDockingMode()) {
+               drawDockingMode(spacecraftDataDisplay, pGuiGraphics, x, y);
            } else {
-               drawNormalMode(spacecraftScreen, pGuiGraphics, x, y);
+               drawNormalMode(spacecraftDataDisplay, pGuiGraphics, x, y);
            }
         }
     }
 
-    private void drawDockingMode(PlayerSpacecraftScreen spacecraftScreen, GuiGraphics pGuiGraphics, int x, int y) {
+    private void drawDockingMode(ISpacecraftDataDisplay spacecraftScreen, GuiGraphics pGuiGraphics, int x, int y) {
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 7, y + 23,7,36,10,10);
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 23, y + 2,23,36,41,32);
 
@@ -52,7 +50,7 @@ public class LeftPanelWidget extends AbstractWidget {
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 51, y + 29 - yAxis,67,0,7,5);
     }
 
-    private void drawNormalMode(PlayerSpacecraftScreen spacecraftScreen,GuiGraphics pGuiGraphics, int x, int y) {
+    private void drawNormalMode(ISpacecraftDataDisplay spacecraftScreen,GuiGraphics pGuiGraphics, int x, int y) {
         int pitch = (int) (spacecraftScreen.getSWAxis().getPositiveAxisValue()*23.5f);
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 51, y + 29 - pitch,67,0,7,5);
 

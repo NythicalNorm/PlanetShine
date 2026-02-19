@@ -12,7 +12,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.gui.widgets.TimeWarpWidget;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
-import com.nythicalnorm.planetshine.util.KeyBindings;
+import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -85,7 +85,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     @Override
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
 
-        if (KeyBindings.OPEN_SOLAR_SYSTEM_MAP_KEY.matches(pKeyCode, pScanCode)) {
+        if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.matches(pKeyCode, pScanCode)) {
             this.onClose();
             return true;
         }  else if (isSpacecraftScreenOpen) {

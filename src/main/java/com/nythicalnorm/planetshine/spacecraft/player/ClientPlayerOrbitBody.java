@@ -47,16 +47,8 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
         absoluteOrbitalPos = newAbs.add(relativeOrbitalPos);
     }
 
-    public void processLocalMovement(float inputAD, float inputSW, float inputQE, float inputShiftCTRL, float throttle, boolean SAS, boolean RCS, boolean inDockingMode) {
-
-    }
-
     public void processHostMove(Vec3 deltaMovement) {
         clientDeltavelLast.add(deltaMovement.x, deltaMovement.y, deltaMovement.z);
-    }
-
-    public float getSunAngle() {
-        return 0f;
     }
 
     public void sendMovementPacket() {

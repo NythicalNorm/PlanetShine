@@ -48,13 +48,12 @@ public class AltitudeWidget extends AbstractWidget {
     }
 
     private void renderAltitudeNumbers(PSClient css, GuiGraphics pGuiGraphics, int xPos, int yPos) {
-        //altitude = 100000000 - altitude;
-        double altitude = 0;
-
-        if (css.getPlayerOrbit() != null) {
-            altitude = css.getPlayerOrbit().getAltitude();
-            altitude = Math.abs(altitude);
+        double altitude = 0d;
+        if (css.getCurrentPlanet().isPresent()) {
+            altitude = css.getPlayerOrbit().getAltitude(css.getCurrentPlanet().get());
         }
+
+        altitude = Math.abs(altitude);
 
         String altitudeMeters =  Long.toString((long) altitude);
         int altitudeUnitIndex;

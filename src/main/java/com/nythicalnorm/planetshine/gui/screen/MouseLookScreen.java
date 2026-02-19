@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.gui.screen;
 
 import com.nythicalnorm.planetshine.PSClient;
-import com.nythicalnorm.planetshine.util.KeyBindings;
+import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -10,7 +10,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class MouseLookScreen extends Screen implements GuiEventListener {
+public abstract class MouseLookScreen extends Screen implements GuiEventListener {
     protected float cameraYrot = 0f;
     protected float cameraXrot = 0f;
     protected float zoomLevel = 2f;
@@ -47,17 +47,29 @@ public class MouseLookScreen extends Screen implements GuiEventListener {
 
     @Override
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
-        if (KeyBindings.INC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
+        if (PSKeyBinds.INC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
             PSClient.getInstance().ifPresent((psClient ->
                     psClient.TryChangeTimeWarp(true)));
             return true;
         }
 
-        else if (KeyBindings.DEC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
+        else if (PSKeyBinds.DEC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
             PSClient.getInstance().ifPresent((psClient ->
                     psClient.TryChangeTimeWarp(false)));
             return true;
         }
         return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+    }
+
+    public boolean movePlayerCamera() {
+        return false;
+    }
+
+    public float getViewYrot() {
+        return -cameraYrot*57.29577951308232f;
+    }
+
+    public float getViewXrot() {
+        return -cameraXrot*57.29577951308232f;
     }
 }
