@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.mixin.spaceentites;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
 import net.minecraft.world.entity.Entity;
@@ -19,6 +20,15 @@ public class EntitySpaceMixin {
             return true;
         } else {
             return original;
+        }
+    }
+
+    @ModifyExpressionValue(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;isNoGravity()Z"))
+    private boolean saveNoGravity(boolean original) {
+        if (!OrbitalBodyUtils.isSpaceLevel(level)) {
+            return original;
+        } else {
+            return false;
         }
     }
 }

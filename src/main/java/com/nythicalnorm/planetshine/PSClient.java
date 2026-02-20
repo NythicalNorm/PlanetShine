@@ -4,6 +4,8 @@ import com.nythicalnorm.planetshine.gui.PSScreenManager;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.time.ServerboundTimeWarpChange;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
+import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
+import com.nythicalnorm.planetshine.rendering.renderTypes.SpaceRenderable;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.ClientCelestialBody;
@@ -43,20 +45,25 @@ public class PSClient extends Stage {
     private final PSScreenManager screenManager;
     private final ClientTexManager planetTexManager;
 
+    // Rendering stuff
+    private SpaceRenderable[] renderPlanets;
+    private MapRenderer mapRenderer;
+
     public PSClient(@NotNull ClientPlayerOrbitBody playerDataFromServer, SolarSystem solarSystem) {
         super(solarSystem);
         instance = this;
         minecraft = Minecraft.getInstance();
         this.playerOrbit = playerDataFromServer;
-        SpaceObjRenderer.PopulateRenderPlanets(solarSystem);
         this.screenManager = new PSScreenManager();
         this.planetTexManager = new ClientTexManager(this);
         if (minecraft.level != null) {
             onClientLevelLoad(minecraft.level);
         }
-        this.solarSystem.getRootStar().initCalcs();
-        clientTimeHandler = new ClientTimeHandler();
+        this.updatePlanets();
+
+        this.clientTimeHandler = new ClientTimeHandler();
         this.daylightRegion = new DaylightRegion();
+        this.mapRenderer = new MapRenderer();
     }
 
     public static Optional<PSClient> getInstance() {
@@ -68,6 +75,20 @@ public class PSClient extends Stage {
 
     public static PSClient get() {
         return instance;
+    }
+
+    @Override
+    protected void updatePlanets() {
+        super.updatePlanets();
+        this.renderPlanets = SpaceObjRenderer.PopulateRenderPlanets(solarSystem);
+    }
+
+    public SpaceRenderable[] getSpaceRenderables() {
+        return this.renderPlanets;
+    }
+
+    public MapRenderer getMapRenderer() {
+        return mapRenderer;
     }
 
     public ClientCelestialBody getClientPlanet(OrbitId planetID) {
@@ -98,6 +119,7 @@ public class PSClient extends Stage {
     }
 
     public void onClientLevelLoad(ClientLevel clientLevel) {
+        this.screenManager.resetMapState();
         CelestialBody celestialBody = solarSystem.getDimensionOfPlanet(clientLevel.dimension());
         if (celestialBody != null) {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);

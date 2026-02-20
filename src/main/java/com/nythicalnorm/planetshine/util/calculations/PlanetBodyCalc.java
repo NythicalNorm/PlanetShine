@@ -9,9 +9,9 @@ import org.joml.*;
 import java.lang.Math;
 
 public class PlanetBodyCalc {
-    public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, double planetRadius, Quaternionf planetRot, boolean isNormalized) {
+    public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, double planetRadius, Quaternionfc planetRot, boolean isNormalized) {
         Vector3d quadSpherePos = getNonRotatedDimPosFromNormalizeVector(pos, planetRadius, isNormalized);
-        quadSpherePos.rotate(new Quaterniond(planetRot.x, planetRot.y, planetRot.z, planetRot.w));
+        quadSpherePos.rotate(new Quaterniond(planetRot.x(), planetRot.y(), planetRot.z(), planetRot.w()));
         return quadSpherePos;
     }
 
@@ -124,10 +124,10 @@ public class PlanetBodyCalc {
         return squarePos;
     }
 
-    public static Vector2d vectorToPlanetDimPos(Vector3dc pos, double planetRadius, Quaternionf rotation) {
+    public static Vector2d vectorToPlanetDimPos(Vector3dc pos, double planetRadius, Quaternionfc rotation) {
         int squareSide = 0;
         Vector3d position = new Vector3d(pos).normalize();
-        position.rotate(new Quaterniond().set(rotation.invert()));
+        position.rotate(new Quaterniond(rotation).invert());
         //reversing the switch case in getSpherePos
         double[] axisVals = new double[]{position.z, position.x, -position.z, -position.x, position.y, -position.y};
         double searchedMax = 0;

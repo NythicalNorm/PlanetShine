@@ -21,8 +21,8 @@ public class MapRenderablePlanet extends MapRenderable {
     }
 
     @Override
-    public Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix) {
-        Vector3f pos = getPos(planetBody, MapRenderer.getCurrentFocusedBody());
+    public Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocusedBody) {
+        Vector3f pos = getPos(planetBody, currentFocusedBody);
         poseStack.translate(pos.x,pos.y, pos.z);
 
         float PlanetSize = (float) (2f* MapRenderer.SCALE_FACTOR*planetBody.getRadius());

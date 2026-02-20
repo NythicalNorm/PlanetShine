@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
@@ -134,6 +135,13 @@ public class NetworkEncoders {
         buffer.writeDouble(pVector3f.x());
         buffer.writeDouble(pVector3f.y());
         buffer.writeDouble(pVector3f.z());
+    }
+
+    public static void writeQuaternionfc(FriendlyByteBuf buf, Quaternionfc pQuaternion) {
+        buf.writeFloat(pQuaternion.x());
+        buf.writeFloat(pQuaternion.y());
+        buf.writeFloat(pQuaternion.z());
+        buf.writeFloat(pQuaternion.w());
     }
 
     public static Vector3d readVector3d(FriendlyByteBuf buffer) {

@@ -20,21 +20,20 @@ import java.util.*;
 
 @OnlyIn(Dist.CLIENT)
 public class SpaceObjRenderer {
-    private static SpaceRenderable[] renderPlanets;
-
-    public static void PopulateRenderPlanets(SolarSystem planets) {
+    public static SpaceRenderable[] PopulateRenderPlanets(SolarSystem planets) {
         List<CelestialBody> planetList = planets.getAllPlanetOrbitsList();
 
-        renderPlanets = new SpaceRenderable[planetList.size()];
+        SpaceRenderable[] renderPlanets = new SpaceRenderable[planetList.size()];
         int i = 0;
 
         for (CelestialBody planet : planetList) {
             renderPlanets[i] = new RenderablePlanet(planet);
             i++;
         }
+        return renderPlanets;
     }
 
-    public static void renderPlanetaryBodies(PoseStack poseStack, Minecraft mc, PSClient css, Camera camera, Matrix4f projectionMatrix, float partialTick) {
+    public static void renderPlanetaryBodies(PoseStack poseStack, SpaceRenderable[] renderPlanets, PSClient css, Camera camera, Matrix4f projectionMatrix, float partialTick) {
         poseStack.pushPose();
 
         for (SpaceRenderable obj : renderPlanets) {
@@ -46,6 +45,7 @@ public class SpaceObjRenderer {
         renderPlanets(renderPlanets, css, poseStack, projectionMatrix, partialTick);
 
         poseStack.popPose();
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     public static void renderPlanets(SpaceRenderable[] renderPlanets, PSClient css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {

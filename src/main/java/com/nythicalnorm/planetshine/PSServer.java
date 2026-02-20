@@ -54,7 +54,7 @@ public class PSServer extends Stage {
         super(solarSystem);
         instance = this;
         this.server = server;
-        BiomeColorHolder.init();
+        BiomeColorHolder.init(server.registryAccess());
         serverRunningTicks = 0;
         spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
     }
@@ -100,7 +100,7 @@ public class PSServer extends Stage {
     }
 
     public void serverStarted() {
-        solarSystem.getRootStar().initCalcs();
+        updatePlanets();
         PSCommonSaveData PSCommonSaveData = PSDataPackManager.createOrLoadSaveData(server);
         setCurrentTime(PSCommonSaveData.getCurrentTime());
         setTimePassPerTick(PSCommonSaveData.getTimeWarp());

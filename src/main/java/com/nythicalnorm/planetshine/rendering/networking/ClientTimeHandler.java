@@ -5,9 +5,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientTimeHandler {
-    private static volatile long serverUpdatedSolarSystemTime;
-    private static long serverSolarSystemTimeTarget;
-    private static long serverSolarSystemTimePrevTick;
+    private volatile long serverUpdatedSolarSystemTime;
+    private long serverSolarSystemTimeTarget;
+    private long serverSolarSystemTimePrevTick;
 
     public void UpdateState(long serverTime){
         serverUpdatedSolarSystemTime = serverTime;

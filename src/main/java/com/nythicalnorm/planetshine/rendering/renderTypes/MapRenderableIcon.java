@@ -3,8 +3,9 @@ package com.nythicalnorm.planetshine.rendering.renderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
-import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.util.RenderingCommon;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -26,15 +27,16 @@ public class MapRenderableIcon extends MapRenderable {
 
     //This doesn't actually render it just calculates the position so it can be rendered with guiGraphics in the future
     @Override
-    public Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix) {
-        if (MapRenderer.getCurrentOpenScreen() == null) {
+    public Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocusedBody) {
+        if (currentFocusedBody == null) {
             return null;
         }
-        Vector3f pos = getPos(spacecraftBody, MapRenderer.getCurrentFocusedBody());
-
-        screenPos = RenderingCommon.worldToScreenCoordinate(pos,
-                poseStack, projectionMatrix, MapRenderer.getCurrentOpenScreen().width, MapRenderer.getCurrentOpenScreen().height);
-
+        Vector3f pos = getPos(spacecraftBody, currentFocusedBody);
+        Screen screen = Minecraft.getInstance().screen;
+        if (screen != null) {
+            screenPos = RenderingCommon.worldToScreenCoordinate(pos,
+                    poseStack, projectionMatrix, screen.width, screen.height);
+        }
         return null;
     }
 

@@ -19,8 +19,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Optional;
-
 @OnlyIn(Dist.CLIENT)
 @Mixin(LevelRenderer.class)
 public abstract class LevelRendererMixin {
@@ -37,17 +35,17 @@ public abstract class LevelRendererMixin {
         LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
         Minecraft mc = Minecraft.getInstance();
         //long beforeTimes = Util.getNanos();
-        Optional<PSClient> css = PSClient.getInstance();
+        PSClient css = PSClient.get();
 
-        if (mc.level == null || css.isEmpty()) {
+        if (mc.level == null || css == null) {
             return;
         }
-        if (css.get().doRender()) {
+        if (css.doRender()) {
             pSkyFogSetup.run();
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();
                 if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !this.doesMobEffectBlockSky(pCamera)) {
-                    PSRenderer.renderSkybox(mc, levelRenderer, pPoseStack, pPartialTick, pCamera, skyBuffer, css.get());
+                    PSRenderer.renderSkybox(mc, levelRenderer, pPoseStack, pPartialTick, pCamera, skyBuffer, css);
                 }
             }
             ci.cancel();

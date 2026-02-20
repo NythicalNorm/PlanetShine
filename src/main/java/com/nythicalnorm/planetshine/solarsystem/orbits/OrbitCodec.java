@@ -20,7 +20,7 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
         NetworkEncoders.writeVector3d(byteBuf, orbit.getRelativePos());
         NetworkEncoders.writeVector3d(byteBuf, orbit.getAbsolutePos());
         NetworkEncoders.writeVector3d(byteBuf, orbit.getRelativeVelocity());
-        byteBuf.writeQuaternion(orbit.getRotation());
+        NetworkEncoders.writeQuaternionfc(byteBuf, orbit.getRotation());
 
         if (orbit.getOrbitalElements() == null) {
             byteBuf.writeBoolean(false);
@@ -62,7 +62,7 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
         tag.put("relative_pos", NBTEncoders.putVector3d(orbit.getRelativePos()));
         tag.put("absolute_pos", NBTEncoders.putVector3d(orbit.getAbsolutePos()));
         tag.put("relative_velocity", NBTEncoders.putVector3d(orbit.getRelativeVelocity()));
-        tag.put("rotation", NBTEncoders.putQuaternionf(orbit.getRotation()));
+        tag.put("rotation", NBTEncoders.putQuaternionfc(orbit.getRotation()));
 
         if (orbit.getOrbitalElements() != null) {
             tag.put("orbital_elements", NBTEncoders.putOrbitalElements(orbit.orbitalElements));

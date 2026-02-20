@@ -18,6 +18,11 @@ public class OrbitDrawer {
     private static VertexBuffer circleBuffer;
     private static VertexBuffer hyperbolaBuffer;
 
+    public static void setupBuffers() {
+        generateCircle(2048);
+        generateHyperbola(2048);
+    }
+
     public static void generateCircle(int segments) {
         circleBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();

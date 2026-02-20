@@ -71,11 +71,9 @@ public class NavballWidget extends AbstractWidget {
         float navballScale = (float) gameWindow.getGuiScale() * (124f/gameWindow.getHeight());
         navballPosestack.scale(navballScale, navballScale, navballScale);
 
-        if (css.getPlayerOrbit() != null) {
-            if (css.getPlayerOrbit().getRotation() != null) {
-                navballPosestack.mulPose(Axis.YP.rotation(Mth.HALF_PI));
-                navballPosestack.mulPose(css.getPlayerOrbit().getRotation());
-            }
+        if (css.getPlayerOrbit().getRotation() != null) {
+            navballPosestack.mulPose(Axis.YP.rotation(Mth.HALF_PI));
+            navballPosestack.mulPose(css.getPlayerOrbit().getRotation());
         }
 
         QuadSphereModelGenerator.getSphereBuffer().bind();
@@ -99,8 +97,8 @@ public class NavballWidget extends AbstractWidget {
     }
 
     private void renderRelativeVelocity(GuiGraphics pGuiGraphics, int xPos, int yPos) {
-        if (PSClient.getInstance().get().weInSpaceDim()) {
-            int speed = (int) PSClient.getInstance().get().getPlayerOrbit().getRelativeVelocity().length();
+        if (PSClient.get().weInSpaceDim()) {
+            int speed = (int) PSClient.get().getPlayerOrbit().getRelativeVelocity().length();
             Component orbitalSpeedComp = Component.translatable("planetshine.screen.orbital_speed", speed);
             pGuiGraphics.drawString(Minecraft.getInstance().font, orbitalSpeedComp,xPos + 22, yPos + 5, 0x00ff2b, false);
         }

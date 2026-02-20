@@ -22,6 +22,10 @@ public abstract class Stage {
         }
     }
 
+    protected void updatePlanets() {
+        this.solarSystem.getRootStar().initCalcs();
+    }
+
     // Returns the server solar system when on Singleplayer & on Dedicated Server,
     // and returns the client solar system in Multiplayer client.
     public static SolarSystem getAnySolarSystem() {

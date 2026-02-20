@@ -8,8 +8,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.biome.BiomeManager;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -42,15 +41,14 @@ public class LodTexGenTask extends TexGenTask {
 
         double minPosX = xIndex*texturePixelSize - ((double) texturePixelSize / 2);
         double minPosZ = zIndex*texturePixelSize - ((double) texturePixelSize / 2);
-        BiomeSource biomeSource = level.getChunkSource().getGenerator().getBiomeSource();
-        Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
+        BiomeManager biomeManager = level.getBiomeManager();
 
         for (int z = 0; z < textureRes; z++) {
             for (int x = 0; x < textureRes; x++) {
                 int xDist = (int) Math.floor(minPosX + (((float)x / textureRes) * texturePixelSize));
                 int zDist = (int) Math.floor(minPosZ + (((float)z / textureRes) * texturePixelSize));
-                Holder<Biome> biomeAtPos = biomeSource.getNoiseBiome(QuartPos.fromBlock(xDist), 64, QuartPos.fromBlock(zDist), sampler);
-                int biomeColor = BiomeColorHolder.getColorForBiome(biomeAtPos.unwrapKey());
+                Holder<Biome> biomeAtPos = biomeManager.getNoiseBiomeAtQuart(QuartPos.fromBlock(xDist), 64, QuartPos.fromBlock(zDist));
+                int biomeColor = BiomeColorHolder.getColorForBiome(biomeAtPos.get());
                 genTexture.setRGB(x, z, biomeColor);
             }
         }

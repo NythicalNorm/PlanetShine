@@ -50,7 +50,7 @@ public class PlanetRenderer {
     }
 
     public static void render(CelestialBody planet, Optional<PlanetAtmosphere> currentPlanetAtmosphere, PoseStack poseStack, Matrix4f projectionMatrix, float currentAlbedo, boolean isCurrentPlanetOn, float opacityEasing) {
-        Quaternionf planetRot = planet.getRotation();
+        Quaternionf planetRot = new Quaternionf(planet.getRotation());
 
         if (currentPlanetAtmosphere.isPresent() && !isCurrentPlanetOn) {
                 //AtmosphereRenderer.render(obj,atmosphere, poseStack, projectionMatrix, partialTick);

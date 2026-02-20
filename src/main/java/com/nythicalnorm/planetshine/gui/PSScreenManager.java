@@ -2,7 +2,6 @@ package com.nythicalnorm.planetshine.gui;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.gui.screen.MapSolarSystemScreen;
-import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -15,16 +14,29 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class PSScreenManager {
     private boolean isMapScreenOpen = false;
     private Screen openSpacecraftScreen = null;
+    private MapSolarSystemScreen.MapState mapState = null;
 
     public void setMapScreenOpen(boolean open) {
         this.isMapScreenOpen = open;
+    }
+
+    public MapSolarSystemScreen.MapState getMapState() {
+        return mapState;
+    }
+
+    public void setMapState(MapSolarSystemScreen.MapState mapState) {
+        this.mapState = mapState;
+    }
+
+    public void resetMapState() {
+        this.mapState = null;
     }
 
     public void setOpenSpacecraftScreen(Screen opened) {
         this.openSpacecraftScreen = opened;
     }
 
-    public boolean doPlanetShineDraw() {
+    public boolean isNotDrawPlanetShine() {
         updateScreenState();
         return Minecraft.getInstance().screen instanceof MapSolarSystemScreen;
     }
@@ -41,7 +53,7 @@ public class PSScreenManager {
     }
 
     public void closeMapScreen() {
-        MapRenderer.setScreen(null);
+        PSClient.get().getMapRenderer().setScreen(null);
         isMapScreenOpen = false;
     }
 

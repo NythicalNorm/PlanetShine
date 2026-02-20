@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.generators.SkyboxCubeGen;
-import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
+import com.nythicalnorm.planetshine.rendering.map.OrbitDrawer;
 import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
@@ -45,43 +45,37 @@ public class PSRenderer {
         Skybox_Buffer.upload(skyboxRendered);
         VertexBuffer.unbind();
 
-        MapRenderer.setupBuffers();
+        OrbitDrawer.setupBuffers();
     }
 
     private static void setupShaders() {
         PlanetRenderer.setupShader();
         AtmosphereRenderer.setupShader(Skybox_Buffer);
         // enable depth clamping shouldn't break stuff i don't think anyway.
-        GL11.glEnable(0x864F);
-
     }
 
     public static void renderSkybox(Minecraft mc, LevelRenderer levelRenderer, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient)
     {
-        double fov = mc.gameRenderer.getFov(camera, partialTick, true);
-        Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
+        FogRenderer.levelFogColor();
+        psClient.renderTick(partialTick);
 
-        PSClient css = psClient;
+        if (mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine()) {
+            return;
+        }
+
         if (isFirstTime) {
             setupShaders();
             isFirstTime = false;
         }
-        FogRenderer.levelFogColor();
 
-        if (mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight()) {
-            return;
-        }
-
-        css.renderTick(partialTick);
-
-        if (css.getScreenManager().doPlanetShineDraw()) {
-            return;
-        }
+        GL11.glEnable(0x864F);
+        double fov = mc.gameRenderer.getFov(camera, partialTick, true);
+        Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
 
         RenderSystem.depthMask(false);
 
-        if (css.isOnPlanet()) {
-            if (css.getCurrentPlanet().get().getAtmosphere().hasAtmosphere()) {
+        if (psClient.isOnPlanet()) {
+            if (psClient.getCurrentPlanet().get().getAtmosphere().hasAtmosphere()) {
                 latestSkyColor = Minecraft.getInstance().level.getSkyColor(camera.getPosition(), partialTick);
 
                 RenderSystem.setShaderColor((float) latestSkyColor.x, (float) latestSkyColor.y, (float) latestSkyColor.z, 1.0F);
@@ -95,15 +89,15 @@ public class PSRenderer {
         }
 
         poseStack.pushPose();
-        poseStack.mulPose(css.getPlayerOrbit().getRotation());
+        poseStack.mulPose(psClient.getPlayerOrbit().getRotation());
 
-        SpaceObjRenderer.renderPlanetaryBodies(poseStack, mc, css, camera, projectionMatrix, partialTick);
+        SpaceObjRenderer.renderPlanetaryBodies(poseStack, psClient.getSpaceRenderables(), psClient, camera, projectionMatrix, partialTick);
         RenderSystem.depthMask(true);
         poseStack.popPose();
+        GL11.glDisable(0x864F);
     }
 
     public static void close() {
-        isFirstTime = false;
         latestSkyColor = null;
     }
 

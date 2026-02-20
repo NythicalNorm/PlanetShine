@@ -23,23 +23,18 @@ import java.util.Optional;
 @OnlyIn(Dist.CLIENT)
 public class MapRenderer { // this is full of memory leaks like chock-full of them need to fix.
     public static final float SCALE_FACTOR = 1/1000000000f;
-    private static MapRenderable renderTree;
-    private static OrbitalBody currentFocusedBody;
-    private static MapSolarSystemScreen currentOpenScreen;
-    private static ArrayList<MapRenderableIcon> iconsList;
-    private static MapRenderableIcon homePlanetPlayerDisplay;
+    private MapRenderable renderTree;
+    private OrbitalBody currentFocusedBody;
+    private MapSolarSystemScreen currentOpenScreen;
+    private ArrayList<MapRenderableIcon> iconsList;
+    private MapRenderableIcon homePlanetPlayerDisplay;
 
-    public static void setupBuffers() {
-        OrbitDrawer.generateCircle(2048);
-        OrbitDrawer.generateHyperbola(2048);
-    }
-
-    public static void renderSkybox(PoseStack mapPosestack, Matrix4f projectionMatrix) {
+    public void renderSkybox(PoseStack mapPosestack, Matrix4f projectionMatrix) {
         AtmosphereRenderer.renderSpaceSky(mapPosestack, projectionMatrix);
         PSRenderer.drawStarBuffer(mapPosestack, projectionMatrix, 1.0f);
     }
 
-    public static void renderMapObjects(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, Vector3d cameraPos, OrbitalBody currentFocus) {
+    public void renderMapObjects(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, Vector3d cameraPos, OrbitalBody currentFocus) {
         currentFocusedBody = currentFocus;
         if (renderTree == null || currentFocusedBody == null) {
             return;
@@ -47,14 +42,14 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
 
         Vector3f mapCameraPos = toMapCoordinate(cameraPos);
         poseStack.translate(-mapCameraPos.x, -mapCameraPos.y, -mapCameraPos.z);
-        renderTree.propagateRender(poseStack, projectionMatrix, null);
+        renderTree.propagateRender(poseStack, projectionMatrix, null, currentFocusedBody);
 
         for (MapRenderableIcon icon : iconsList) {
             renderIcon(graphics, icon.getScreenPos(), icon.getPlayerTextureLoc(), 64);
         }
     }
 
-    public static void updateMapRenderables(PSClient css, OrbitalBody currentFocusedBody) {
+    public void updateMapRenderables(PSClient css, OrbitalBody currentFocusedBody) {
         CelestialBody rootStar = css.getSolarSystem().getRootStar();
         iconsList = new ArrayList<>();
         MapRelativeState starMapState = MapRelativeState.AbsolutePos;
@@ -75,11 +70,11 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
         traverseAndPopulateList(css.getSolarSystem().getRootStar(), currentFocusedBody, renderTree);
     }
 
-    private static MapRenderable traverseAndPopulateList(OrbitalBody parentBody, OrbitalBody currentFocusedBody, MapRenderable parentRenderableInMap) {
+    private MapRenderable traverseAndPopulateList(OrbitalBody parentBody, OrbitalBody currentFocusedBody, MapRenderable parentRenderableInMap) {
         Collection<OrbitalBody> OrbitChildren = parentBody.getChildren();
 
         if (homePlanetPlayerDisplay != null) {
-            if (parentBody.equals(PSClient.getInstance().get().getCurrentPlanet().get())) {
+            if (parentBody.equals(PSClient.get().getCurrentPlanet().get())) {
                 parentRenderableInMap.addChildRenderable(homePlanetPlayerDisplay);
             }
         }
@@ -119,13 +114,13 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
         return parentRenderableInMap;
     }
 
-    private static void renderIcon(GuiGraphics graphics, int[] screenPos, ResourceLocation TextureLoc, float size) {
+    private void renderIcon(GuiGraphics graphics, int[] screenPos, ResourceLocation TextureLoc, float size) {
         float relativeHeadSize = size/8;
         graphics.blit(TextureLoc, (int) (screenPos[0] - relativeHeadSize*0.5f), (int) (screenPos[1] - relativeHeadSize*0.5f), (int) relativeHeadSize,
                 (int) relativeHeadSize,(int) relativeHeadSize, (int) relativeHeadSize,  (int) size, (int) size);
     }
 
-    public static OrbitalBody getCurrentFocusedBody() {
+    public OrbitalBody getCurrentFocusedBody() {
         return currentFocusedBody;
     }
 
@@ -134,11 +129,11 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
         return new Vector3f((float) position.x, (float) position.y, (float) position.z);
     }
 
-    public static MapSolarSystemScreen getCurrentOpenScreen() {
+    public MapSolarSystemScreen getCurrentOpenScreen() {
         return currentOpenScreen;
     }
 
-    public static void setScreen(MapSolarSystemScreen mapSolarSystem) {
+    public void setScreen(MapSolarSystemScreen mapSolarSystem) {
         if (mapSolarSystem == null) {
             homePlanetPlayerDisplay = null;
             iconsList = new ArrayList<>();

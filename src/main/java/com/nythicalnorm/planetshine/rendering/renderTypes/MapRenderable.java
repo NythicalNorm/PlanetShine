@@ -28,16 +28,16 @@ public abstract class MapRenderable {
         this.childRenderables.add(renderableInMap);
     }
 
-    public void propagateRender(PoseStack poseStack, Matrix4f projectionMatrix, Vector3f parentPos) {
+    public void propagateRender(PoseStack poseStack, Matrix4f projectionMatrix, Vector3f parentPos, OrbitalBody currentFocusedBody) {
         poseStack.pushPose();
         if (relativeState.equals(MapRelativeState.AlwaysParentRelative)) {
             poseStack.translate(parentPos.x, parentPos.y, parentPos.z);
         }
-        Vector3f parentBodyPos = render(poseStack, projectionMatrix);
+        Vector3f parentBodyPos = render(poseStack, projectionMatrix, currentFocusedBody);
         poseStack.popPose();
 
         for (MapRenderable childRenderable : childRenderables) {
-            childRenderable.propagateRender(poseStack, projectionMatrix, parentBodyPos);
+            childRenderable.propagateRender(poseStack, projectionMatrix, parentBodyPos, currentFocusedBody);
         }
     }
 
@@ -52,6 +52,6 @@ public abstract class MapRenderable {
         return MapRenderer.toMapCoordinate(returnPos);
     }
 
-    public abstract Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix);
+    public abstract Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocusedBody);
 }
 

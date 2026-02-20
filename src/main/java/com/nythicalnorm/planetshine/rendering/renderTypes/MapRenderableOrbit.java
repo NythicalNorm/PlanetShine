@@ -19,7 +19,7 @@ public class MapRenderableOrbit extends MapRenderable {
     }
 
     @Override
-    public Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix) {
+    public Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocusedBody) {
         OrbitDrawer.drawOrbit(orbitOf, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix);
         return null;
     }

@@ -50,12 +50,12 @@ public class NBTEncoders {
         return new Vector2i(tag.getInt("x"), tag.getInt("y"));
     }
 
-    public static CompoundTag putQuaternionf(Quaternionf quaternionf) {
+    public static CompoundTag putQuaternionfc(Quaternionfc quaternionf) {
         CompoundTag quaternionTag = new CompoundTag();
-        quaternionTag.putDouble("x", quaternionf.x);
-        quaternionTag.putDouble("y", quaternionf.y);
-        quaternionTag.putDouble("z", quaternionf.z);
-        quaternionTag.putDouble("w", quaternionf.w);
+        quaternionTag.putDouble("x", quaternionf.x());
+        quaternionTag.putDouble("y", quaternionf.y());
+        quaternionTag.putDouble("z", quaternionf.z());
+        quaternionTag.putDouble("w", quaternionf.w());
         return quaternionTag;
     }
 
