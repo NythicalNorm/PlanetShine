@@ -14,16 +14,17 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class OrbitalBody {
     protected final OrbitId id;
     protected Component displayName;
-    protected Vector3d relativeOrbitalPos;
-    protected Vector3d absoluteOrbitalPos;
-    protected Vector3d relativeVelocity;
-    protected Quaternionf rotation;
+    protected final Vector3d relativeOrbitalPos;
+    protected final Vector3d absoluteOrbitalPos;
+    protected final Vector3d relativeVelocity;
+    protected final Quaternionf rotation;
+    protected final ConcurrentMap<OrbitId, OrbitalBody> childElements;
+
     protected @Nullable OrbitalElements orbitalElements;
-    protected ConcurrentMap<OrbitId, OrbitalBody> childElements;
     protected @Nullable CelestialBody parent; // Nullable only in the case of the sun
     protected boolean isStableOrbit;
 
-    public OrbitalBody(OrbitalBody.Builder<?> builder) {
+    public OrbitalBody(OrbitalBody.Builder<?> builder, ConcurrentMap<OrbitId, OrbitalBody> childElements) {
         this.id = builder.id;
         this.displayName = builder.displayName;
         this.relativeOrbitalPos = builder.relativeOrbitalPos;
@@ -32,6 +33,7 @@ public abstract class OrbitalBody {
         this.rotation = builder.rotation;
         this.orbitalElements = builder.orbitalElements;
         this.isStableOrbit = builder.isStableOrbit;
+        this.childElements = childElements;
     }
 
     public Component getDisplayName() {
@@ -80,8 +82,8 @@ public abstract class OrbitalBody {
         isStableOrbit = stableOrbit;
     }
 
-    public void setRotation(Quaternionf rotation) {
-        this.rotation = rotation;
+    public void setRotation(Quaternionfc rotation) {
+        this.rotation.set(rotation);
     }
 
     public abstract void simulatePropagate(long TimeElapsed, Vector3dc parentPos, boolean isTimeWarping);

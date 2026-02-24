@@ -23,14 +23,13 @@ public abstract class CelestialBody extends OrbitalBody {
     private double SOI;
 
     public CelestialBody(String name, double radius, double mass, PlanetAtmosphere atmosphericEffects, @Nullable ResourceKey<Level> dimension, OrbitalBody.Builder<?> bodyBuilder) {
-        super(bodyBuilder);
+        super(bodyBuilder, new ConcurrentHashMap<>());
         this.name = name;
         this.displayName = Component.translatable(String.format("planetshine.planets.%s", name));
         this.radius = radius;
         this.mass = mass;
         this.atmosphericEffects = atmosphericEffects;
         this.dimension = dimension;
-        this.childElements = new ConcurrentHashMap<>();
     }
 
     public String getName() {
@@ -44,10 +43,10 @@ public abstract class CelestialBody extends OrbitalBody {
     protected void simulate(long TimeElapsed, Vector3dc parentPos) {
         if (orbitalElements != null) {
             Vector3d[] stateVectors = orbitalElements.ToCartesian(TimeElapsed);
-            this.relativeOrbitalPos = stateVectors[0];
-            this.relativeVelocity = stateVectors[1];
+            this.relativeOrbitalPos.set(stateVectors[0]);
+            this.relativeVelocity.set(stateVectors[1]);
 
-            this.absoluteOrbitalPos = this.absoluteOrbitalPos.set(parentPos).add(relativeOrbitalPos);
+            this.absoluteOrbitalPos.set(parentPos).add(relativeOrbitalPos);
         }
     }
 

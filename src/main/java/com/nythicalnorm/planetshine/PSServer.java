@@ -75,7 +75,7 @@ public class PSServer extends Stage {
         instance = null;
     }
 
-    public MinecraftServer getServer() {
+    public MinecraftServer getMCServer() {
         return server;
     }
 

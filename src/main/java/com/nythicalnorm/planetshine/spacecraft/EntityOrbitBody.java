@@ -22,7 +22,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected final boolean isClientSide;
 
     public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId currentHostSpace, boolean isClientSide) {
-        super(orbitalBuilder);
+        super(orbitalBuilder, null);
         this.currentHostSpace = currentHostSpace;
         this.isClientSide = isClientSide;
     }
@@ -36,7 +36,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.relativeVelocity.add(newtonAcceleration);
         Vector3d velocityPerTick = this.relativeVelocity.div(TimeCalc.PhysTickPerSec, new Vector3d());
 
-        this.relativeOrbitalPos = this.relativeOrbitalPos.add(velocityPerTick);
+        this.relativeOrbitalPos.add(velocityPerTick);
     }
 
     @PhysTickOnly
@@ -47,15 +47,15 @@ public abstract class EntityOrbitBody extends OrbitalBody {
 
         if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
             Vector3d[] stateVectors = orbitalElements.ToCartesian(TimeElapsed);
-            this.relativeOrbitalPos = stateVectors[0];
-            this.relativeVelocity = stateVectors[1];
+            this.relativeOrbitalPos.set(stateVectors[0]);
+            this.relativeVelocity.set(stateVectors[1]);
         } else if (!isClientSide && !isTimeWarping) {
             simulateNonTimeWarp();
             this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
             sendOrbitUpdateToRelevantPlayers();
         }
 
-        absoluteOrbitalPos = this.absoluteOrbitalPos.set(parentPos).add(relativeOrbitalPos);
+        this.absoluteOrbitalPos.set(parentPos).add(relativeOrbitalPos);
     }
 
     protected void sendOrbitUpdateToRelevantPlayers() {

@@ -31,7 +31,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
 
     private void updatePlanetRot(Quaternionf existingrotation, CelestialBody currentPlanet) {
         //quaternion to rotate the output of lookalong function to the correct -y direction.
-        this.rotation = new Quaternionf(new AxisAngle4f(Mth.HALF_PI,1f,0f,0f));
+        this.rotation.set(new AxisAngle4f(Mth.HALF_PI,1f,0f,0f));
         Vector3f playerRelativePos = new Vector3f((float) relativeOrbitalPos.x, (float) relativeOrbitalPos.y, (float) relativeOrbitalPos.z);
         playerRelativePos.normalize();
         Vector3f upVector = PlanetBodyCalc.getUpVectorForPlanetRot(new Vector3f(playerRelativePos), currentPlanet);
@@ -42,9 +42,8 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
         double seaLevel = level.getMinBuildHeight() + 127;
         position = new Vec3(position.x, position.y - seaLevel, position.z);
 
-        relativeOrbitalPos = PlanetBodyCalc.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false);
-        Vector3d newAbs = new Vector3d(currentPlanetOn.getAbsolutePos());
-        absoluteOrbitalPos = newAbs.add(relativeOrbitalPos);
+        this.relativeOrbitalPos.set(PlanetBodyCalc.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false));
+        this.absoluteOrbitalPos.set(currentPlanetOn.getAbsolutePos()).add(relativeOrbitalPos);
     }
 
     public void processHostMove(Vec3 deltaMovement) {

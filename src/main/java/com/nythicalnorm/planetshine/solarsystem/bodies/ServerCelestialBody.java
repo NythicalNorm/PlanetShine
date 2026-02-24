@@ -12,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 public interface ServerCelestialBody {
     default void initServerPlanet() {
         if (PSServer.get() != null) {
-            setLevel(PSServer.get().getServer().getLevel(getDimension()));
+            setLevel(PSServer.get().getMCServer().getLevel(getDimension()));
         }
     }
 

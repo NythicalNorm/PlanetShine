@@ -29,13 +29,13 @@ import org.joml.*;
 import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
+import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
+import org.valkyrienskies.core.internal.ShipTeleportData;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.lang.Math;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 
 public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
@@ -44,6 +44,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     private final ShipTeleporter shipTeleporter;
     private final Map<Vector2ic, OrbitHostSpace> loadedHostSpaces;
     private final Map<OrbitId, Vector2ic> allRegisteredHostSpaces;
+    private final ServerLevel spaceLevel;
 
     private static final int HOST_SPACE_GAP_SIZE = 16000;
     private static final int HOST_SPACE_DIAMETER = HOST_SPACE_GAP_SIZE / 2;
@@ -52,9 +53,10 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public HostSpaceManager(PSServer psServer, Map<OrbitId, Vector2ic> allRegisteredHostSpaces) {
         this.psServer = psServer;
-        shipTeleporter = new ShipTeleporter(psServer.getSpaceLevel(), this);
+        this.shipTeleporter = new ShipTeleporter(VSGameUtilsKt.getShipObjectWorld(psServer.getMCServer()));
         this.allRegisteredHostSpaces = allRegisteredHostSpaces;
         this.loadedHostSpaces = new Object2ObjectOpenHashMap<>();
+        this.spaceLevel = psServer.getSpaceLevel();
     }
 
     public OrbitHostSpace getOrCreateHostSpace(EntityOrbitBody entityOrbitBody){
@@ -139,18 +141,30 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     }
 
     public void checkShipTeleportToSpace() {
-        List<LoadedServerShip> alreadyTeleported = new ArrayList<>();
-        ValkyrienSkies.api().getServerShipWorld(psServer.getServer()).getLoadedShips().forEach(loadedServerShip -> {
-            ResourceKey<Level> shipDimension = VSGameUtilsKt.getResourceKey(loadedServerShip.getChunkClaimDimension());
-            CelestialBody celestialBody = psServer.getSolarSystem().getDimensionOfPlanet(shipDimension);
+        shipTeleporter.telepostShipsFromLastTick();
+        ValkyrienSkies.api().getServerShipWorld(psServer.getMCServer()).getLoadedShips().forEach(loadedServerShip -> {
+            Vector3dc currentPos = loadedServerShip.getTransform().getPositionInWorld();
 
-            if (celestialBody != null) {
-                Vector3dc currentPos = loadedServerShip.getTransform().getPositionInWorld();
-                if (currentPos.y() >= ShipTeleporter.TELEPORT_Y_HEIGHT && !alreadyTeleported.contains(loadedServerShip)) {
-                    shipTeleporter.teleportShipsAndEntities(loadedServerShip, celestialBody, alreadyTeleported, psServer.getServer());
+            if (currentPos.y() >= ShipTeleporter.TELEPORT_Y_HEIGHT && !shipTeleporter.isTeleported(loadedServerShip)) {
+                ResourceKey<Level> shipDimension = VSGameUtilsKt.getResourceKey(loadedServerShip.getChunkClaimDimension());
+                CelestialBody celestialBody = psServer.getSolarSystem().getDimensionOfPlanet(shipDimension);
+
+                if (celestialBody != null) {
+                    teleportShipToSpace(loadedServerShip, celestialBody);
                 }
             }
         });
+        this.shipTeleporter.resetTeleports();
+    }
+
+    private void teleportShipToSpace(LoadedServerShip loadedServerShip, CelestialBody celestialBody) {
+        ServerLevel oldLevel = ((ServerCelestialBody)celestialBody).getLevel();
+        ServerLevel newLevel = psServer.getMCServer().getLevel(Level.NETHER);
+
+        ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(new Vector3d(0d, 250d, 0d), new Quaterniond(),
+                new Vector3d(), new Vector3d(), VSGameUtilsKt.getDimensionId(newLevel),null, null);
+
+        shipTeleporter.teleportShipsWithEntities(loadedServerShip, shipTeleportData, oldLevel, newLevel);
     }
 
     private void checkEntityTeleportToPlanet() {

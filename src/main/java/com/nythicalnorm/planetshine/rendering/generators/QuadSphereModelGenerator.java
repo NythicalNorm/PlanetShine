@@ -79,8 +79,6 @@ public class QuadSphereModelGenerator {
         return quads;
     }
 
-
-
     public static BakedQuad quad(Vector3f v1, Vector3f v2, Vector3f v3, Vector3f v4,
                                  float sidesUpIter, float sidesRightIter, float QuadsPerSide, int squareSide) {
         BakedQuad[] quad = new BakedQuad[1];
