@@ -27,17 +27,16 @@ import org.lwjgl.system.MemoryUtil;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientTexManager {
-    private final PSClient css;
+    private final PSClient psClient;
     private final int lodTexAtlasID;
     private final TexAtlasData texAtlasData;
     private VertexBuffer lodTexBuffer = null;
 
-    public ClientTexManager(PSClient css) {
-        this.css = css;
+    public ClientTexManager(PSClient psClient) {
+        this.psClient = psClient;
         this.texAtlasData = new TexAtlasData();
         lodTexAtlasID = TextureUtil.generateTextureId();
         int texSize = LodTexCalc.texInOneAxisCount * LodTexCalc.textureResolution;
@@ -68,15 +67,15 @@ public class ClientTexManager {
     }
 
     public void incomingLodTexture(ResourceKey<Level> dimensionID, int textureID, int textureSize, byte[] biomeTexture) {
-        Optional<CelestialBody> planetSOIin = css.getCurrentPlanetSOIin();
-        if (planetSOIin.isPresent() && planetSOIin.get().getDimension() != null && planetSOIin.get().getDimension().equals(dimensionID)) {
+        CelestialBody planetSOIin = psClient.getPlayerOrbit().getParent();
+        if (planetSOIin != null && planetSOIin.getDimension() != null && planetSOIin.getDimension().equals(dimensionID)) {
             Vector2i atlasCoordsToPut = texAtlasData.getIndexToPut();
 
             if (atlasCoordsToPut != null && loadTextureToBiomeAtlas(biomeTexture, atlasCoordsToPut)) {
                 Vector2i worldPos = LodTexCalc.textureIndexTo2d(textureID);
                 texAtlasData.addTexture(worldPos, atlasCoordsToPut);
 
-                lodTexBuffer = LodTexRenderer.updateLodTex(planetSOIin.get(), texAtlasData.getPos2AtlasPosMap().entrySet(), this.lodTexBuffer);
+                lodTexBuffer = LodTexRenderer.updateLodTex(planetSOIin, texAtlasData.getPos2AtlasPosMap().entrySet(), this.lodTexBuffer);
             }
 
         }

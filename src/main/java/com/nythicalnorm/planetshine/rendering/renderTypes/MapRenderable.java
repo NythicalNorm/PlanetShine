@@ -2,11 +2,10 @@ package com.nythicalnorm.planetshine.rendering.renderTypes;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
-import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -28,30 +27,19 @@ public abstract class MapRenderable {
         this.childRenderables.add(renderableInMap);
     }
 
-    public void propagateRender(PoseStack poseStack, Matrix4f projectionMatrix, Vector3f parentPos, OrbitalBody currentFocusedBody) {
+    public void propagateRender(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, Vector3f parentPos, OrbitalBody currentFocusedBody) {
         poseStack.pushPose();
         if (relativeState.equals(MapRelativeState.AlwaysParentRelative)) {
             poseStack.translate(parentPos.x, parentPos.y, parentPos.z);
         }
-        Vector3f parentBodyPos = render(poseStack, projectionMatrix, currentFocusedBody);
+        Vector3f parentBodyPos = render(graphics, poseStack, projectionMatrix, currentFocusedBody);
         poseStack.popPose();
 
         for (MapRenderable childRenderable : childRenderables) {
-            childRenderable.propagateRender(poseStack, projectionMatrix, parentBodyPos, currentFocusedBody);
+            childRenderable.propagateRender(graphics, poseStack, projectionMatrix, parentBodyPos, currentFocusedBody);
         }
     }
 
-    protected Vector3f getPos(OrbitalBody bodyToPlace, OrbitalBody currentFocusedBody) {
-        Vector3d returnPos = switch (relativeState) {
-            case AbsolutePos -> new Vector3d(bodyToPlace.getAbsolutePos()).sub(currentFocusedBody.getAbsolutePos());
-            case RelativePos, AlwaysParentRelative -> new Vector3d(bodyToPlace.getRelativePos());
-            case FocusedBodyParent -> new Vector3d(currentFocusedBody.getRelativePos()).negate();
-            default -> new Vector3d(0f, 0f, 0f);
-        };
-
-        return MapRenderer.toMapCoordinate(returnPos);
-    }
-
-    public abstract Vector3f render(PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocusedBody);
+    public abstract Vector3f render(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocusedBody);
 }
 

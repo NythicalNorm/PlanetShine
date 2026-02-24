@@ -74,10 +74,10 @@ public abstract class OrbitalBody {
     public abstract void simulatePropagate(long TimeElapsed, Vector3dc parentPos, boolean isTimeWarping);
 
     public void setOrbitalElements(OrbitalElements orbitalElements) {
-        if (this.orbitalElements != null) {
+        if (this.orbitalElements != null && orbitalElements != null) {
             this.orbitalElements.set(orbitalElements);
         } else {
-            this.orbitalElements = new OrbitalElements(orbitalElements);
+            this.orbitalElements = orbitalElements;
         }
     }
 

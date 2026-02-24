@@ -5,6 +5,13 @@ import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.util.calculations.PlanetBodyCalc;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.PlayerFaceRenderer;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -12,16 +19,19 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.Objects;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     private final Vector3d clientDeltavelLast;
     private final Quaterniond playerOnPlanetRotation;
+    private PlayerInfo playerInfo;
 
     public ClientPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
         super(playerSpacecraftBuilder, true);
         this.clientDeltavelLast = new Vector3d();
         this.playerOnPlanetRotation = new Quaterniond();
+        this.playerInfo = Objects.requireNonNull(Minecraft.getInstance().getConnection()).getPlayerInfo(this.getOrbitId().getUUID());
     }
 
     public void updatePlayerPosRot(CelestialBody currentPlanetOn) {
@@ -66,6 +76,38 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
         if (clientDeltavelLast.length() > tolerance) {
             PacketHandler.sendToServer(new ServerboundPlayerHostVelUpdate(this.id, clientDeltavelLast));
             clientDeltavelLast.zero();
+        }
+    }
+
+    @Override
+    public boolean isPlayerLoggedIn() {
+        return this.playerInfo != null || this.player != null;
+    }
+
+    public void playerJoined(PlayerInfo pPlayerInfo) {
+        this.playerInfo = pPlayerInfo;
+    }
+
+    @Override
+    public void playerLeft() {
+        super.playerLeft();
+        this.playerInfo = null;
+    }
+
+    private ResourceLocation getSkinTexture() {
+        if (this.playerInfo != null) {
+            return playerInfo.getSkinLocation();
+        } else if (this.player != null) {
+            return ((LocalPlayer)this.player).getSkinTextureLocation();
+        } else {
+            return MissingTextureAtlasSprite.getLocation();
+        }
+    }
+
+    @Override
+    public void drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
+        if (this.isPlayerLoggedIn()) {
+            PlayerFaceRenderer.draw(graphics, this.getSkinTexture(), (screenPos.x - (size/2)), (screenPos.y - (size/2)), size);
         }
     }
 }

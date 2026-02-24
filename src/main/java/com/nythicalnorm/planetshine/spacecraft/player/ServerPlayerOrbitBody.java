@@ -5,18 +5,12 @@ import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class ServerPlayerOrbitBody extends AbstractPlayerOrbitBody {
-
     public ServerPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
         super(playerSpacecraftBuilder, false);
         velocityApplyQueue = new ConcurrentLinkedDeque<>();
-    }
-
-    public UUID getUUid() {
-        return player.getUUID();
     }
 
     @Override
@@ -25,6 +19,11 @@ public class ServerPlayerOrbitBody extends AbstractPlayerOrbitBody {
         if (this.player != null) {
             PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(hostSpace), (ServerPlayer) this.player);
         }
+    }
+
+    @Override
+    public boolean isPlayerLoggedIn() {
+        return this.player != null;
     }
 
 //    @Override

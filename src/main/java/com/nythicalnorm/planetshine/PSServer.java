@@ -90,12 +90,11 @@ public class PSServer extends Stage {
         }
         hostSpaceManager.onPhysTick();
 
-        if (serverRunningTicks % 3 == 0) {
-            PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
-        }
+        //server.execute(() -> PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime)));
     }
 
     public void OnGameTick() {
+        PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
         hostSpaceManager.onGameTick();
     }
 

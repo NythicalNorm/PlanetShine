@@ -37,6 +37,7 @@
   "client": [
     "CameraMixin",
     "LevelRendererMixin",
+    "PlayerSocialManagerMixin",
     "daynightcycle.ClientLevelMixin",
     "daynightcycle.FogRendererMixin",
     "screen.DebugScreenOverlayMixin",

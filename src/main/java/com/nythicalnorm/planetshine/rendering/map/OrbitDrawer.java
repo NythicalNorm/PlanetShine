@@ -49,12 +49,6 @@ public class OrbitDrawer {
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
 
-        // start the buffer with negative z infinity line - causes visual issues with float max at 10^38
-//        Vector3f startLineMax = new Vector3f((float) (1f/Math.cos( Mth.HALF_PI)), 0f,(float) Math.tan( Mth.HALF_PI));
-//        Vector3f startLineInfinity = new Vector3f(Float.MAX_VALUE, 0f, Float.MAX_VALUE);
-//        bufferbuilder.vertex(startLineInfinity.x, startLineInfinity.y, startLineInfinity.z).color(1.0f,1.0f,1.0f,1.0f).endVertex();
-//        bufferbuilder.vertex(startLineMax.x, startLineMax.y, startLineMax.z).color(1.0f,1.0f,1.0f,1.0f).endVertex();
-
         for (int i = 0; i < segments; i++) {
             float angleAround = (float) i/(segments);
             float angleAroundNext = (i+1f)/(segments);
@@ -77,6 +71,9 @@ public class OrbitDrawer {
 
     public static void drawOrbit(OrbitalBody orbitalBody, float scaleFactor, PoseStack poseStack, Matrix4f projectionMatrix) {
         OrbitalElements orbitalElements = orbitalBody.getOrbitalElements();
+        if (orbitalElements == null) {
+            return;
+        }
         boolean isElliptical = (orbitalElements.getEccentricity() >= 0 && orbitalElements.getEccentricity() < 1);
 
         VertexBuffer drawBuffer = isElliptical ? circleBuffer : hyperbolaBuffer;
@@ -105,6 +102,5 @@ public class OrbitDrawer {
         drawBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
         VertexBuffer.unbind();
         poseStack.popPose();
-        RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
     }
 }

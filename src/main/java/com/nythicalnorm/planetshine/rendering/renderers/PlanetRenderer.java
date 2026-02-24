@@ -49,9 +49,8 @@ public class PlanetRenderer {
         render(planet, Optional.empty(), poseStack, projectionMatrix, 1.0f, false, 1.0f);
     }
 
-    public static void render(CelestialBody planet, Optional<PlanetAtmosphere> currentPlanetAtmosphere, PoseStack poseStack, Matrix4f projectionMatrix, float currentAlbedo, boolean isCurrentPlanetOn, float opacityEasing) {
-        Quaternionf planetRot = new Quaternionf(planet.getRotation());
-
+    public static void render(CelestialBody planet, Optional<PlanetAtmosphere> currentPlanetAtmosphere, PoseStack poseStack,
+                              Matrix4f projectionMatrix, float currentAlbedo, boolean isCurrentPlanetOn, float opacityEasing) {
         if (currentPlanetAtmosphere.isPresent() && !isCurrentPlanetOn) {
                 //AtmosphereRenderer.render(obj,atmosphere, poseStack, projectionMatrix, partialTick);
             PlanetAtmosphere bodyAtmos = planet.getAtmosphere();
@@ -70,7 +69,7 @@ public class PlanetRenderer {
 
         Vector3d absoluteDir = new Vector3d(planet.getAbsolutePos()).normalize();
         Vector3f lightDir = new Vector3f((float) absoluteDir.x,(float) absoluteDir.y,(float) absoluteDir.z);
-        lightDir.rotate(planetRot.invert());
+        lightDir.rotate(new Quaternionf(planet.getRotation()).invert());
         lightDir.normalize();
 
         sunDirUniform.set(lightDir);

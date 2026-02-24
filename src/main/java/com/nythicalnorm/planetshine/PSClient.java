@@ -50,19 +50,19 @@ public class PSClient extends Stage {
 
     public PSClient(@NotNull ClientPlayerOrbitBody playerDataFromServer, SolarSystem solarSystem) {
         super(solarSystem);
-        instance = this;
         minecraft = Minecraft.getInstance();
         this.playerOrbit = playerDataFromServer;
         this.screenManager = new PSScreenManager();
         this.planetTexManager = new ClientTexManager(this);
-        if (minecraft.level != null) {
-            onClientLevelLoad(minecraft.level);
-        }
         this.updatePlanets();
 
         this.clientTimeHandler = new ClientTimeHandler();
         this.daylightRegion = new DaylightRegion();
         this.mapRenderer = new MapRenderer();
+        if (minecraft.level != null) {
+            onClientLevelLoad(minecraft.level);
+        }
+        instance = this;
     }
 
     public static Optional<PSClient> getInstance() {
@@ -122,10 +122,15 @@ public class PSClient extends Stage {
         CelestialBody celestialBody = solarSystem.getDimensionOfPlanet(clientLevel.dimension());
         if (celestialBody != null) {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);
-            currentPlanetOn = celestialBody;
+            this.currentPlanetOn = celestialBody;
+            this.solarSystem.entityRemoveOrbital(this.playerOrbit);
+            this.currentPlanetOn.addChildBody(this.playerOrbit);
         } else {
             this.playerOrbit.clearRotation();
-            currentPlanetOn = null;
+            this.currentPlanetOn = null;
+            if (!OrbitalBodyUtils.isSpaceLevel(clientLevel)) {
+                this.playerOrbit.removeParent();
+            }
         }
     }
 
@@ -133,12 +138,8 @@ public class PSClient extends Stage {
         this.setCurrentTime(clientTimeHandler.calculateCurrentTime(partialTick));
         this.solarSystem.UpdatePlanets(this.getCurrentTime(), this.isTimeWarping());
 
-        if (!weInSpaceDim()) {
-            playerOrbit.setParent(null);
-        }
-
         if (currentPlanetOn != null && playerOrbit.getPlayerEntity() != null) {
-            playerOrbit.updatePlayerPosRot(currentPlanetOn);
+            this.playerOrbit.updatePlayerPosRot(currentPlanetOn);
             BlockPos playerPos = playerOrbit.getPlayerEntity().blockPosition();
             this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getPlayerEntity().level());
         }
@@ -173,11 +174,9 @@ public class PSClient extends Stage {
         if (entityOrbitBody != null) {
             solarSystem.playerChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
         } else if (this.playerOrbit.getOrbitId().equals(spacecraftID)) {
-            //temporary setting the rotation to default
             if (solarSystem.getAllSpacecraftBodies().containsKey(this.playerOrbit.getOrbitId())) {
                 solarSystem.playerChangeOrbitalSOIs(this.playerOrbit, newParentID, orbitalElements);
             } else {
-                // A temporary place to put it player joining has to be a separate packet
                 this.playerOrbit.setOrbitalElements(orbitalElements);
                 solarSystem.entityJoinedOrbital(this.playerOrbit, newParentID);
             }
@@ -208,17 +207,6 @@ public class PSClient extends Stage {
 
     public Optional<CelestialBody> getCurrentPlanet() {
         if (currentPlanetOn != null) {
-            return Optional.of(currentPlanetOn);
-        }
-        else  {
-            return Optional.empty();
-        }
-    }
-
-    public Optional<CelestialBody> getCurrentPlanetSOIin() {
-        if (playerOrbit.getParent() != null) {
-            return Optional.of(playerOrbit.getParent());
-        } else if (currentPlanetOn != null) {
             return Optional.of(currentPlanetOn);
         }
         else  {

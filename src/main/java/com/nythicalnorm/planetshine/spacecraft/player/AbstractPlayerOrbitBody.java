@@ -46,9 +46,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
         this.player = null;
     }
 
-    public boolean isPlayerLoggedIn() {
-        return this.player != null;
-    }
+    public abstract boolean isPlayerLoggedIn();
 
     public Player getPlayerEntity() {
         return player;

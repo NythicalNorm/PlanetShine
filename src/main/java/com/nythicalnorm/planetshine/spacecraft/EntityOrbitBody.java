@@ -7,7 +7,11 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2i;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
@@ -88,10 +92,13 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         } else return this.currentHostSpace.equals(this.id);
     }
 
-    // can be called from the game tick or VS phys ticks, don't call this while time warping
+    // Thread safe, don't call this while time warping
     public void addVelocityForUpdate(Vector3d impulse) {
         velocityApplyQueue.add(impulse);
     }
 
     public abstract OrbitHostSpace createHostSpace(Vector3d posNew);
+
+    @OnlyIn(Dist.CLIENT) // kinda sus but hey it works without having generics glorp.
+    public void drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {}
 }

@@ -34,10 +34,6 @@ public class SolarSystem {
         return allSpacecraftBodies;
     }
 
-    public Map<ResourceKey<Level>, CelestialBody> getPlanetDimensions() {
-        return planetDimensions;
-    }
-
     public @Nullable CelestialBody getPlanet(String key) {
         for (CelestialBody planetaryBody : allPlanetaryBodies.values()) {
             if (planetaryBody.getName().equals(key)) {
@@ -76,6 +72,7 @@ public class SolarSystem {
         if (newOrbitPlanet != null) {
             if (orbitalDataNew instanceof EntityOrbitBody entitySpacecraftBody &&
                     getAllSpacecraftBodies().putIfAbsent(entitySpacecraftBody.getOrbitId(), entitySpacecraftBody) == null) {
+                entitySpacecraftBody.removeParent();
                 newOrbitPlanet.addChildBody(entitySpacecraftBody);
             }
         } else {
@@ -86,6 +83,7 @@ public class SolarSystem {
     public void entityRemoveOrbital(EntityOrbitBody entityOrbitBody) {
         entityOrbitBody.removeParent();
         entityOrbitBody.setHostSpace(null);
+        entityOrbitBody.setOrbitalElements(null);
         this.allSpacecraftBodies.remove(entityOrbitBody.getOrbitId());
     }
 
