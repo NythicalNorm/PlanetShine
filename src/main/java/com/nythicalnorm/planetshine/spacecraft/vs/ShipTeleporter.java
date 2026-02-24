@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.spacecraft.vs;
 
+import com.nythicalnorm.planetshine.PlanetShine;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
@@ -25,32 +26,41 @@ public class ShipTeleporter {
     private final VsiServerShipWorld serverShipWorld;
     private final List<Long> alreadyTeleported;
     private final Queue<ShipToTeleport> shipTeleportDataQueue;
+    private final Queue<Entity> shipyardEntityTeleportQueue;
+    private final Queue<EntityToTeleport> entityTeleportDataQueue;
 
     public ShipTeleporter(VsiServerShipWorld serverShipWorld) {
         this.serverShipWorld = serverShipWorld;
         this.alreadyTeleported = new ArrayList<>();
         this.shipTeleportDataQueue = new ArrayDeque<>();
+        this.shipyardEntityTeleportQueue = new ArrayDeque<>();
+        this.entityTeleportDataQueue = new ArrayDeque<>();
     }
 
     public void teleportShipsWithEntities(LoadedServerShip serverShip, ShipTeleportData shipTeleportData, ServerLevel levelOld, ServerLevel levelNew) {
         AABBdc shipWorldAABB = serverShip.getWorldAABB();
-        AABBdc shipWorldInflated = new AABBd(shipWorldAABB.minX() - shipExtraRange, shipWorldAABB.minY() - shipExtraRange, shipWorldAABB.minZ() - shipExtraRange,
-                shipWorldAABB.maxX() + shipExtraRange, shipWorldAABB.maxY() + shipExtraRange, shipWorldAABB.maxZ() + shipExtraRange);
 
-        AABB entityAABB = new AABB(shipWorldAABB.minX(), shipWorldAABB.minY(), shipWorldAABB.minZ(), shipWorldAABB.maxX(), shipWorldAABB.maxY(), shipWorldAABB.maxZ()).inflate(5d);
-        List<Entity> allNonPassengerEntities = levelOld.getEntities((Entity) null, entityAABB, (entity) -> !entity.isPassenger());
+        AABBdc shipAABBInflated = new AABBd(shipWorldAABB.minX() - shipExtraRange, shipWorldAABB.minY() - shipExtraRange,
+                shipWorldAABB.minZ() - shipExtraRange, shipWorldAABB.maxX() + shipExtraRange,
+                shipWorldAABB.maxY() + shipExtraRange, shipWorldAABB.maxZ() + shipExtraRange);
 
-        ShipTransform oldShipTransform = teleportIntersectingShips(serverShipWorld.getLoadedShips().getIntersecting(shipWorldInflated, VSGameUtilsKt.getDimensionId(levelOld)),
-                shipTeleportData, levelOld, levelNew);
+        AABB entityAABB = new AABB(shipWorldAABB.minX(), shipWorldAABB.minY(), shipWorldAABB.minZ(), shipWorldAABB.maxX(),
+                shipWorldAABB.maxY(), shipWorldAABB.maxZ()).inflate(5d);
 
-        if (oldShipTransform == null) {
+        LoadedServerShip biggestShip = this.collectIntersectingShips(serverShipWorld.getLoadedShips().getIntersecting(shipAABBInflated,
+                        VSGameUtilsKt.getDimensionId(levelOld)), shipTeleportData);
+
+        if (biggestShip == null) {
             return;
         }
+        List<Entity> allNonPassengerEntities = levelOld.getEntities((Entity) null, entityAABB, (entity) -> !entity.isPassenger());
+        this.collectEntities(allNonPassengerEntities, biggestShip.getId(), biggestShip.getTransform(), shipTeleportData, levelOld, levelNew);
 
-        this.teleportEntities(allNonPassengerEntities, oldShipTransform, shipTeleportData, levelOld, levelNew);
+        this.telepostShips();
+        this.teleportShipyardEntities(levelNew);
     }
 
-    private ShipTransform teleportIntersectingShips(Iterable<LoadedServerShip> serverShipIterable, ShipTeleportData parentTeleportData, ServerLevel levelOld, ServerLevel levelNew) {
+    private LoadedServerShip collectIntersectingShips(Iterable<LoadedServerShip> serverShipIterable, ShipTeleportData parentTeleportData) {
         List<LoadedServerShip> allChildShips = new ArrayList<>();
         LoadedServerShip parentShip = null;
         double maxVolumeSearched = 0d;
@@ -75,10 +85,11 @@ public class ShipTeleporter {
 
         ShipTransform oldParentTransform = parentShip.getTransform();
 
-        shipTeleportDataQueue.add(new ShipToTeleport(parentShip, parentTeleportData, levelOld, levelNew)); //serverShipWorld.teleportShip(parentShip, parentTeleportData);
+        shipTeleportDataQueue.add(new ShipToTeleport(parentShip, parentTeleportData)); //serverShipWorld.teleportShip(parentShip, parentTeleportData);
         alreadyTeleported.add(parentShip.getId());
 
         for (LoadedServerShip childShip : allChildShips) {
+//            Vector3d posNew = oldParentTransform.getWorldToShip().transformPosition(new Vector3d(childShip.getTransform().getPositionInWorld()));
             Vector3d posNew = transformPos(new Vector3d(childShip.getTransform().getPositionInWorld()),
                     oldParentTransform.getPositionInWorld(), oldParentTransform.getRotation(),
                     parentTeleportData.getNewPos(), parentTeleportData.getNewRot());
@@ -88,61 +99,78 @@ public class ShipTeleporter {
 
             ShipTeleportDataImpl childShipData = new ShipTeleportDataImpl(posNew, rotNew, new Vector3d(), childShip.getAngularVelocity(),
                     parentTeleportData.getNewDimension(), null, null);
-            shipTeleportDataQueue.add(new ShipToTeleport(childShip, childShipData, levelOld, levelNew));
+            shipTeleportDataQueue.add(new ShipToTeleport(childShip, childShipData));
             alreadyTeleported.add(childShip.getId());
         }
 
-        return oldParentTransform;
+        return parentShip;
     }
 
-    public void telepostShipsFromLastTick() {
+    private void collectEntities(List<Entity> entities, long ogShipId, ShipTransform oldShipTransform, ShipTeleportData newShipTransform, ServerLevel levelOld, ServerLevel levelNew) {
+
+        for (Entity entity : entities) {
+            Vector3d posNew;
+
+            if (!VSGameUtilsKt.isBlockInShipyard(levelOld, entity.position())) {
+                posNew = new Vector3d(entity.position().x, entity.position().y, entity.position().z);
+                oldShipTransform.getWorldToShip().transformPosition(posNew);
+                ((IEntityDraggingInformationProvider) entity).getDraggingInformation().setLastShipStoodOn(null);
+                Quaterniond entityRotation = new Quaterniond().rotationX(entity.getXRot()).rotationY(entity.getYRot());
+                Vector3d entityEuler = transformRot(entityRotation, oldShipTransform.getRotation(), newShipTransform.getNewRot()).getEulerAnglesXYZ(new Vector3d());
+                float yRot = (float) entityEuler.y();
+                float xRot = (float) entityEuler.x();
+
+                entityTeleportDataQueue.add(new EntityToTeleport(entity, posNew.x, posNew.y, posNew.z, yRot, xRot, levelNew, ogShipId));
+            } else if (!levelOld.equals(levelNew)) {
+                shipyardEntityTeleportQueue.add(entity);
+            }
+        }
+    }
+
+    public void teleportEntitiesFromLastTick() {
+        teleportEntities();
+    }
+
+    private void telepostShips() {
         ShipToTeleport shipToTeleport;
 
         while ((shipToTeleport = shipTeleportDataQueue.poll()) != null) {
-            List<Entity> allNonPassengerEntities = this.getShipYardEntities(shipToTeleport.levelOld(), shipToTeleport.serverShip());
             this.serverShipWorld.teleportShip(shipToTeleport.serverShip(), shipToTeleport.data());
-            this.teleportShipyardEntities(allNonPassengerEntities, shipToTeleport.levelNew());
         }
     }
 
-    private void teleportEntities(List<Entity> entities, ShipTransform oldShipTransform, ShipTeleportData newShipTransform, ServerLevel oldLevel,  ServerLevel levelNew) {
-        for (Entity entity : entities) {
-            if (VSGameUtilsKt.isBlockInShipyard(oldLevel, entity.position())) {
-                continue;
+    private void teleportEntities() {
+        EntityToTeleport entityToTeleport;
+
+        while ((entityToTeleport = entityTeleportDataQueue.poll()) != null) {
+            List<Entity> passengerList = List.copyOf(entityToTeleport.entity().getPassengers());
+            Vector3d pos = new Vector3d(entityToTeleport.x(), entityToTeleport.y(), entityToTeleport.z());
+            ServerShip ship = this.serverShipWorld.getAllShips().getById(entityToTeleport.shipID());
+            if (ship == null) {
+                return;
             }
+            ship.getShipToWorld().transformPosition(pos);
+            ((IEntityDraggingInformationProvider) entityToTeleport.entity()).getDraggingInformation().setLastShipStoodOn(null);
 
-            ((IEntityDraggingInformationProvider) entity).getDraggingInformation().setLastShipStoodOn(null);
-            Vector3d posNew = transformPos(new Vector3d(entity.position().x, entity.position().y, entity.position().z),
-                    oldShipTransform.getPositionInWorld(), oldShipTransform.getRotation(), newShipTransform.getNewPos(), newShipTransform.getNewRot());
+            entityToTeleport.entity().teleportTo(entityToTeleport.levelNew(), pos.x(), pos.y(), pos.z(),
+                    EnumSet.noneOf(RelativeMovement.class), entityToTeleport.yRot(), entityToTeleport.xRot());
 
-            Quaterniond entityRotation = new Quaterniond().rotationX(entity.getXRot()).rotationY(entity.getYRot());
-            Vector3d entityEuler = transformRot(entityRotation, oldShipTransform.getRotation(), newShipTransform.getNewRot()).getEulerAnglesXYZ(new Vector3d());
-            List<Entity> passengerList = List.copyOf(entity.getPassengers());
+            Entity postTeleportEntity = entityToTeleport.levelNew().getEntity(entityToTeleport.entity().getUUID());
 
-            float yRot = (float) entityEuler.y();
-            float xRot = (float) entityEuler.x();
-
-            if (entity.teleportTo(levelNew, posNew.x, posNew.y, posNew.z, EnumSet.noneOf(RelativeMovement.class), yRot, xRot)) {
-                Entity postTeleportEntity = levelNew.getEntity(entity.getUUID());
-                teleportPassengers(postTeleportEntity, passengerList, levelNew);
+            if (postTeleportEntity != null) {
+                teleportPassengers(postTeleportEntity, passengerList, entityToTeleport.levelNew());
             }
         }
     }
+    private void teleportShipyardEntities(ServerLevel levelNew) {
+        Entity entity;
 
-    private List<Entity> getShipYardEntities(ServerLevel level, ServerShip ship) {
-        IShipActiveChunksSet iShipActiveChunksSet = ship.getActiveChunksSet();
-        Vector3i minChunks = new Vector3i();
-        Vector3i maxChunks = new Vector3i();
-
-        iShipActiveChunksSet.getMinMaxWorldPos(minChunks, maxChunks, VSGameUtilsKt.getYRange(level));
-        AABB entitySearchAABB = new AABB(minChunks.x, minChunks.y, minChunks.z, maxChunks.x, maxChunks.y, maxChunks.z);
-        return level.getEntities((Entity) null, entitySearchAABB, (entity) -> !entity.isPassenger());
-    }
-
-    private void teleportShipyardEntities(List<Entity> entities, ServerLevel levelNew) {
-        for (Entity entity : entities) {
+        while ((entity = shipyardEntityTeleportQueue.poll()) != null) {
             List<Entity> passengerList = List.copyOf(entity.getPassengers());
-            entity.teleportTo(levelNew, entity.position().x, entity.position().y, entity.position().z, EnumSet.noneOf(RelativeMovement.class), entity.getYRot(), entity.getXRot());
+
+            entity.teleportTo(levelNew, entity.position().x(), entity.position().y(), entity.position().z(),
+                    EnumSet.noneOf(RelativeMovement.class), entity.getYRot(), entity.getXRot());
+
             Entity postTeleportEntity = levelNew.getEntity(entity.getUUID());
 
             if (postTeleportEntity != null) {
@@ -159,7 +187,7 @@ public class ShipTeleporter {
                 Entity postTeleportPassenger = levelNew.getEntity(passenger.getUUID());
 
                 postTeleportPassenger.startRiding(parentEntity, true);
-                teleportPassengers(postTeleportPassenger, subPassengerList, levelNew);
+                this.teleportPassengers(postTeleportPassenger, subPassengerList, levelNew);
             }
         }
     }
@@ -186,5 +214,8 @@ public class ShipTeleporter {
         alreadyTeleported.clear();
     }
 
-    private record ShipToTeleport(LoadedServerShip serverShip, ShipTeleportData data, ServerLevel levelOld, ServerLevel levelNew) {}
+    private record ShipToTeleport(LoadedServerShip serverShip, ShipTeleportData data) {}
+
+    private record EntityToTeleport(Entity entity, double x, double y, double z, float yRot, float xRot, ServerLevel levelNew, long shipID) {
+    }
 }

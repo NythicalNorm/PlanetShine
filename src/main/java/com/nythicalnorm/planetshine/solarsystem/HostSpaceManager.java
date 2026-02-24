@@ -75,9 +75,8 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         int x = (int) (Math.round(spaceDimPos.x / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         int z = (int) (Math.round(spaceDimPos.z / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         Vector2ic pos = new Vector2i(x,z);
-        OrbitHostSpace hostSpace = loadedHostSpaces.get(pos);
 
-        return hostSpace;
+        return loadedHostSpaces.get(pos);
     }
 
     private Vector2i genNewHostSpaceLoc(int alreadyGenerated) {
@@ -141,7 +140,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     }
 
     public void checkShipTeleportToSpace() {
-        shipTeleporter.telepostShipsFromLastTick();
+        this.shipTeleporter.teleportEntitiesFromLastTick();
         ValkyrienSkies.api().getServerShipWorld(psServer.getMCServer()).getLoadedShips().forEach(loadedServerShip -> {
             Vector3dc currentPos = loadedServerShip.getTransform().getPositionInWorld();
 
