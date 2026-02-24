@@ -5,37 +5,37 @@ import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.util.calculations.PlanetBodyCalc;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3d;
-import org.joml.Vector3f;
+import org.joml.*;
+
+import java.lang.Math;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
-    private Vector3d clientDeltavelLast;
+    private final Vector3d clientDeltavelLast;
+    private final Quaterniond playerOnPlanetRotation;
 
     public ClientPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
         super(playerSpacecraftBuilder, true);
-        clientDeltavelLast = new Vector3d();
+        this.clientDeltavelLast = new Vector3d();
+        this.playerOnPlanetRotation = new Quaterniond();
     }
 
     public void updatePlayerPosRot(CelestialBody currentPlanetOn) {
         updatePlanetPos(getPlayerEntity().level(), getPlayerEntity().position(), currentPlanetOn);
-        updatePlanetRot(new Quaternionf(), currentPlanetOn);
+        updatePlanetRot(currentPlanetOn);
     }
 
-    private void updatePlanetRot(Quaternionf existingrotation, CelestialBody currentPlanet) {
+    private void updatePlanetRot(CelestialBody currentPlanet) {
         //quaternion to rotate the output of lookalong function to the correct -y direction.
-        this.rotation.set(new AxisAngle4f(Mth.HALF_PI,1f,0f,0f));
-        Vector3f playerRelativePos = new Vector3f((float) relativeOrbitalPos.x, (float) relativeOrbitalPos.y, (float) relativeOrbitalPos.z);
+        this.playerOnPlanetRotation.set(new AxisAngle4d(Math.PI*0.5d,1d,0d,0d));
+        Vector3d playerRelativePos = new Vector3d(this.getRelativePos());
         playerRelativePos.normalize();
-        Vector3f upVector = PlanetBodyCalc.getUpVectorForPlanetRot(new Vector3f(playerRelativePos), currentPlanet);
-        this.rotation.lookAlong(playerRelativePos, upVector);
+        Vector3d upVector = PlanetBodyCalc.getUpVectorForPlanetRot(new Vector3d(playerRelativePos), currentPlanet);
+        this.playerOnPlanetRotation.lookAlong(playerRelativePos, upVector);
     }
 
     private void updatePlanetPos(Level level, Vec3 position, CelestialBody currentPlanetOn) {
@@ -44,6 +44,14 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
 
         this.relativeOrbitalPos.set(PlanetBodyCalc.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false));
         this.absoluteOrbitalPos.set(currentPlanetOn.getAbsolutePos()).add(relativeOrbitalPos);
+    }
+
+    public Quaterniondc getPlayerOnPlanetRotation() {
+        return playerOnPlanetRotation;
+    }
+
+    public void clearRotation() {
+        this.playerOnPlanetRotation.identity();
     }
 
     public void processHostMove(Vec3 deltaMovement) {

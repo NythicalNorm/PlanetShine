@@ -69,7 +69,7 @@ public abstract class OrbitHostSpace {
         nonHostEntities.add(entity);
     }
 
-    public void removeEntityToHostSpace(Entity entity) {
+    public void removeEntityFromHostSpace(Entity entity) {
         nonHostEntities.remove(entity);
     }
 

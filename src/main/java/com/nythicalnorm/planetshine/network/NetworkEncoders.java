@@ -4,9 +4,9 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
@@ -40,10 +40,8 @@ public class NetworkEncoders {
             NetworkEncoders.writeOrbitalBody(friendlyByteBuf, orbitBody);
             List<OrbitId> planetChildBodiesIDs = new ArrayList<>();
 
-            for (OrbitalBody childBody : orbitBody.getChildren()) {
-                if (childBody instanceof PlanetaryBody planetaryBody) {
-                    planetChildBodiesIDs.add(planetaryBody.getOrbitId());
-                }
+            for (CelestialBody childBody : orbitBody.getPlanetChildren()) {
+                planetChildBodiesIDs.add(childBody.getOrbitId());
             }
 
             friendlyByteBuf.writeVarInt(planetChildBodiesIDs.size());
@@ -74,7 +72,7 @@ public class NetworkEncoders {
         for (TempPlanetaryHolder holder : tempPlanetHolderMap.values()) {
             for (OrbitId childID : holder.orbitIdList) {
                 if (tempPlanetHolderMap.containsKey(childID)) {
-                   holder.planetaryBody.addChildBody(tempPlanetHolderMap.get(childID).planetaryBody);
+                   holder.planetaryBody.addChildPlanet(tempPlanetHolderMap.get(childID).planetaryBody);
                 } else {
                     PlanetShine.logError("unable to parse planetaryBody due to improper static bodies orbiting planets");
                 }
@@ -85,6 +83,29 @@ public class NetworkEncoders {
         return bodyList;
     }
 
+    public static void writeEntityBodyList(FriendlyByteBuf friendlyByteBuf, List<EntityOrbitBody> bodyList) {
+        friendlyByteBuf.writeVarInt(bodyList.size());
+
+        for (EntityOrbitBody orbitBody : bodyList) {
+            if (orbitBody.getParent() != null) {
+                NetworkEncoders.writeOrbitalBody(friendlyByteBuf, orbitBody);
+                orbitBody.getParent().getOrbitId().encodeToBuffer(friendlyByteBuf);
+            }
+        }
+    }
+
+    public static List<TempEntityOrbitHolder> readEntityBodyList(FriendlyByteBuf friendlyByteBuf) {
+        int bodyNo = friendlyByteBuf.readVarInt();
+        List<TempEntityOrbitHolder> tempEntityOrbitHolder = new ArrayList<>();
+
+        for (int i = 0; i < bodyNo; i++) {
+            if (NetworkEncoders.readOrbitalBodyClient(friendlyByteBuf) instanceof EntityOrbitBody entityOrbitBody) {
+                OrbitId parentID = new OrbitId(friendlyByteBuf);
+                tempEntityOrbitHolder.add(new TempEntityOrbitHolder(entityOrbitBody, parentID));
+            }
+        }
+        return tempEntityOrbitHolder;
+    }
 
     public static void writeOrbitalElements(FriendlyByteBuf friendlyByteBuf, OrbitalElements orbitalElements) {
         friendlyByteBuf.writeDouble(orbitalElements.getSemiMajorAxis());
@@ -158,7 +179,7 @@ public class NetworkEncoders {
         return friendlyByteBuf.readCharSequence(stringSize, StandardCharsets.US_ASCII).toString();
     }
 
-    private record TempPlanetaryHolder(CelestialBody planetaryBody, List<OrbitId> orbitIdList) {
+    private record TempPlanetaryHolder(CelestialBody planetaryBody, List<OrbitId> orbitIdList) {}
 
-    }
+    public record TempEntityOrbitHolder(EntityOrbitBody orbitBody, OrbitId parentID) {}
 }

@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.solarsystem;
 
+import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.bodies.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
@@ -8,7 +9,6 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Quaternionf;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -55,11 +55,11 @@ public class SolarSystem {
         return allSpacecraftBodies.get(spacecraftBodyAddress);
     }
 
-    public void playerChangeOrbitalSOIs(OrbitalBody spacecraftBody, OrbitId newParentID, OrbitalElements orbitalElementsNew) {
+    public void playerChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, OrbitId newParentID, OrbitalElements orbitalElementsNew) {
         playerChangeOrbitalSOIs(spacecraftBody, getPlanet(newParentID), orbitalElementsNew);
     }
 
-    public void playerChangeOrbitalSOIs(OrbitalBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElements orbitalElementsNew) {
+    public void playerChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElements orbitalElementsNew) {
         //removing the old reference to the object
         spacecraftBody.removeParent();
         // adding reference to new object
@@ -68,19 +68,18 @@ public class SolarSystem {
         spacecraftBody.setOrbitalElements(orbitalElementsNew);
     }
 
-    public void playerJoinedOrbital(OrbitalBody OrbitalDataNew, OrbitId newParentID) {
-        playerJoinedOrbital(getPlanet(newParentID), OrbitalDataNew);
+    public void entityJoinedOrbital(OrbitalBody OrbitalDataNew, OrbitId newParentID) {
+        entityJoinedOrbital(getPlanet(newParentID), OrbitalDataNew);
     }
 
-    public void playerJoinedOrbital(CelestialBody newOrbitPlanet, OrbitalBody orbitalDataNew) {
+    public void entityJoinedOrbital(CelestialBody newOrbitPlanet, OrbitalBody orbitalDataNew) {
         if (newOrbitPlanet != null) {
-            //temp default Rotation
-            orbitalDataNew.setRotation(new Quaternionf());
-            newOrbitPlanet.addChildBody(orbitalDataNew);
-
-            if (orbitalDataNew instanceof EntityOrbitBody entitySpacecraftBody) {
-                getAllSpacecraftBodies().putIfAbsent(entitySpacecraftBody.getOrbitId(), entitySpacecraftBody);
+            if (orbitalDataNew instanceof EntityOrbitBody entitySpacecraftBody &&
+                    getAllSpacecraftBodies().putIfAbsent(entitySpacecraftBody.getOrbitId(), entitySpacecraftBody) == null) {
+                newOrbitPlanet.addChildBody(entitySpacecraftBody);
             }
+        } else {
+            PlanetShine.logError("EntityBody tried to join non-existent CelestialBody, ignoring Entity");
         }
     }
 
@@ -104,6 +103,10 @@ public class SolarSystem {
 
     public List<CelestialBody> getAllPlanetOrbitsList() {
         return allPlanetaryBodies.values().stream().toList();
+    }
+
+    public List<EntityOrbitBody> getAllEntitiesOrbitsList() {
+        return allSpacecraftBodies.values().stream().toList();
     }
 
     public CelestialBody getOverworldPlanet() {

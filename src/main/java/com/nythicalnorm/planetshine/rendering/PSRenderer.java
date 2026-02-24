@@ -20,6 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
@@ -89,7 +90,7 @@ public class PSRenderer {
         }
 
         poseStack.pushPose();
-        poseStack.mulPose(psClient.getPlayerOrbit().getRotation());
+        poseStack.mulPose(new Quaternionf().set(psClient.getPlayerOrbit().getPlayerOnPlanetRotation()));
 
         SpaceObjRenderer.renderPlanetaryBodies(poseStack, psClient.getSpaceRenderables(), psClient, camera, projectionMatrix, partialTick);
         RenderSystem.depthMask(true);
@@ -185,14 +186,13 @@ public class PSRenderer {
         return latestSkyColor;
     }
 
-    public static Vector3f getSunPosOverworld() {
+    public static Vector3d getSunPosOverworld() {
         Level clientLevel = Minecraft.getInstance().level;
         if (PSClient.get() != null && clientLevel != null) {
             PSClient css = PSClient.get();
             if (css.isOnPlanet() && clientLevel.dimension() == Level.OVERWORLD) {
                 Vector3d sunPosD = new Vector3d(css.getPlayerOrbit().getAbsolutePos()).normalize();
-                Vector3f sunPosF = new Vector3f((float) sunPosD.x, (float) sunPosD.y, (float) sunPosD.z);
-                return sunPosF.rotate(css.getPlayerOrbit().getRotation());
+                return sunPosD.rotate(css.getPlayerOrbit().getPlayerOnPlanetRotation());
             }
         }
         return null;
@@ -201,7 +201,7 @@ public class PSRenderer {
     private static void drawSunriseDisc(PoseStack poseStack, ClientLevel level) {
         RenderSystem.enableBlend();
         float[] sunriseColor = level.effects().getSunriseColor(PSClient.get().getDaylightRegion().getSunAngle(),0f);
-        Vector3f sunPos = getSunPosOverworld();
+        Vector3d sunPos = getSunPosOverworld();
 
         if (sunriseColor == null || sunPos == null) {
             return;

@@ -20,7 +20,6 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
         NetworkEncoders.writeVector3d(byteBuf, orbit.getRelativePos());
         NetworkEncoders.writeVector3d(byteBuf, orbit.getAbsolutePos());
         NetworkEncoders.writeVector3d(byteBuf, orbit.getRelativeVelocity());
-        NetworkEncoders.writeQuaternionfc(byteBuf, orbit.getRotation());
 
         if (orbit.getOrbitalElements() == null) {
             byteBuf.writeBoolean(false);
@@ -38,7 +37,6 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
         orbit.setRelativeOrbitalPos(NetworkEncoders.readVector3d(byteBuf));
         orbit.setAbsoluteOrbitalPos(NetworkEncoders.readVector3d(byteBuf));
         orbit.setRelativeVelocity(NetworkEncoders.readVector3d(byteBuf));
-        orbit.setRotation(byteBuf.readQuaternion());
 
         if (byteBuf.readBoolean()) {
             orbit.setOrbitalElements(NetworkEncoders.readOrbitalElements(byteBuf));
@@ -62,7 +60,6 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
         tag.put("relative_pos", NBTEncoders.putVector3d(orbit.getRelativePos()));
         tag.put("absolute_pos", NBTEncoders.putVector3d(orbit.getAbsolutePos()));
         tag.put("relative_velocity", NBTEncoders.putVector3d(orbit.getRelativeVelocity()));
-        tag.put("rotation", NBTEncoders.putQuaternionfc(orbit.getRotation()));
 
         if (orbit.getOrbitalElements() != null) {
             tag.put("orbital_elements", NBTEncoders.putOrbitalElements(orbit.orbitalElements));
@@ -79,7 +76,6 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
         orbit.setRelativeOrbitalPos(NBTEncoders.getVector3d(tag.getCompound("relative_pos")));
         orbit.setAbsoluteOrbitalPos(NBTEncoders.getVector3d(tag.getCompound("absolute_pos")));
         orbit.setRelativeVelocity(NBTEncoders.getVector3d(tag.getCompound("relative_velocity")));
-        orbit.setRotation(NBTEncoders.getQuaternionf(tag.getCompound("rotation")));
 
         if (tag.contains("orbital_elements")) {
             orbit.setOrbitalElements(NBTEncoders.getOrbitalElements(tag.getCompound("orbital_elements")));

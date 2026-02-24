@@ -17,15 +17,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ClientboundLoginSolarSystemState {
+public class ClientboundLoginPSClientStart {
     private final long currentTime;
     private final long currentTimeWarp;
     private final AbstractPlayerOrbitBody playerData;
     private final List<CelestialBody> allPlanetaryBodies;
     private final OrbitId playerParentOrbit;
 
-    public ClientboundLoginSolarSystemState(@Nullable ServerPlayerOrbitBody playerData, List<CelestialBody> allPlanetaryBodies,
-                                            long currentTime, long timeWarp) {
+    public ClientboundLoginPSClientStart(@Nullable ServerPlayerOrbitBody playerData, List<CelestialBody> allPlanetaryBodies,
+                                         long currentTime, long timeWarp) {
         this.currentTime = currentTime;
         this.currentTimeWarp = timeWarp;
         this.playerData = playerData;
@@ -40,7 +40,7 @@ public class ClientboundLoginSolarSystemState {
         this.allPlanetaryBodies = allPlanetaryBodies;
     }
 
-    public ClientboundLoginSolarSystemState(FriendlyByteBuf friendlyByteBuf) {
+    public ClientboundLoginPSClientStart(FriendlyByteBuf friendlyByteBuf) {
         currentTime = friendlyByteBuf.readLong();
         currentTimeWarp = friendlyByteBuf.readLong();
         OrbitId playerParent = null;

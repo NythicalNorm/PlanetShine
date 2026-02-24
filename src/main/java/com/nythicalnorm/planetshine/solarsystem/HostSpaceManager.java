@@ -124,7 +124,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     public void spaceEntityLeave(Entity entity) {
         OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
         if (entityHostSpace != null) {
-            entityHostSpace.removeEntityToHostSpace(entity);
+            entityHostSpace.removeEntityFromHostSpace(entity);
         }
     }
 
@@ -173,21 +173,13 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                 if (planetLevel != null) {
                     Vector2d pos = PlanetBodyCalc.vectorToPlanetDimPos(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent().getRotation());
                     if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody) {
-                        teleportEntity(playerOrbitBody.getPlayerEntity(), planetLevel, pos);
+                        teleportEntity(playerOrbitBody.getPlayerEntity(), planetLevel, pos.x, teleportToGroundHeight, pos.y);
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));
                     }
                 }
             }
         });
-    }
-
-    public void teleportEntity(Entity entity, ServerLevel level, Vector3d position) {
-        teleportEntity(entity, level, position.x, position.y, position.z);
-    }
-
-    public void teleportEntity(Entity entity, ServerLevel level, Vector2d position) {
-        teleportEntity(entity, level, position.x, 1000d, position.y);
     }
 
     public void teleportEntity(Entity entity, ServerLevel level, double x, double y, double z) {
@@ -205,7 +197,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         Quaterniond rotationDifference = OrbitalBodyUtils.getSpaceRotationFromPlanetPos(relativesShipPosition, celestialBody);
         Quaterniond shipNewRot = new Quaterniond();
         bodyKinematics.getRotation().mul(rotationDifference, shipNewRot);
-        builder.setRotation(shipNewRot);
+
         // need to take into account the planets rotational velocity that is also transferred to the ship, earth moving at 1000 m/s at the equator etc...
         Vector3d velocity = new Vector3d(ship.getVelocity()).rotate(rotationDifference);
         builder.setRelativeVelocity(velocity);

@@ -55,7 +55,7 @@ public class PSDataPackManager {
         for (Map.Entry<String, CelestialBody> entry : planetLoadedData.tempPlanetaryBodyMap().entrySet()) {
             String[] childPlanets = planetLoadedData.tempChildPlanetsMap().get(entry.getKey());
             for (String planet : childPlanets) {
-                entry.getValue().addChildBody(planetLoadedData.tempPlanetaryBodyMap().get(planet));
+                entry.getValue().addChildPlanet(planetLoadedData.tempPlanetaryBodyMap().get(planet));
             }
 
             if (entry.getValue().getDimension() != null) {

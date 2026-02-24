@@ -8,17 +8,13 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.renderTypes.*;
 import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
-import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
 public class MapRenderer { // this is full of memory leaks like chock-full of them need to fix.
@@ -26,8 +22,6 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
     private MapRenderable renderTree;
     private OrbitalBody currentFocusedBody;
     private MapSolarSystemScreen currentOpenScreen;
-    private ArrayList<MapRenderableIcon> iconsList;
-    private MapRenderableIcon homePlanetPlayerDisplay;
 
     public void renderSkybox(PoseStack mapPosestack, Matrix4f projectionMatrix) {
         AtmosphereRenderer.renderSpaceSky(mapPosestack, projectionMatrix);
@@ -44,14 +38,13 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
         poseStack.translate(-mapCameraPos.x, -mapCameraPos.y, -mapCameraPos.z);
         renderTree.propagateRender(poseStack, projectionMatrix, null, currentFocusedBody);
 
-        for (MapRenderableIcon icon : iconsList) {
-            renderIcon(graphics, icon.getScreenPos(), icon.getPlayerTextureLoc(), 64);
-        }
+//        for (MapRenderableIcon icon : iconsList) {
+//            renderIcon(graphics, icon.getScreenPos(), icon.getPlayerTextureLoc(), 64);
+//        }
     }
 
     public void updateMapRenderables(PSClient css, OrbitalBody currentFocusedBody) {
         CelestialBody rootStar = css.getSolarSystem().getRootStar();
-        iconsList = new ArrayList<>();
         MapRelativeState starMapState = MapRelativeState.AbsolutePos;
         if (rootStar.hasChild(currentFocusedBody)) {
             starMapState = MapRelativeState.FocusedBodyParent;
@@ -61,53 +54,33 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
 
         renderTree = new MapRenderablePlanet(rootStar, starMapState, null);
 
-        Optional<CelestialBody> planetOn = css.getCurrentPlanet();
-        if (planetOn.isPresent()) {
-            homePlanetPlayerDisplay = new MapRenderableIcon(css.getPlayerOrbit(), Minecraft.getInstance().player.getSkinTextureLocation(),
-                    MapRelativeState.AlwaysParentRelative, planetOn.get());
-            iconsList.add(homePlanetPlayerDisplay);
-        }
+//        Optional<CelestialBody> planetOn = css.getCurrentPlanet();
+//        if (planetOn.isPresent()) {
+//            homePlanetPlayerDisplay = new MapRenderableIcon(css.getPlayerOrbit(), Minecraft.getInstance().player.getSkinTextureLocation(),
+//                    MapRelativeState.AlwaysParentRelative, planetOn.get());
+//            iconsList.add(homePlanetPlayerDisplay);
+//        }
+
         traverseAndPopulateList(css.getSolarSystem().getRootStar(), currentFocusedBody, renderTree);
     }
 
-    private MapRenderable traverseAndPopulateList(OrbitalBody parentBody, OrbitalBody currentFocusedBody, MapRenderable parentRenderableInMap) {
-        Collection<OrbitalBody> OrbitChildren = parentBody.getChildren();
-
-        if (homePlanetPlayerDisplay != null) {
-            if (parentBody.equals(PSClient.get().getCurrentPlanet().get())) {
-                parentRenderableInMap.addChildRenderable(homePlanetPlayerDisplay);
-            }
-        }
+    private MapRenderable traverseAndPopulateList(CelestialBody parentBody, OrbitalBody currentFocusedBody, MapRenderable parentRenderableInMap) {
+        Collection<CelestialBody> OrbitChildren = parentBody.getPlanetChildren();
 
         if (OrbitChildren != null) {
-            for (OrbitalBody childBody : OrbitChildren) {
+            for (CelestialBody childBody : OrbitChildren) {
                 boolean isCurrentFocusedBody = childBody.equals(currentFocusedBody);
                 MapRelativeState mapState = MapRelativeState.AbsolutePos;
                 if (isCurrentFocusedBody) {
                     mapState = MapRelativeState.FocusedBody;
-                } else if (currentFocusedBody.hasChild(childBody)) {
-                    mapState = MapRelativeState.RelativePos;
                 } else if (childBody.hasChild(currentFocusedBody)) {
                     mapState = MapRelativeState.FocusedBodyParent;
-                }
-                MapRenderable renderInMap = null;
-
-                if (childBody.getOrbitalElements() != null) {
-                    parentRenderableInMap.addChildRenderable(new MapRenderableOrbit(MapRelativeState.AlwaysParentRelative, childBody, parentBody));
+                } else if (currentFocusedBody instanceof CelestialBody currentCelestialBody && currentCelestialBody.hasChild(childBody)) {
+                    mapState = MapRelativeState.RelativePos;
                 }
 
-                if (childBody instanceof CelestialBody celestialBody) {
-                    renderInMap = new MapRenderablePlanet(celestialBody, mapState, parentBody);
-                } else if (childBody instanceof EntityOrbitBody clientBody) {
-                    ResourceLocation playerHeadTexture = Minecraft.getInstance().player.getSkinTextureLocation();
-                    MapRenderableIcon iconMap = new MapRenderableIcon(clientBody, playerHeadTexture, mapState, parentBody);
-                    iconsList.add(iconMap);
-                    renderInMap = iconMap;
-                }
-
-                if (renderInMap != null) {
-                    parentRenderableInMap.addChildRenderable(traverseAndPopulateList(childBody, currentFocusedBody, renderInMap));
-                }
+                MapRenderable renderInMap = new MapRenderablePlanet(childBody, mapState, parentBody);
+                parentRenderableInMap.addChildRenderable(traverseAndPopulateList(childBody, currentFocusedBody, renderInMap));
             }
         }
 
@@ -120,24 +93,12 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
                 (int) relativeHeadSize,(int) relativeHeadSize, (int) relativeHeadSize,  (int) size, (int) size);
     }
 
-    public OrbitalBody getCurrentFocusedBody() {
-        return currentFocusedBody;
-    }
-
     public static Vector3f toMapCoordinate(Vector3d position) {
         position.mul(SCALE_FACTOR);
         return new Vector3f((float) position.x, (float) position.y, (float) position.z);
     }
 
-    public MapSolarSystemScreen getCurrentOpenScreen() {
-        return currentOpenScreen;
-    }
-
     public void setScreen(MapSolarSystemScreen mapSolarSystem) {
-        if (mapSolarSystem == null) {
-            homePlanetPlayerDisplay = null;
-            iconsList = new ArrayList<>();
-        }
         currentOpenScreen = mapSolarSystem;
     }
 }

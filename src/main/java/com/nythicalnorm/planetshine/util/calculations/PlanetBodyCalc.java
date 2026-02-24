@@ -167,14 +167,14 @@ public class PlanetBodyCalc {
     }
 
     //client side only
-    public static Vector3f getUpVectorForPlanetRot(Vector3f playerRelativePos, CelestialBody planet) {
-        Vector3f upDir = new Vector3f(0f,-1f,0f);
+    public static Vector3d getUpVectorForPlanetRot(Vector3d playerRelativePos, CelestialBody planet) {
+        Vector3d upDir = new Vector3d(0f,-1f,0f);
         if (planet instanceof PlanetaryBody planetaryBody) {
             AxisAngle4f northPole = planetaryBody.getNorthPoleDir();
-            upDir = new Vector3f(northPole.x, northPole.z, northPole.y);
+            upDir = new Vector3d(northPole.x, northPole.z, northPole.y);
         }
         upDir.normalize();
-        Quaternionf rot = new Quaternionf(new AxisAngle4f(Mth.HALF_PI, 1f, 0f, 0f));
+        Quaterniond rot = new Quaterniond(new AxisAngle4d(Math.PI * 0.5d, 1f, 0f, 0f));
 
         upDir.rotate(rot);
         return upDir;

@@ -55,7 +55,7 @@ public class SpacecraftDataStorage {
                 for (Tag tag : spacecraftList) {
                     if (tag instanceof CompoundTag compoundTag) {
                         OrbitalBody orbitalBody = NBTEncoders.getOrbitalBody(compoundTag);
-                        solarSystem.playerJoinedOrbital(celestialBody, orbitalBody);
+                        solarSystem.entityJoinedOrbital(celestialBody, orbitalBody);
                     }
                 }
             }
@@ -88,11 +88,9 @@ public class SpacecraftDataStorage {
             File planetFileLoc = ((ServerCelestialBody) celestialBody).getPlanetDataFile();
             ListTag spacecraftTags = new ListTag();
 
-            for (OrbitalBody orbitalBody : celestialBody.getChildren()) {
-                if (orbitalBody instanceof EntityOrbitBody) {
-                    CompoundTag orbitalTag = NBTEncoders.putOrbitalBody(orbitalBody);
-                    spacecraftTags.add(orbitalTag);
-                }
+            for (EntityOrbitBody orbitalBody : celestialBody.getEntityChildren()) {
+                CompoundTag orbitalTag = NBTEncoders.putOrbitalBody(orbitalBody);
+                spacecraftTags.add(orbitalTag);
             }
 
             writeList(planetFileLoc, spacecraftTags);

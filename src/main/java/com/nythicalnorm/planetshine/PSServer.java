@@ -2,9 +2,10 @@ package com.nythicalnorm.planetshine;
 
 import com.nythicalnorm.planetshine.dimensions.SpaceDimension;
 import com.nythicalnorm.planetshine.network.*;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundLoginEntityBodiesList;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitSOIChange;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundLoginSolarSystemState;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundLoginPSClientStart;
 import com.nythicalnorm.planetshine.network.time.ClientboundSolarSystemTimeUpdate;
 import com.nythicalnorm.planetshine.network.time.ClientboundTimeWarpUpdate;
 import com.nythicalnorm.planetshine.planettexgen.lod_tex.BiomeColorHolder;
@@ -34,7 +35,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
@@ -145,7 +145,9 @@ public class PSServer extends Stage {
             hostSpaceManager.teleportEntity(entity, server.overworld(), spawnPosition.x, spawnPosition.y, spawnPosition.z);
         }
 
-        PacketHandler.sendToPlayer(new ClientboundLoginSolarSystemState(playerSpacecraftBody, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick()), (ServerPlayer) entity);
+        PacketHandler.sendToPlayer(new ClientboundLoginPSClientStart(playerSpacecraftBody, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick()), (ServerPlayer) entity);
+
+        PacketHandler.sendToPlayer(new ClientboundLoginEntityBodiesList(this.solarSystem.getAllEntitiesOrbitsList()), (ServerPlayer) entity);
 
         if (planetTexHandler != null) {
             planetTexHandler.sendAllTexToPlayer((ServerPlayer) entity, solarSystem.getAllPlanetaryBodies());
@@ -168,25 +170,25 @@ public class PSServer extends Stage {
         if (playerOrbitBody != null) {
             solarSystem.playerChangeOrbitalSOIs(playerOrbitBody, body, elements);
             playerOrbitBody.setPlayer(player);
-            PacketHandler.sendToPlayer(new ClientboundOrbitSOIChange(PlayerID, body.getOrbitId(), elements), player);
+            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(PlayerID, body.getOrbitId(), elements));
         }
         else  {
             AbstractPlayerOrbitBody.PlayerOrbitBuilder builder = new AbstractPlayerOrbitBody.PlayerOrbitBuilder();
             builder.setPlayer(player);
-            builder.setRotation(new Quaternionf());
             builder.setStableOrbit(true);
             builder.setOrbitalElements(elements);
 
             playerOrbitBody = builder.build();
 
-            solarSystem.playerJoinedOrbital(body, playerOrbitBody);
-            PacketHandler.sendToPlayer(new ClientboundOrbitSOIChange(PlayerID, body.getOrbitId(), elements), player);
+            solarSystem.entityJoinedOrbital(body, playerOrbitBody);
+            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(PlayerID, body.getOrbitId(), elements));
         }
 
         OrbitHostSpace playerHostSpace = hostSpaceManager.getOrCreateHostSpace(playerOrbitBody);
         playerOrbitBody.setHostSpace(playerHostSpace.getOrbitIdOfHost());
 
-        hostSpaceManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY), playerHostSpace.getOriginPos());
+        hostSpaceManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY),
+                playerHostSpace.getOriginPos().x, playerHostSpace.getOriginPos().y, playerHostSpace.getOriginPos().z);
     }
 
     public void playerCloned(ServerPlayer player) {

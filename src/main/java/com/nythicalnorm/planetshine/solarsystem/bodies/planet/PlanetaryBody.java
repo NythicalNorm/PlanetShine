@@ -19,7 +19,7 @@ public abstract class PlanetaryBody extends CelestialBody {
     protected final long RotationPeriod;
 
     public PlanetaryBody(PlanetBuilder planetBuilder) {
-        super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder);
+        super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,  planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder);
         this.NorthPoleDir = planetBuilder.NorthPoleDir;
         this.RotationPeriod = planetBuilder.RotationPeriod;
     }
@@ -51,6 +51,7 @@ public abstract class PlanetaryBody extends CelestialBody {
         private String name;
         private double radius = 1000;
         private double mass = 10E24;
+        protected Quaternionf rotation = new Quaternionf();
         private AxisAngle4f NorthPoleDir = new AxisAngle4f();
         private long RotationPeriod = 0L;
         private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
@@ -71,6 +72,10 @@ public abstract class PlanetaryBody extends CelestialBody {
 
         public void setMass(double mass) {
             this.mass = mass;
+        }
+
+        public void setRotation(Quaternionf rotation) {
+            this.rotation.set(rotation);
         }
 
         public void setNorthPoleDir(AxisAngle4f northPoleDir) {

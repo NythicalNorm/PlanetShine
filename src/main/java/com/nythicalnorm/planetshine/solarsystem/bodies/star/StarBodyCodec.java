@@ -19,6 +19,8 @@ public class StarBodyCodec extends OrbitCodec<StarBody, StarBody.StarBuilder> {
         NetworkEncoders.writeASCII(byteBuf, sunBody.getName());
         byteBuf.writeDouble(sunBody.getRadius());
         byteBuf.writeDouble(sunBody.getMass());
+        NetworkEncoders.writeQuaternionfc(byteBuf, sunBody.getRotation());
+
         NetworkEncoders.writePlanetAtmosphere(byteBuf, sunBody.getAtmosphere());
     }
 
@@ -28,6 +30,7 @@ public class StarBodyCodec extends OrbitCodec<StarBody, StarBody.StarBuilder> {
         sunBody.setName(NetworkEncoders.readASCII(byteBuf));
         sunBody.setRadius(byteBuf.readDouble());
         sunBody.setMass(byteBuf.readDouble());
+        sunBody.setRotation(byteBuf.readQuaternion());
         sunBody.setAtmosphericEffects(NetworkEncoders.readPlanetAtmosphere(byteBuf));
         return sunBody;
     }

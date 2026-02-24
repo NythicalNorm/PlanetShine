@@ -2,7 +2,6 @@ package com.nythicalnorm.planetshine.spacecraft.player;
 
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitChange;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -28,10 +27,10 @@ public class ServerPlayerOrbitBody extends AbstractPlayerOrbitBody {
         }
     }
 
-    @Override
-    protected void sendOrbitUpdateToRelevantPlayers() {
-        if (this.player != null) {
-            PacketHandler.sendToPlayer(new ClientboundOrbitChange(this.id, this.orbitalElements), (ServerPlayer) this.player);
-        }
-    }
+//    @Override
+//    protected void sendOrbitUpdateToRelevantPlayers() {
+//        if (this.player != null) {
+//            PacketHandler.sendToPlayer(new ClientboundOrbitChange(this.id, this.orbitalElements), (ServerPlayer) this.player);
+//        }
+//    }
 }

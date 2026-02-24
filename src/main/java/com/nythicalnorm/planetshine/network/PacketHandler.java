@@ -26,10 +26,16 @@ public class PacketHandler {
     public static void register() {
         int id = 500;
 
-        INSTANCE.messageBuilder(ClientboundLoginSolarSystemState.class, ++id)
-                .encoder(ClientboundLoginSolarSystemState::encode)
-                .decoder(ClientboundLoginSolarSystemState::new)
-                .consumerMainThread(ClientboundLoginSolarSystemState::handle)
+        INSTANCE.messageBuilder(ClientboundLoginPSClientStart.class, ++id)
+                .encoder(ClientboundLoginPSClientStart::encode)
+                .decoder(ClientboundLoginPSClientStart::new)
+                .consumerMainThread(ClientboundLoginPSClientStart::handle)
+                .add();
+
+        INSTANCE.messageBuilder(ClientboundLoginEntityBodiesList.class, ++id)
+                .encoder(ClientboundLoginEntityBodiesList::encode)
+                .decoder(ClientboundLoginEntityBodiesList::new)
+                .consumerMainThread(ClientboundLoginEntityBodiesList::handle)
                 .add();
 
         INSTANCE.messageBuilder(ClientboundSolarSystemTimeUpdate.class, ++id)

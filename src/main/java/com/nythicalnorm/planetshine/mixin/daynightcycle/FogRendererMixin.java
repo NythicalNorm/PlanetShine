@@ -4,6 +4,7 @@ import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,9 +16,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class FogRendererMixin {
     @Redirect(method = "setupColor", at = @At(value = "INVOKE", target = "Lorg/joml/Vector3f;dot(Lorg/joml/Vector3fc;)F"))
     private static float setupColor(Vector3f instance, Vector3fc v) {
-        Vector3f sunPos = PSRenderer.getSunPosOverworld();
+        Vector3d sunPos = PSRenderer.getSunPosOverworld();
         if (sunPos != null) {
-            return -instance.dot(sunPos);
+            return -instance.dot((float) sunPos.x, (float) sunPos.y, (float) sunPos.z);
         }
         return instance.dot(v);
     }

@@ -8,12 +8,13 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
 public abstract class StarBody extends CelestialBody {
 
     public StarBody(StarBuilder starBuilder) {
-        super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.atmosphericEffects, null, starBuilder);
+        super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.rotation, starBuilder.atmosphericEffects, null, starBuilder);
     }
 
     @Override
@@ -36,6 +37,7 @@ public abstract class StarBody extends CelestialBody {
         private String name;
         private double radius = 1000;
         private double mass = 10E24;
+        protected Quaternionf rotation = new Quaternionf();
         private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
 
         public StarBuilder() {
@@ -45,6 +47,10 @@ public abstract class StarBody extends CelestialBody {
         public void setName(String name) {
             this.name = name.toLowerCase().trim();
             this.setId(OrbitId.getIdFromString(name));
+        }
+
+        public void setRotation(Quaternionf rotation) {
+            this.rotation.set(rotation);
         }
 
         public void setRadius(double radius) {

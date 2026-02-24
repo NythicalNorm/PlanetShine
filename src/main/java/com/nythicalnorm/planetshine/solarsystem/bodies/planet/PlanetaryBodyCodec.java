@@ -26,6 +26,7 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
         NetworkEncoders.writeASCII(byteBuf, planetBody.getName());
         byteBuf.writeDouble(planetBody.getRadius());
         byteBuf.writeDouble(planetBody.getMass());
+        NetworkEncoders.writeQuaternionfc(byteBuf, planetBody.getRotation());
 
         byteBuf.writeFloat(planetBody.getNorthPoleDir().angle);
         byteBuf.writeFloat(planetBody.getNorthPoleDir().x);
@@ -49,6 +50,7 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
         planetBuilder.setName(NetworkEncoders.readASCII(byteBuf));
         planetBuilder.setRadius(byteBuf.readDouble());
         planetBuilder.setMass(byteBuf.readDouble());
+        planetBuilder.setRotation(byteBuf.readQuaternion());
 
         planetBuilder.setNorthPoleDir(new AxisAngle4f(
                 byteBuf.readFloat(),

@@ -17,12 +17,12 @@ public class OrbitalBodyUtils {
     }
 
     public static Quaterniond getSpaceRotationFromPlanetPos(Vector3dc relativePlanetPosition, CelestialBody celestialBody) {
-        Quaternionf planetRotation = new Quaternionf(new AxisAngle4d(Mth.HALF_PI,1f,0f,0f));
-        Vector3f playerRelativePos = new Vector3f((float) relativePlanetPosition.x(), (float) relativePlanetPosition.y(), (float) relativePlanetPosition.z());
+        Quaterniond planetRotation = new Quaterniond(new AxisAngle4d(Mth.HALF_PI,1f,0f,0f));
+        Vector3d playerRelativePos = new Vector3d(relativePlanetPosition);
         playerRelativePos.normalize();
-        Vector3f upVector = PlanetBodyCalc.getUpVectorForPlanetRot(new Vector3f(playerRelativePos), celestialBody);
+        Vector3d upVector = PlanetBodyCalc.getUpVectorForPlanetRot(new Vector3d(playerRelativePos), celestialBody);
         planetRotation.lookAlong(playerRelativePos, upVector);
-        return new Quaterniond(planetRotation);
+        return planetRotation;
     }
 
     public static Vector2dc getLatLongCoordinates(Vec3 pos, CelestialBody currentPlanetOn) {

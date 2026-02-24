@@ -27,7 +27,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Quaternionf;
 
 import java.util.Optional;
 
@@ -46,8 +45,8 @@ public class PSClient extends Stage {
     private final ClientTexManager planetTexManager;
 
     // Rendering stuff
+    private final MapRenderer mapRenderer;
     private SpaceRenderable[] renderPlanets;
-    private MapRenderer mapRenderer;
 
     public PSClient(@NotNull ClientPlayerOrbitBody playerDataFromServer, SolarSystem solarSystem) {
         super(solarSystem);
@@ -125,6 +124,7 @@ public class PSClient extends Stage {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);
             currentPlanetOn = celestialBody;
         } else {
+            this.playerOrbit.clearRotation();
             currentPlanetOn = null;
         }
     }
@@ -174,13 +174,12 @@ public class PSClient extends Stage {
             solarSystem.playerChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
         } else if (this.playerOrbit.getOrbitId().equals(spacecraftID)) {
             //temporary setting the rotation to default
-            this.playerOrbit.setRotation(new Quaternionf());
             if (solarSystem.getAllSpacecraftBodies().containsKey(this.playerOrbit.getOrbitId())) {
                 solarSystem.playerChangeOrbitalSOIs(this.playerOrbit, newParentID, orbitalElements);
             } else {
                 // A temporary place to put it player joining has to be a separate packet
                 this.playerOrbit.setOrbitalElements(orbitalElements);
-                solarSystem.playerJoinedOrbital(this.playerOrbit, newParentID);
+                solarSystem.entityJoinedOrbital(this.playerOrbit, newParentID);
             }
         }
     }

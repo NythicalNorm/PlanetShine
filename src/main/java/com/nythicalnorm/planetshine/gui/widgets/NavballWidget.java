@@ -22,6 +22,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 
 @OnlyIn(Dist.CLIENT)
 public class NavballWidget extends AbstractWidget {
@@ -71,9 +72,9 @@ public class NavballWidget extends AbstractWidget {
         float navballScale = (float) gameWindow.getGuiScale() * (124f/gameWindow.getHeight());
         navballPosestack.scale(navballScale, navballScale, navballScale);
 
-        if (css.getPlayerOrbit().getRotation() != null) {
+        if (css.getPlayerOrbit().getPlayerOnPlanetRotation() != null) {
             navballPosestack.mulPose(Axis.YP.rotation(Mth.HALF_PI));
-            navballPosestack.mulPose(css.getPlayerOrbit().getRotation());
+            navballPosestack.mulPose(new Quaternionf().set(css.getPlayerOrbit().getPlayerOnPlanetRotation()));
         }
 
         QuadSphereModelGenerator.getSphereBuffer().bind();

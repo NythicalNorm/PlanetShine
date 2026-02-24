@@ -8,32 +8,25 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
-import java.util.Collection;
-import java.util.concurrent.ConcurrentMap;
-
 public abstract class OrbitalBody {
     protected final OrbitId id;
     protected Component displayName;
     protected final Vector3d relativeOrbitalPos;
     protected final Vector3d absoluteOrbitalPos;
     protected final Vector3d relativeVelocity;
-    protected final Quaternionf rotation;
-    protected final ConcurrentMap<OrbitId, OrbitalBody> childElements;
 
     protected @Nullable OrbitalElements orbitalElements;
     protected @Nullable CelestialBody parent; // Nullable only in the case of the sun
     protected boolean isStableOrbit;
 
-    public OrbitalBody(OrbitalBody.Builder<?> builder, ConcurrentMap<OrbitId, OrbitalBody> childElements) {
+    public OrbitalBody(OrbitalBody.Builder<?> builder) {
         this.id = builder.id;
         this.displayName = builder.displayName;
         this.relativeOrbitalPos = builder.relativeOrbitalPos;
         this.absoluteOrbitalPos = builder.absoluteOrbitalPos;
         this.relativeVelocity = builder.relativeVelocity;
-        this.rotation = builder.rotation;
         this.orbitalElements = builder.orbitalElements;
         this.isStableOrbit = builder.isStableOrbit;
-        this.childElements = childElements;
     }
 
     public Component getDisplayName() {
@@ -66,10 +59,6 @@ public abstract class OrbitalBody {
         return relativeVelocity;
     }
 
-    public Quaternionf getRotation() {
-        return rotation;
-    }
-
     public void setParent(@Nullable CelestialBody parent) {
         this.parent = parent;
     }
@@ -82,26 +71,7 @@ public abstract class OrbitalBody {
         isStableOrbit = stableOrbit;
     }
 
-    public void setRotation(Quaternionfc rotation) {
-        this.rotation.set(rotation);
-    }
-
     public abstract void simulatePropagate(long TimeElapsed, Vector3dc parentPos, boolean isTimeWarping);
-
-    public OrbitalBody getChild(OrbitId name) {
-        return childElements.get(name) ;
-    }
-
-    public void removeChild(OrbitId oldAddress) {
-        this.childElements.remove(oldAddress);
-    }
-
-    public Collection<OrbitalBody> getChildren() {
-        if (childElements != null) {
-            return childElements.values();
-        }
-        return null;
-    }
 
     public void setOrbitalElements(OrbitalElements orbitalElements) {
         if (this.orbitalElements != null) {
@@ -113,15 +83,6 @@ public abstract class OrbitalBody {
 
     public @Nullable OrbitalElements getOrbitalElements() {
         return orbitalElements;
-    }
-
-    public boolean hasChild(OrbitalBody body) {
-        if (childElements != null) {
-            if (!childElements.isEmpty()) {
-                return childElements.containsValue(body);
-            }
-        }
-        return false;
     }
 
     public double getAltitude(CelestialBody parentBody) {
@@ -147,7 +108,6 @@ public abstract class OrbitalBody {
         protected Vector3d relativeOrbitalPos = new Vector3d();
         protected Vector3d absoluteOrbitalPos = new Vector3d();
         protected Vector3d relativeVelocity = new Vector3d();
-        protected Quaternionf rotation = new Quaternionf();
         protected @Nullable OrbitalElements orbitalElements;
         protected @Nullable OrbitalBody parent; // Nullable only in the case of the sun
         protected boolean isStableOrbit = true;
@@ -170,14 +130,6 @@ public abstract class OrbitalBody {
 
         public void setRelativeVelocity(Vector3d relativeVelocity) {
             this.relativeVelocity = relativeVelocity;
-        }
-
-        public void setRotation(Quaternionf rotation) {
-            this.rotation = rotation;
-        }
-
-        public void setRotation(Quaterniond rotation) {
-            this.rotation.set(rotation);
         }
 
         public void setOrbitalElements(@Nullable OrbitalElements orbitalElements) {

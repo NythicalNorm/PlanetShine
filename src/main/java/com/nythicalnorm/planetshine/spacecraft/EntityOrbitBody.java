@@ -22,7 +22,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected final boolean isClientSide;
 
     public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId currentHostSpace, boolean isClientSide) {
-        super(orbitalBuilder, null);
+        super(orbitalBuilder);
         this.currentHostSpace = currentHostSpace;
         this.isClientSide = isClientSide;
     }

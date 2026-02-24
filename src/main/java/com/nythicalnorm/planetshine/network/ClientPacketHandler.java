@@ -43,7 +43,7 @@ public class ClientPacketHandler {
 
         if (playerData instanceof ClientPlayerOrbitBody plrSpacecraftBody) {
             if (playerParentOrbit != null) {
-                solarSystem.playerJoinedOrbital(playerData, playerParentOrbit);
+                solarSystem.entityJoinedOrbital(playerData, playerParentOrbit);
                 plrSpacecraftBody.setPlayer(Minecraft.getInstance().player);
             }
             clientPlayerSpacecraftBody = plrSpacecraftBody;
@@ -95,5 +95,14 @@ public class ClientPacketHandler {
     public static void orbitChange(OrbitId spacecraftID, OrbitalElements orbitalElements) {
         PSClient.getInstance().ifPresent(psClient ->
                 psClient.orbitChange(spacecraftID, orbitalElements));
+    }
+
+    public static void entityBodyList(List<NetworkEncoders.TempEntityOrbitHolder> entityOrbitHolderList) {
+        if (PSClient.get() != null) {
+            SolarSystem solarSystem = PSClient.get().getSolarSystem();
+            for (NetworkEncoders.TempEntityOrbitHolder entityOrbitHolder : entityOrbitHolderList) {
+                solarSystem.entityJoinedOrbital(entityOrbitHolder.orbitBody(), entityOrbitHolder.parentID());
+            }
+        }
     }
 }
