@@ -172,7 +172,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                 ServerLevel planetLevel = ((ServerCelestialBody)entityOrbitBody.getParent()).getLevel();
                 if (planetLevel != null) {
                     Vector2d pos = PlanetBodyCalc.vectorToPlanetDimPos(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent().getRotation());
-                    if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody) {
+                    if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody && playerOrbitBody.getPlayerEntity() != null) {
                         teleportEntity(playerOrbitBody.getPlayerEntity(), planetLevel, pos.x, teleportToGroundHeight, pos.y);
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));

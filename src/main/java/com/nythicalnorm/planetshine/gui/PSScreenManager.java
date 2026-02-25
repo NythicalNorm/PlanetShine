@@ -57,6 +57,10 @@ public class PSScreenManager {
         isMapScreenOpen = false;
     }
 
+    public boolean isMapScreenOpen() {
+        return isMapScreenOpen;
+    }
+
     public boolean isSpacecraftScreenOpen() {
         return openSpacecraftScreen != null;
     }

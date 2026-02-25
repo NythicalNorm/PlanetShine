@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.network;
 
 import com.nythicalnorm.planetshine.PSClient;
+import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -11,6 +12,7 @@ import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -40,21 +42,36 @@ public class ClientPacketHandler {
         }
         SolarSystem solarSystem = new SolarSystem(AllPlanetaryBodies, AllSpacecraftBodies, PlanetDimensions, rootStar);
         ClientPlayerOrbitBody clientPlayerSpacecraftBody;
-
+        LocalPlayer localPlayer = Minecraft.getInstance().player;
+        if (localPlayer == null) {
+            PlanetShine.logError("this shouldn't happen, but shut up, intellij");
+            return;
+        }
         if (playerData instanceof ClientPlayerOrbitBody plrSpacecraftBody) {
             if (playerParentOrbit != null) {
                 solarSystem.entityJoinedOrbital(playerData, playerParentOrbit);
-                plrSpacecraftBody.setPlayer(Minecraft.getInstance().player);
+                plrSpacecraftBody.setPlayer(localPlayer);
             }
             clientPlayerSpacecraftBody = plrSpacecraftBody;
         } else {
             AbstractPlayerOrbitBody.PlayerOrbitBuilder playerSpacecraftBuilder = new AbstractPlayerOrbitBody.PlayerOrbitBuilder();
-            playerSpacecraftBuilder.setPlayer(Minecraft.getInstance().player);
+            playerSpacecraftBuilder.setPlayer(localPlayer);
             clientPlayerSpacecraftBody = (ClientPlayerOrbitBody) playerSpacecraftBuilder.buildClientSide();
         }
         PSClient css =  new PSClient(clientPlayerSpacecraftBody, solarSystem);
         css.setCurrentTime(currentTime);
         css.setTimePassPerTick(timeWarp);
+
+//        localPlayer.connection.getOnlinePlayers().forEach(playerInfo -> {
+//            if (css.getSolarSystem().getSpacecraftOrbit(new OrbitId(playerInfo.getProfile().getId())) instanceof ClientPlayerOrbitBody clientPlayerOrbitBody) {
+//                clientPlayerOrbitBody.setPlayerInfo(playerInfo);
+//            }
+//        });
+    }
+
+    public static void localPlayerJoinOrbital(OrbitId newParentID, OrbitalElements orbitalElements) {
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.localPlayerJoinOrbital(newParentID, orbitalElements));
     }
 
     public static void OrbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements orbitalElements) {
@@ -103,6 +120,12 @@ public class ClientPacketHandler {
             for (NetworkEncoders.TempEntityOrbitHolder entityOrbitHolder : entityOrbitHolderList) {
                 solarSystem.entityJoinedOrbital(entityOrbitHolder.orbitBody(), entityOrbitHolder.parentID());
             }
+        }
+    }
+
+    public static void entityBodyJoinOrbital(EntityOrbitBody entityOrbitBody, OrbitId orbitParent) {
+        if (PSClient.get() != null) {
+            PSClient.get().entityJoinOrbital(entityOrbitBody, orbitParent);
         }
     }
 }

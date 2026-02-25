@@ -49,20 +49,23 @@ public class MapRenderablePlanet extends MapRenderable {
         planetBody.getPlanetChildren().forEach(celestialBody ->
                 OrbitDrawer.drawOrbit(celestialBody, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix));
         planetBody.getEntityChildren().forEach(entityOrbitBody -> {
-            this.renderIconForOrbitalBody(graphics, entityOrbitBody, currentFocusedBody, poseStack, projectionMatrix);
-            OrbitDrawer.drawOrbit(entityOrbitBody, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix);
+            if (this.renderIconForOrbitalBody(graphics, entityOrbitBody, currentFocusedBody, poseStack, projectionMatrix)) {
+                OrbitDrawer.drawOrbit(entityOrbitBody, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix);
+            }
         });
     }
 
-    public void renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+    public boolean renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
         Vector3f pos = MapRenderer.toMapCoordinate(entityOrbitBody.getRelativePos());
         Matrix4f poseMatrix = new Matrix4f(poseStack.last().pose());
+        RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
 
         Screen screen = Minecraft.getInstance().screen;
         Vector2i screenPos = RenderingCommon.worldToScreenCoordinate(pos, poseMatrix, projectionMatrix, screen.width, screen.height);
         if (screenPos != null) {
-            entityOrbitBody.drawIcon(graphics, screenPos, 8);
+            return entityOrbitBody.drawIcon(graphics, screenPos, 8);
         }
+        return false;
     }
 
     public CelestialBody getBody() {

@@ -72,15 +72,16 @@ public abstract class CelestialBody extends OrbitalBody {
         }
     }
 
-    @Override
     public void simulatePropagate(long TimeElapsed, Vector3dc parentPos, boolean isTimeWarping) {
         simulate(TimeElapsed, parentPos);
 
         childCelestialBodies.values().forEach((celestialBody ->
-                celestialBody.simulatePropagate(TimeElapsed, absoluteOrbitalPos, isTimeWarping)));
+                celestialBody.simulatePropagate(TimeElapsed, this.absoluteOrbitalPos, isTimeWarping)));
+    }
 
-        childEntityBodies.values().forEach((entityOrbitBody ->
-                entityOrbitBody.simulatePropagate(TimeElapsed, absoluteOrbitalPos, isTimeWarping)));
+    public void simulateSpacecraft(long currentTime, boolean timeWarping) {
+        this.childEntityBodies.values().forEach((entityOrbitBody ->
+                entityOrbitBody.simulate(currentTime, timeWarping)));
     }
 
     public void addChildPlanet(CelestialBody celestialBody) {

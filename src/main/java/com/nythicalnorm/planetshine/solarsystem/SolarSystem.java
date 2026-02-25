@@ -9,6 +9,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import org.valkyrienskies.core.api.util.PhysTickOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -26,8 +27,15 @@ public class SolarSystem {
         this.rootStar = rootStar;
     }
 
+    @PhysTickOnly
     public void UpdatePlanets(long currentTime, boolean isTimeWarping) {
         rootStar.simulatePlanets(currentTime, isTimeWarping);
+    }
+
+    @PhysTickOnly
+    public void UpdateSpacecraft(long currentTime, boolean isTimeWarping) {
+        this.allSpacecraftBodies.values().forEach((entityOrbitBody ->
+                entityOrbitBody.simulate(currentTime, isTimeWarping)));
     }
 
     public Map<OrbitId, EntityOrbitBody> getAllSpacecraftBodies() {
@@ -65,15 +73,18 @@ public class SolarSystem {
     }
 
     public void entityJoinedOrbital(OrbitalBody OrbitalDataNew, OrbitId newParentID) {
-        entityJoinedOrbital(getPlanet(newParentID), OrbitalDataNew);
+        this.entityJoinedOrbital(getPlanet(newParentID), OrbitalDataNew);
     }
 
     public void entityJoinedOrbital(CelestialBody newOrbitPlanet, OrbitalBody orbitalDataNew) {
         if (newOrbitPlanet != null) {
-            if (orbitalDataNew instanceof EntityOrbitBody entitySpacecraftBody &&
-                    getAllSpacecraftBodies().putIfAbsent(entitySpacecraftBody.getOrbitId(), entitySpacecraftBody) == null) {
-                entitySpacecraftBody.removeParent();
-                newOrbitPlanet.addChildBody(entitySpacecraftBody);
+            if (orbitalDataNew instanceof EntityOrbitBody entitySpacecraftBody) {
+                this.getAllSpacecraftBodies().computeIfAbsent(entitySpacecraftBody.getOrbitId(), id -> {
+                    entitySpacecraftBody.removeParent();
+                    newOrbitPlanet.addChildBody(entitySpacecraftBody);
+                    entitySpacecraftBody.init();
+                    return entitySpacecraftBody;
+                });
             }
         } else {
             PlanetShine.logError("EntityBody tried to join non-existent CelestialBody, ignoring Entity");

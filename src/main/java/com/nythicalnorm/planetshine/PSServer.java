@@ -2,10 +2,7 @@ package com.nythicalnorm.planetshine;
 
 import com.nythicalnorm.planetshine.dimensions.SpaceDimension;
 import com.nythicalnorm.planetshine.network.*;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundLoginEntityBodiesList;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitSOIChange;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundLoginPSClientStart;
+import com.nythicalnorm.planetshine.network.orbitaldata.*;
 import com.nythicalnorm.planetshine.network.time.ClientboundSolarSystemTimeUpdate;
 import com.nythicalnorm.planetshine.network.time.ClientboundTimeWarpUpdate;
 import com.nythicalnorm.planetshine.planettexgen.lod_tex.BiomeColorHolder;
@@ -83,6 +80,8 @@ public class PSServer extends Stage {
     public void OnPhysTick(double delta) {
         serverRunningTicks++;
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
+        solarSystem.UpdateSpacecraft(currentTime, this.isTimeWarping());
+
         if (!sleepTimeWarping) {
             setCurrentTime(currentTime + timePassPerTick);
         } else {
@@ -134,18 +133,15 @@ public class PSServer extends Stage {
         List<CelestialBody> allPlanetaryBodies = solarSystem.getAllPlanetaryBodies().values().stream().toList();
         ServerPlayerOrbitBody playerSpacecraftBody = null;
 
-        if (solarSystem.getAllSpacecraftBodies().containsKey(playerEntityID)) {
-            if (solarSystem.getAllSpacecraftBodies().get(playerEntityID) instanceof ServerPlayerOrbitBody pPlrSpacecraftBody) {
-                pPlrSpacecraftBody.setPlayer(entity);
-                playerSpacecraftBody = pPlrSpacecraftBody;
-            }
+        if (solarSystem.getAllSpacecraftBodies().get(playerEntityID) instanceof ServerPlayerOrbitBody pPlrSpacecraftBody) {
+            pPlrSpacecraftBody.setPlayer(entity);
+            playerSpacecraftBody = pPlrSpacecraftBody;
         } else if (OrbitalBodyUtils.isSpaceLevel(entity.level())) {
             Vec3 spawnPosition = server.overworld().getSharedSpawnPos().getCenter();
             hostSpaceManager.teleportEntity(entity, server.overworld(), spawnPosition.x, spawnPosition.y, spawnPosition.z);
         }
 
         PacketHandler.sendToPlayer(new ClientboundLoginPSClientStart(playerSpacecraftBody, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick()), (ServerPlayer) entity);
-
         PacketHandler.sendToPlayer(new ClientboundLoginEntityBodiesList(this.solarSystem.getAllEntitiesOrbitsList()), (ServerPlayer) entity);
 
         if (planetTexHandler != null) {
@@ -180,7 +176,8 @@ public class PSServer extends Stage {
             playerOrbitBody = builder.build();
 
             solarSystem.entityJoinedOrbital(body, playerOrbitBody);
-            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(PlayerID, body.getOrbitId(), elements));
+
+            sendPacketsPlayerJoinOrbital(player, playerOrbitBody);
         }
 
         OrbitHostSpace playerHostSpace = hostSpaceManager.getOrCreateHostSpace(playerOrbitBody);
@@ -188,6 +185,13 @@ public class PSServer extends Stage {
 
         hostSpaceManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY),
                 playerHostSpace.getOriginPos().x, playerHostSpace.getOriginPos().y, playerHostSpace.getOriginPos().z);
+    }
+
+    private void sendPacketsPlayerJoinOrbital(ServerPlayer player, AbstractPlayerOrbitBody playerOrbitBody) {
+        PacketHandler.sendToPlayer(new ClientboundLocalPlayerJoinOrbital(playerOrbitBody.getParent().getOrbitId(),
+                playerOrbitBody.getOrbitalElements()), player);
+        PacketHandler.sendToAllPlayersExcept(new ClientboundEntityBodyJoinOrbital(playerOrbitBody), player,
+                this.getMCServer().getPlayerList().getPlayers());
     }
 
     public void playerCloned(ServerPlayer player) {

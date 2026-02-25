@@ -2,7 +2,6 @@ package com.nythicalnorm.planetshine.spacecraft.hostspace;
 
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -62,8 +61,7 @@ public abstract class OrbitHostSpace {
 
     public void addEntityToHostSpace(Entity entity) {
         if (entity instanceof Player player
-                && hostBody instanceof AbstractPlayerOrbitBody playerOrbitBody
-                && playerOrbitBody.getPlayerEntity().equals(player)) {
+                && hostBody.getOrbitId().getUUID().equals(player.getUUID())) {
             return;
         }
         nonHostEntities.add(entity);

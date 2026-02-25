@@ -17,12 +17,12 @@ import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 
 import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class EntityOrbitBody extends OrbitalBody {
     protected static final float tolerance = 1E-6f;
     protected @Nullable OrbitId currentHostSpace;
-    protected ConcurrentLinkedDeque<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
+    protected ConcurrentLinkedQueue<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
     protected final boolean isClientSide;
 
     public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId currentHostSpace, boolean isClientSide) {
@@ -30,6 +30,8 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.currentHostSpace = currentHostSpace;
         this.isClientSide = isClientSide;
     }
+
+    public void init() { }
 
     private void simulateNonTimeWarp() {
         if (this.parent == null) {
@@ -44,8 +46,8 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     @PhysTickOnly
-    public void simulatePropagate(long TimeElapsed, Vector3dc parentPos, boolean isTimeWarping) {
-        if (this.orbitalElements == null) {
+    public void simulate(long TimeElapsed, boolean isTimeWarping) {
+        if (this.orbitalElements == null || this.parent == null) {
             return;
         }
 
@@ -59,7 +61,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             sendOrbitUpdateToRelevantPlayers();
         }
 
-        this.absoluteOrbitalPos.set(parentPos).add(relativeOrbitalPos);
+        this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(relativeOrbitalPos);
     }
 
     protected void sendOrbitUpdateToRelevantPlayers() {
@@ -100,5 +102,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     public abstract OrbitHostSpace createHostSpace(Vector3d posNew);
 
     @OnlyIn(Dist.CLIENT) // kinda sus but hey it works without having generics glorp.
-    public void drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {}
+    public boolean drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
+        return false;
+    }
 }

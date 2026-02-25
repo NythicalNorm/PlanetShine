@@ -138,6 +138,12 @@ public class PSClient extends Stage {
         this.setCurrentTime(clientTimeHandler.calculateCurrentTime(partialTick));
         this.solarSystem.UpdatePlanets(this.getCurrentTime(), this.isTimeWarping());
 
+        if (this.screenManager.isMapScreenOpen()) {
+            this.solarSystem.UpdateSpacecraft(this.getCurrentTime(), this.isTimeWarping());
+        } else if (this.playerOrbit.getParent() != null) {
+            this.playerOrbit.getParent().simulateSpacecraft(this.getCurrentTime(), this.isTimeWarping());
+        }
+
         if (currentPlanetOn != null && playerOrbit.getPlayerEntity() != null) {
             this.playerOrbit.updatePlayerPosRot(currentPlanetOn);
             BlockPos playerPos = playerOrbit.getPlayerEntity().blockPosition();
@@ -168,18 +174,20 @@ public class PSClient extends Stage {
         }
     }
 
+    public void localPlayerJoinOrbital(OrbitId newParentID, OrbitalElements orbitalElements) {
+        this.playerOrbit.setOrbitalElements(orbitalElements);
+        solarSystem.entityJoinedOrbital(this.playerOrbit, newParentID);
+    }
+
+    public void entityJoinOrbital(EntityOrbitBody entityOrbitBody, OrbitId orbitParent) {
+        this.solarSystem.entityJoinedOrbital(entityOrbitBody, orbitParent);
+    }
+
     public void orbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements orbitalElements) {
         EntityOrbitBody entityOrbitBody = solarSystem.getAllSpacecraftBodies().get(spacecraftID);
 
         if (entityOrbitBody != null) {
             solarSystem.playerChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
-        } else if (this.playerOrbit.getOrbitId().equals(spacecraftID)) {
-            if (solarSystem.getAllSpacecraftBodies().containsKey(this.playerOrbit.getOrbitId())) {
-                solarSystem.playerChangeOrbitalSOIs(this.playerOrbit, newParentID, orbitalElements);
-            } else {
-                this.playerOrbit.setOrbitalElements(orbitalElements);
-                solarSystem.entityJoinedOrbital(this.playerOrbit, newParentID);
-            }
         }
     }
 
