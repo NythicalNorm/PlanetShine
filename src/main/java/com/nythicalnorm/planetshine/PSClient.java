@@ -95,7 +95,7 @@ public class PSClient extends Stage {
     }
 
     public void setHostOrbit(OrbitId orbitId) {
-        this.getPlayerOrbit().setHostSpace(orbitId);
+        this.getPlayerOrbit().setHostSpaceId(orbitId);
     }
 
     public float getSunAngleOpacity() {
@@ -184,7 +184,7 @@ public class PSClient extends Stage {
     }
 
     public void orbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements orbitalElements) {
-        EntityOrbitBody entityOrbitBody = solarSystem.getAllSpacecraftBodies().get(spacecraftID);
+        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
 
         if (entityOrbitBody != null) {
             solarSystem.playerChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
@@ -199,7 +199,7 @@ public class PSClient extends Stage {
     }
 
     public void orbitRemove(OrbitId spacecraftID) {
-        EntityOrbitBody entityOrbitBody = solarSystem.getAllSpacecraftBodies().get(spacecraftID);
+        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             solarSystem.entityRemoveOrbital(entityOrbitBody);
         }

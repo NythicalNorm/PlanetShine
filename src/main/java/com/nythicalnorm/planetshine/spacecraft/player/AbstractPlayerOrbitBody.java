@@ -11,12 +11,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3d;
+import org.joml.Vector2ic;
+import org.valkyrienskies.core.api.util.GameTickOnly;
 
 public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
-    protected static final float JetpackRotationalForce = 0.1f;
-    protected static final double JetpackTranslationForce = 1d;
-    protected static final double JetpackThrottleForce = 25d;
     protected Player player;
 
     public AbstractPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder, boolean isClientSide) {
@@ -33,8 +31,10 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     }
 
     @Override
-    public OrbitHostSpace createHostSpace(Vector3d posNew) {
-        return new PlayerHostSpace(this.id, posNew, this);
+    public OrbitHostSpace createHostSpace(Vector2ic posNew) {
+        OrbitHostSpace hostSpace = new PlayerHostSpace(this.id, posNew, this);
+        this.orbitHostSpace.set(hostSpace);
+        return hostSpace;
     }
 
     public void setPlayer(@NotNull Player player) {
@@ -48,6 +48,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
 
     public abstract boolean isPlayerLoggedIn();
 
+    @GameTickOnly
     public Player getPlayerEntity() {
         return player;
     }

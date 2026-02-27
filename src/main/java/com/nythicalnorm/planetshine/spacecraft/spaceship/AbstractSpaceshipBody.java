@@ -6,12 +6,12 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
-import com.nythicalnorm.planetshine.spacecraft.hostspace.PlayerHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.ShipHostSpace;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector3d;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2ic;
 import org.valkyrienskies.core.api.ships.Ship;
 
 public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
@@ -27,11 +27,13 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     }
 
     @Override
-    public OrbitHostSpace createHostSpace(Vector3d posNew) {
-        return new ShipHostSpace(this.id, posNew, this);
+    public OrbitHostSpace createHostSpace(Vector2ic posNew) {
+        OrbitHostSpace hostSpace = new ShipHostSpace(this.id, posNew, this);
+        this.orbitHostSpace.set(hostSpace);
+        return hostSpace;
     }
 
-    public void setShip(@NotNull Ship ship) {
+    public void setShip(@Nullable Ship ship) {
         this.ship = ship;
     }
 

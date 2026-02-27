@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.storage;
 
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.solarsystem.HostSpaceManager;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;

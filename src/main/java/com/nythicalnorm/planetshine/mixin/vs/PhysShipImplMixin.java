@@ -1,5 +1,9 @@
 package com.nythicalnorm.planetshine.mixin.vs;
 
+import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
+import com.nythicalnorm.planetshine.util.Calc;
+import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,10 +16,17 @@ import org.valkyrienskies.core.impl.game.ships.PhysShipImpl;
 import java.util.ArrayDeque;
 
 @Mixin(PhysShipImpl.class)
-public class PhysShipImplMixin {
+public abstract class PhysShipImplMixin {
     @Shadow
     @Final
     private ArrayDeque<Vector3dc> invForces;
+
+    @Shadow
+    @Final
+    private ArrayDeque<Vector3dc> rotForces;
+
+    @Shadow
+    protected abstract Vector3d rotateForceToWorld(Vector3dc $this$rotateForceToWorld);
 
     @Shadow
     @Final
@@ -23,14 +34,40 @@ public class PhysShipImplMixin {
 
     @Shadow
     @Final
-    private ArrayDeque<Vector3dc> rotForces;
+    private ArrayDeque<Vector3dc> invPosPositions;
 
-    @Inject(method = "applyQueuedForces", at = @At(value = "HEAD"), cancellable = false, remap = false)
+    @Shadow
+    public abstract double getMass();
+
+    @Shadow
+    public abstract long getId();
+
+    @Inject(method = "applyQueuedForces", at = @At(value = "HEAD"), remap = false)
     public void applyForces(CallbackInfo ci) {
-//        PhysShipImpl physShip = (PhysShipImpl) (Object) this;
-//        invPosForces.forEach(force -> {
-//            PlanetShine.log("force applied: " + force);
-//        });
-//        ci.cancel();
+        if (PSServer.get() != null) {
+            ServerSpaceshipBody serverSpaceshipBody = PSServer.get().getSolarSystem().getShipFromVSId(getId());
+
+            if (serverSpaceshipBody != null && serverSpaceshipBody.isHostOfItsSpace()) {
+                double forceThreshold = 0.1 * getMass();
+                double forceThresholdSquared = forceThreshold * forceThreshold;
+
+                Vector3d invForcesTotal = Calc.pollVectorQueue(invForces);
+                if (invForcesTotal.lengthSquared() > forceThresholdSquared) {
+                    serverSpaceshipBody.addVelocityForUpdate(invForcesTotal.div(getMass()));
+                }
+
+                Vector3d rotForcesTotal = Calc.pollVectorQueue(rotForces);
+                if (rotForcesTotal.lengthSquared() > forceThresholdSquared) {
+                    rotForcesTotal = rotateForceToWorld(rotForcesTotal);
+                    rotForcesTotal.div(getMass());
+
+                    serverSpaceshipBody.addVelocityForUpdate(rotForcesTotal);
+                }
+
+                // need to figure out the moment of inertia shit, with rotation and force with this.
+                invPosForces.clear();
+                invPosPositions.clear();
+            }
+        }
     }
 }

@@ -10,6 +10,7 @@
   "mixins": [
     "ClimateMixin",
     "LevelMixin",
+    "daynightcycle.DaylightDetectorBlockMixin",
     "daynightcycle.LevelReaderMixin",
     "daynightcycle.LevelTimeAccessMixin",
     "daynightcycle.ServerLevelMixin",
@@ -43,6 +44,7 @@
     "screen.DebugScreenOverlayMixin",
     "screen.ProgressScreenMixin",
     "screen.ReceivingLevelScreenMixin",
-    "spaceentites.PlayerRendererSpaceMixin"
+    "spaceentites.PlayerRendererSpaceMixin",
+    "vs.TempFrustumMixin"
   ]
 }

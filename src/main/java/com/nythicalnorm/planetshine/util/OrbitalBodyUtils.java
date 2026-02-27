@@ -11,6 +11,8 @@ import org.joml.*;
 import java.lang.Math;
 
 public class OrbitalBodyUtils {
+    private static String spaceLevelString = "minecraft:dimension:planetshine:spacedim";
+
     public static Vector3d getRelativePositon(Vector3dc pos, CelestialBody celestialBody) {
         Vec3 vec3Pos = new Vec3(pos.x(), pos.y(), pos.z());
         return PlanetBodyCalc.planetDimPosToNormalizedVector(vec3Pos, celestialBody.getRadius(), celestialBody.getRotation(), false);
@@ -38,5 +40,9 @@ public class OrbitalBodyUtils {
 
     public static boolean isSpaceLevel(Level level) {
         return level.dimension().equals(SpaceDimension.SPACE_LEVEL_KEY);
+    }
+
+    public static boolean isSpaceLevel(String chunkClaimDimension) {
+        return spaceLevelString.equals(chunkClaimDimension);
     }
 }

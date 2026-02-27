@@ -28,7 +28,7 @@ public class PlayerOrbitCodec extends OrbitCodec<AbstractPlayerOrbitBody, Abstra
     public CompoundTag encodeNBT(AbstractPlayerOrbitBody orbit) {
         CompoundTag tag = super.encodeNBT(orbit);
         if (orbit.currentHostSpace != null) {
-            orbit.currentHostSpace.encodeToNBT(tag, "current_host_space");
+            orbit.currentHostSpace.get().encodeToNBT(tag, "current_host_space");
         }
         return tag;
     }

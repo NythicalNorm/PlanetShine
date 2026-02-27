@@ -18,7 +18,7 @@ public class PlayerSocialManagerMixin {
     @Inject(method = "addPlayer", at = @At(value = "TAIL"))
     public void playerJoined(PlayerInfo pPlayerInfo, CallbackInfo ci) {
         if (PSClient.get() != null) {
-            EntityOrbitBody entityOrbitBody = PSClient.get().getSolarSystem().getAllSpacecraftBodies().get(new OrbitId(pPlayerInfo.getProfile().getId()));
+            EntityOrbitBody entityOrbitBody = PSClient.get().getSolarSystem().getSpacecraftOrbit(new OrbitId(pPlayerInfo.getProfile().getId()));
             if (entityOrbitBody instanceof ClientPlayerOrbitBody clientPlayerOrbitBody) {
                 clientPlayerOrbitBody.playerJoined(pPlayerInfo);
             }
@@ -28,7 +28,7 @@ public class PlayerSocialManagerMixin {
     @Inject(method = "removePlayer", at = @At(value = "TAIL"))
     public void removePlayer(UUID pId, CallbackInfo ci) {
         if (PSClient.get() != null) {
-            EntityOrbitBody entityOrbitBody = PSClient.get().getSolarSystem().getAllSpacecraftBodies().get(new OrbitId(pId));
+            EntityOrbitBody entityOrbitBody = PSClient.get().getSolarSystem().getSpacecraftOrbit(new OrbitId(pId));
             if (entityOrbitBody instanceof ClientPlayerOrbitBody clientPlayerOrbitBody) {
                 clientPlayerOrbitBody.playerLeft();
             }

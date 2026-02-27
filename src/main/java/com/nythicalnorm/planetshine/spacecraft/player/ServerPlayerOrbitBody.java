@@ -14,8 +14,8 @@ public class ServerPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     @Override
-    public void setHostSpace(OrbitId hostSpace) {
-        super.setHostSpace(hostSpace);
+    public void setHostSpaceId(OrbitId hostSpace) {
+        super.setHostSpaceId(hostSpace);
         if (this.player != null) {
             PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(hostSpace), (ServerPlayer) this.player);
         }

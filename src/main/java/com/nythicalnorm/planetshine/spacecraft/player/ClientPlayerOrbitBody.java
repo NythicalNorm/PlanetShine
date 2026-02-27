@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -109,7 +109,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
         if (this.playerInfo != null) {
             return playerInfo.getSkinLocation();
         } else if (this.player != null) {
-            return ((LocalPlayer)this.player).getSkinTextureLocation();
+            return ((AbstractClientPlayer)this.player).getSkinTextureLocation();
         } else {
             return MissingTextureAtlasSprite.getLocation();
         }

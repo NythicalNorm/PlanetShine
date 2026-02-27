@@ -33,6 +33,11 @@ public class OrbitId {
         this(ship.getId());
     }
 
+    public OrbitId(OrbitId orbitId) {
+        this.leastSignificantBits = orbitId.leastSignificantBits;
+        this.mostSignificantBits = orbitId.mostSignificantBits;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

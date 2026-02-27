@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.event;
 
 import com.nythicalnorm.planetshine.PSServer;
 import org.valkyrienskies.core.api.events.PhysTickEvent;
+import org.valkyrienskies.core.api.events.ShipLoadEvent;
 import org.valkyrienskies.core.api.events.TickEndEvent;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
@@ -9,6 +10,7 @@ public class VSEvents {
     public static void addListeners() {
         ValkyrienSkies.api().getPhysTickEvent().on(VSEvents::onPhysTick);
         ValkyrienSkies.api().getTickEndEvent().on(VSEvents::onTickEnd);
+        ValkyrienSkies.api().getShipLoadEvent().on(VSEvents::onShipLoadEvent);
     }
 
     public static void onPhysTick(PhysTickEvent event) {
@@ -21,5 +23,11 @@ public class VSEvents {
     }
 
     public static void onTickEnd(TickEndEvent event){
+    }
+
+    private static void onShipLoadEvent(ShipLoadEvent shipLoadEvent) {
+        if (PSServer.get() != null) {
+            PSServer.get().onShipLoad(shipLoadEvent.getShip());
+        }
     }
 }

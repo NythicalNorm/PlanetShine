@@ -117,21 +117,6 @@ sourceSets.main.resources {
 
 repositories {
     mavenCentral()
-    // Put repositories for dependencies here
-    // ForgeGradle automatically adds the Forge maven and Maven Central for you
-
-    // CurseForge Maven Repositor
-    maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
-    maven {
-        name = "create maven"
-        url = "https://maven.tterrag.com/"
-        content {
-            includeGroup("com.simibubi.create")
-            includeGroup("com.jozufozu.flywheel")
-            includeGroup("com.tterrag.registrate")
-        }
-    }
-
     // Add KFF Maven repository
     maven {
         name = 'Kotlin for Forge'
@@ -148,35 +133,11 @@ repositories {
         url = 'https://cursemaven.com'
     }
 
-    maven { url = "https://maven.ithundxr.dev/mirror" } // Registrate
     maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" } // ForgeConfigAPIPort
 
     maven {
         name = 'MinecraftForge'
         url = 'https://maven.minecraftforge.net/'
-    }
-
-    maven {
-        url "https://maven.squiddev.cc"
-        content {
-            includeGroup("cc.tweaked")
-            includeGroup ("org.squiddev")
-        }
-    }
-    maven {
-        // location of the maven that hosts JEI files since January 2023
-        // location of the maven for Vazkii's mods
-        name = "Jared's maven"
-        url = "https://maven.blamejared.com/"
-    }
-
-    repositories {
-        maven { url 'https://maven.rover656.dev/releases' }
-    }
-
-    maven {
-        // location of the maven for Curios API
-        url = "https://maven.theillusivec4.top/"
     }
 
     maven {
@@ -188,50 +149,75 @@ repositories {
         name = "Architectury"
         url 'https://maven.architectury.dev/'
     }
+
+//    maven { url = "https://maven.ithundxr.dev/mirror" } // Registrate
+    // Put repositories for dependencies here
+    // ForgeGradle automatically adds the Forge maven and Maven Central for you
+
+    // CurseForge Maven Repositor
+//    maven { url = "https://maven.createmod.net" } // Create, Ponder, Flywheel
+//    maven {
+//        name = "create maven"
+//        url = "https://maven.tterrag.com/"
+//        content {
+//            includeGroup("com.simibubi.create")
+//            includeGroup("com.jozufozu.flywheel")
+//            includeGroup("com.tterrag.registrate")
+//        }
+//    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    // implementation fg.deobf("curse.maven:architectury-api-419699:4663010")
-    runtimeOnly fg.deobf("maven.modrinth:kotlin-for-forge:${kotlin_version}")
+    implementation("org.valkyrienskies.core:api:${vs_core_version}") { transitive = false
+        exclude group: 'org.joml', module: ''
+    }
+    implementation("org.valkyrienskies.core:internal:${vs_core_version}") { transitive = false
+        exclude group: 'org.joml', module: ''
+    }
+    implementation("org.valkyrienskies.core:util:${vs_core_version}") { transitive = false
+        exclude group: 'org.joml', module: ''
+    }
+    implementation("org.valkyrienskies.core:impl:${vs_core_version}") { transitive = false
+        exclude group: 'org.joml', module: ''
+    }
+    implementation fg.deobf("org.valkyrienskies:valkyrienskies-120-forge:${vs2_version}") { transitive = false
+        exclude group: 'org.valkyrienskies.core', module: ''
+    }
+    // endregion
 
-    implementation         ("org.valkyrienskies.core:api:${vs_core_version}")
-    implementation         ("org.valkyrienskies.core:internal:${vs_core_version}")
-    implementation         ("org.valkyrienskies.core:util:${vs_core_version}")
-    implementation         ("org.valkyrienskies.core:impl:$vs_core_version")
+    // region VS deps
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.13.3"
+    compileOnly("org.joml:joml:1.10.4")
+    compileOnly("org.joml:joml-primitives:1.10.0")
+    implementation fg.deobf("thedarkcolour:kotlinforforge:${kotlin_version}")
 
-    implementation         fg.deobf("org.valkyrienskies:valkyrienskies-120-forge:${vs2_version}") {transitive = false}
-
-    // Drive by Wire - With deobfuscation for development environment
-    //runtimeOnly fg.deobf("curse.maven:drive-by-wire-1192722:6224008")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.3"))
 
-    implementation(fg.deobf("dev.architectury:architectury-forge:9.1.12"))
-    implementation fg.deobf("curse.maven:vlib-1265893:7378603")
-    implementation fg.deobf("curse.maven:lodestone-616457:6213794")
-    implementation fg.deobf("curse.maven:zero-point-labs-1369441:7387597")
+    //implementation("io.github.llamalad7:mixinextras-forge:0.5.3")
 
-    implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false })
-    implementation(fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"))
-    compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}"))
-    runtimeOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"))
-    implementation(fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}"))
+//    implementation(fg.deobf("dev.architectury:architectury-forge:9.1.12"))
+//    implementation fg.deobf("curse.maven:vlib-1265893:7378603")
+//    implementation fg.deobf("curse.maven:lodestone-616457:6213794")
+//    implementation fg.deobf("curse.maven:zero-point-labs-1369441:7387597")
+//    implementation fg.deobf("curse.maven:zps-1283072:7376897")
+//    implementation fg.deobf("curse.maven:ender-io-64578:7446175")
 
-    implementation fg.deobf("curse.maven:createaddition-439890:6901922")
-    implementation(fg.deobf("maven.modrinth:qS1ot7R2:RlsWa2L4")) // vmod
+//    implementation(fg.deobf("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false })
+//    implementation(fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"))
+//    compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}"))
+//    runtimeOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"))
+//    implementation(fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")) { transitive = false }
 
-    // compile against the JEI API but do not include it at runtime
-    // compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
-    // at runtime, use the full JEI jar for Forge
-    // runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
-    // Clockwork
+    // implementation fg.deobf("curse.maven:createaddition-439890:6901922")
+//    implementation(fg.deobf("maven.modrinth:qS1ot7R2:RlsWa2L4")) // vmod
+
 //    runtimeOnly fg.deobf("org.valkyrienskies.kelvin:kelvin-forge:${minecraft_version}-${kelvin_version}")
 //    implementation(fg.deobf("maven.modrinth:84USeAvk:ZyJYZ6kU")) // Clockwork 0.5.4.4
 
     // mixin extras
-    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.3"))
-    implementation("io.github.llamalad7:mixinextras-forge:0.5.3")
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0' // Use the latest stable version
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0' // Use the latest stable version

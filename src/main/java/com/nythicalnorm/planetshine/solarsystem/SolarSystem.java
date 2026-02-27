@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -59,10 +60,12 @@ public class SolarSystem {
         return allSpacecraftBodies.get(spacecraftBodyAddress);
     }
 
+    @PhysTickOnly
     public void playerChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, OrbitId newParentID, OrbitalElements orbitalElementsNew) {
         playerChangeOrbitalSOIs(spacecraftBody, getPlanet(newParentID), orbitalElementsNew);
     }
 
+    @PhysTickOnly
     public void playerChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElements orbitalElementsNew) {
         //removing the old reference to the object
         spacecraftBody.removeParent();
@@ -91,9 +94,10 @@ public class SolarSystem {
         }
     }
 
+    @PhysTickOnly // not sure if this is true but better safe than sorry
     public void entityRemoveOrbital(EntityOrbitBody entityOrbitBody) {
         entityOrbitBody.removeParent();
-        entityOrbitBody.setHostSpace(null);
+        entityOrbitBody.removeHostSpaces();
         entityOrbitBody.setOrbitalElements(null);
         this.allSpacecraftBodies.remove(entityOrbitBody.getOrbitId());
     }
@@ -128,5 +132,12 @@ public class SolarSystem {
 
     public CelestialBody getDimensionOfPlanet(ResourceKey<Level> dim) {
         return planetDimensions.get(dim);
+    }
+
+    public ServerSpaceshipBody getShipFromVSId(long id) {
+        if (this.allSpacecraftBodies.get(new OrbitId(id)) instanceof ServerSpaceshipBody serverSpaceshipBody) {
+            return serverSpaceshipBody;
+        }
+        return null;
     }
 }
