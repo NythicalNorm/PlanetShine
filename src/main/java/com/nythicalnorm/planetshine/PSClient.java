@@ -18,6 +18,8 @@ import com.nythicalnorm.planetshine.rendering.textures.ClientTexManager;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.ClientHostSpace;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
 import com.nythicalnorm.planetshine.util.Stage;
@@ -27,6 +29,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3d;
 
 import java.util.Optional;
 
@@ -38,6 +41,7 @@ public class PSClient extends Stage {
     private final @NotNull ClientPlayerOrbitBody playerOrbit;
     private CelestialBody currentPlanetOn;
     private ClientPlayerOrbitBody controllingBody;
+    private ClientHostSpace clientHostSpace;
     private final DaylightRegion daylightRegion;
     public ClientTimeHandler clientTimeHandler;
 
@@ -94,8 +98,13 @@ public class PSClient extends Stage {
        return (ClientCelestialBody) this.solarSystem.getPlanet(planetID);
     }
 
-    public void setHostOrbit(OrbitId orbitId) {
+    public void setHostOrbit(OrbitId orbitId, Vector3d originPos) {
         this.getPlayerOrbit().setHostSpaceId(orbitId);
+        if (orbitId != null) {
+            this.clientHostSpace = new ClientHostSpace(orbitId, originPos, this.solarSystem.getSpacecraftOrbit(orbitId));
+        } else {
+            this.clientHostSpace = null;
+        }
     }
 
     public float getSunAngleOpacity() {
@@ -157,6 +166,10 @@ public class PSClient extends Stage {
 
     public @NotNull ClientPlayerOrbitBody getPlayerOrbit() {
         return playerOrbit;
+    }
+
+    public OrbitHostAccessor getCurrentHostSpace() {
+        return clientHostSpace;
     }
 
     public void TryChangeTimeWarp(boolean doInc) {

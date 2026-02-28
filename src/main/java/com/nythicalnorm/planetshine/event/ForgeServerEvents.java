@@ -33,7 +33,7 @@ public class ForgeServerEvents {
     }
 
     @SubscribeEvent
-    public static void onCommandsRegiser(RegisterCommandsEvent event) {
+    public static void onCommandsRegister(RegisterCommandsEvent event) {
         new PSTeleportCommand(event.getDispatcher());
         ConfigCommand.register(event.getDispatcher());
     }
@@ -66,7 +66,7 @@ public class ForgeServerEvents {
 
     @SubscribeEvent
     public static void onPlayerLoggedInEvent(PlayerEvent.PlayerLoggedInEvent event) {
-        PSServer.getInstance().ifPresent(psServer -> psServer.playerJoined(event.getEntity()));
+        PSServer.getInstance().ifPresent(psServer -> psServer.playerJoined((ServerPlayer) event.getEntity()));
     }
 
     @SubscribeEvent
@@ -76,17 +76,16 @@ public class ForgeServerEvents {
 
     @SubscribeEvent
     public static void onPlayerCloned(PlayerEvent.Clone event) {
-        if(event.isWasDeath() && event.getEntity() instanceof ServerPlayer serverPlayer) {
-            PSServer.getInstance().ifPresent(psServer -> psServer.playerCloned(serverPlayer));
+        if(event.isWasDeath() && event.getEntity() instanceof ServerPlayer playerNew) {
+            PSServer.getInstance().ifPresent(psServer -> psServer.playerCloned(playerNew, (ServerPlayer) event.getOriginal(), playerNew.level().dimension(), event.getOriginal().level().dimension()));
         }
     }
 
     @SubscribeEvent
     public static void onDimensionChanged(PlayerEvent.PlayerChangedDimensionEvent event) {
-        PSServer.getInstance().ifPresent(psServer -> psServer.playerDimChanged(event.getEntity(), event.getTo()));
+        PSServer.getInstance().ifPresent(psServer -> psServer.playerDimChanged(event.getEntity(), event.getTo(), event.getFrom()));
     }
 
-    //serverside Only Starting from here to
     @SubscribeEvent
     public static void OnSleepingTimeCheckEvent(SleepingTimeCheckEvent event) {
         if (event.getEntity().level() instanceof PlanetTimeAccessor planetTimeAccessor && planetTimeAccessor.ps$DaylightDataExists()){

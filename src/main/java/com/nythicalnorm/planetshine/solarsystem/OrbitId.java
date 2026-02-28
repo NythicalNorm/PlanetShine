@@ -26,7 +26,7 @@ public class OrbitId {
 
     public OrbitId(Long shipID) {
         this.leastSignificantBits =  shipID;
-        this.mostSignificantBits = Long.MIN_VALUE;
+        this.mostSignificantBits = Long.MIN_VALUE; // very sus, I'll make it work properly eventually
     }
 
     public OrbitId(@NotNull Ship ship) {

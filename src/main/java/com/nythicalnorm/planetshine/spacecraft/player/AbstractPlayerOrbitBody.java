@@ -12,6 +12,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2ic;
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 
 public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
@@ -35,6 +37,27 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
         OrbitHostSpace hostSpace = new PlayerHostSpace(this.id, posNew, this);
         this.orbitHostSpace.set(hostSpace);
         return hostSpace;
+    }
+
+    @Override
+    public boolean isBodyEntityLoaded() {
+        return this.player != null;
+    }
+
+    @Override
+    public Vector3dc getMcPosition() {
+        if (this.player != null) {
+            return new Vector3d(this.player.position().x, this.player.position().y, this.player.position().z);
+        }
+        return null;
+    }
+
+    @Override
+    public Vector3dc getMcVelocity() {
+        if (this.player != null) {
+            return new Vector3d(this.player.getDeltaMovement().x, this.player.getDeltaMovement().y, this.player.getDeltaMovement().z);
+        }
+        return null;
     }
 
     public void setPlayer(@NotNull Player player) {

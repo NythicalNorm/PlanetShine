@@ -15,6 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import org.joml.Vector3d;
 
 import java.util.List;
 import java.util.Map;
@@ -104,9 +105,9 @@ public class ClientPacketHandler {
                 psClient.timeWarpSetFromServer(successfullyChanged, setTimeWarpSpeed));
     }
 
-    public static void hostOrbitSet(OrbitId spaceHostOrbitId) {
+    public static void hostOrbitSet(OrbitId spaceHostOrbitId, Vector3d originPos) {
         PSClient.getInstance().ifPresent(psClient ->
-                psClient.setHostOrbit(spaceHostOrbitId));
+                psClient.setHostOrbit(spaceHostOrbitId, originPos));
     }
 
     public static void orbitChange(OrbitId spacecraftID, OrbitalElements orbitalElements) {

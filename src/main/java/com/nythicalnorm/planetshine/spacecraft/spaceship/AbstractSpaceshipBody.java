@@ -12,6 +12,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2ic;
+import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.Ship;
 
 public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
@@ -19,6 +20,7 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
 
     public AbstractSpaceshipBody(ShipOrbitBuilder shipOrbitBuilder, boolean isClientSide) {
         super(shipOrbitBuilder, shipOrbitBuilder.currentHostSpace, isClientSide);
+        this.ship = shipOrbitBuilder.ship;
     }
 
     @Override
@@ -33,6 +35,27 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
         return hostSpace;
     }
 
+    @Override
+    public boolean isBodyEntityLoaded() {
+        return this.ship != null;
+    }
+
+    @Override
+    public Vector3dc getMcPosition() {
+        if (this.ship != null) {
+            return this.ship.getKinematics().getPosition();
+        }
+        return null;
+    }
+
+    @Override
+    public Vector3dc getMcVelocity() {
+        if (this.ship != null) {
+            return this.ship.getKinematics().getVelocity();
+        }
+        return null;
+    }
+
     public void setShip(@Nullable Ship ship) {
         this.ship = ship;
     }
@@ -42,7 +65,7 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     }
 
     public static class ShipOrbitBuilder extends Builder<AbstractSpaceshipBody> {
-        Ship ship = null;
+        Ship ship;
         OrbitId currentHostSpace;
 
         public ShipOrbitBuilder() {

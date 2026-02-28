@@ -9,7 +9,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.*;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
-import com.nythicalnorm.planetshine.spacecraft.spaceship.SpaceshipBodyCodec;
+import com.nythicalnorm.planetshine.spacecraft.SpaceshipBodyCodec;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.Map;

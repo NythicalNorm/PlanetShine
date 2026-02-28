@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.spacecraft.spaceship;
 
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import org.valkyrienskies.core.api.world.ServerShipWorld;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
@@ -22,5 +23,10 @@ public class ServerSpaceshipBody extends AbstractSpaceshipBody {
             serverShipWorld.getLoadedShips().getById(0);
             this.setShip(serverShipWorld.getLoadedShips().getById(this.id.getShipID()));
         }
+    }
+
+    @Override
+    public OrbitHostAccessor getHostSpaceAccess() {
+        return this.orbitHostSpace.get();
     }
 }

@@ -4,6 +4,7 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.util.calculations.PlanetBodyCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -63,6 +64,11 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
 
     public Quaterniondc getPlayerOnPlanetRotation() {
         return playerOnPlanetRotation;
+    }
+
+    @Override
+    public OrbitHostAccessor getHostSpaceAccess() {
+        return PSClient.get().getCurrentHostSpace();
     }
 
     public void clearRotation() {

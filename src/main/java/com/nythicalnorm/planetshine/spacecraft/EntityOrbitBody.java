@@ -4,6 +4,7 @@ import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitChange;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
@@ -24,21 +25,46 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class EntityOrbitBody extends OrbitalBody {
     protected static final float tolerance = 1E-6f;
-    protected final AtomicReference<OrbitId> currentHostSpace;
+    protected final AtomicReference<OrbitId> hostSpaceID;
     protected final AtomicReference<OrbitHostSpace> orbitHostSpace;
     protected ConcurrentLinkedQueue<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
     protected final boolean isClientSide;
 
-    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId currentHostSpace, boolean isClientSide) {
+    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID, boolean isClientSide) {
         super(orbitalBuilder);
-        this.currentHostSpace = new AtomicReference<>();
+        this.hostSpaceID = new AtomicReference<>();
         this.orbitHostSpace = new AtomicReference<>();
-        this.currentHostSpace.set(currentHostSpace);
+        this.hostSpaceID.set(hostSpaceID);
         this.isClientSide = isClientSide;
     }
 
     @GameTickOnly
     public void init() { }
+
+    @PhysTickOnly
+    public void simulate(long TimeElapsed, boolean isTimeWarping) {
+        if (this.orbitalElements == null || this.parent == null || this.hostSpaceID == null) {
+            return;
+        }
+
+        if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null && this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
+            Vector3dc originPos = this.getHostSpaceAccess().getOriginPos();
+            Vector3dc hostPos = this.getHostSpaceAccess().getHostBody().getRelativePos();
+            this.setStateVectorsFromHostBody(originPos, hostPos, TimeElapsed);
+        } else {
+            if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
+                Vector3d[] stateVectors = orbitalElements.ToCartesian(TimeElapsed);
+                this.relativeOrbitalPos.set(stateVectors[0]);
+                this.relativeVelocity.set(stateVectors[1]);
+            } else if (!isClientSide && !isTimeWarping) {
+                simulateNonTimeWarp();
+                this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+                sendOrbitUpdateToRelevantPlayers();
+            }
+        }
+
+        this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
+    }
 
     private void simulateNonTimeWarp() {
         if (this.parent == null) {
@@ -52,23 +78,15 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.relativeOrbitalPos.add(velocityPerTick);
     }
 
-    @PhysTickOnly
-    public void simulate(long TimeElapsed, boolean isTimeWarping) {
-        if (this.orbitalElements == null || this.parent == null) {
-            return;
-        }
+    protected void setStateVectorsFromHostBody(Vector3dc originPos, Vector3dc hostPos, long TimeElapsed) {
+        Vector3d relativePos = new Vector3d();
+        Vector3d relativeVel = new Vector3d(this.getMcVelocity());
+        this.getMcPosition().sub(originPos, relativePos);
 
-        if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
-            Vector3d[] stateVectors = orbitalElements.ToCartesian(TimeElapsed);
-            this.relativeOrbitalPos.set(stateVectors[0]);
-            this.relativeVelocity.set(stateVectors[1]);
-        } else if (!isClientSide && !isTimeWarping) {
-            simulateNonTimeWarp();
-            this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
-            sendOrbitUpdateToRelevantPlayers();
-        }
+        this.relativeOrbitalPos.set(relativePos.add(hostPos));
+        this.relativeVelocity.set(relativeVel.add(this.getHostSpaceAccess().getHostBody().getRelativeVelocity()));
 
-        this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(relativeOrbitalPos);
+        this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
     }
 
     protected void sendOrbitUpdateToRelevantPlayers() {
@@ -83,9 +101,16 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         }
     }
 
+    // need to do this so it works on both client and server
+    public abstract OrbitHostAccessor getHostSpaceAccess();
+
     public void setHostSpaceId(OrbitId hostSpace) {
-        this.currentHostSpace.set(hostSpace);
+        this.hostSpaceID.set(hostSpace);
     }
+
+    public abstract boolean isBodyEntityLoaded();
+    public abstract Vector3dc getMcPosition();
+    public abstract Vector3dc getMcVelocity();
 
     public void setHostOrbitSpace(OrbitHostSpace playerHostSpace) {
         this.orbitHostSpace.set(playerHostSpace);
@@ -95,12 +120,12 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         if (this.isHostOfItsSpace() && !this.isClientSide) {
             this.orbitHostSpace.get().hostLeft();
         }
-        this.currentHostSpace.set(null);
+        this.hostSpaceID.set(null);
         this.orbitHostSpace.set(null);
     }
 
-    public Optional<OrbitId> getCurrentHostSpace() {
-        OrbitId currentHostSpace = this.currentHostSpace.get();
+    public Optional<OrbitId> getHostSpaceID() {
+        OrbitId currentHostSpace = this.hostSpaceID.get();
         if (currentHostSpace != null) {
             return Optional.of(currentHostSpace);
         } else {
@@ -109,7 +134,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     public boolean isHostOfItsSpace() {
-        OrbitId hostSpace = this.currentHostSpace.get();
+        OrbitId hostSpace = this.hostSpaceID.get();
         if (hostSpace == null) {
             return false;
         } else {

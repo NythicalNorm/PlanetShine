@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.spacecraft.hostspace;
 
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -21,15 +22,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
-import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
-import org.valkyrienskies.core.internal.ShipTeleportData;
+import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
@@ -67,6 +66,11 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
         return loadedHostSpaces.computeIfAbsent(hostSpaceLoc,
                 k -> entityOrbitBody.createHostSpace(hostSpaceLoc));
+    }
+
+    @GameTickOnly
+    public ShipTeleporter getShipTeleporter() {
+        return shipTeleporter;
     }
 
     public OrbitHostSpace getHostSpaceAt(Vec3 spaceDimPos) {
@@ -111,12 +115,9 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public void spaceEntitySpawn(Entity entity) {
         OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
-        if (entityHostSpace == null && entity instanceof Player player) {
-            AbstractPlayerOrbitBody entityOrbitBody = (AbstractPlayerOrbitBody) psServer.getSolarSystem().getSpacecraftOrbit(new OrbitId(player));
-            if (entityOrbitBody != null) {
-                entityOrbitBody.setPlayer(player);
-                entityHostSpace = getOrCreateHostSpace(entityOrbitBody);
-            }
+
+        if (entityHostSpace == null && entity instanceof ServerPlayer player) {
+            psServer.get().playerUpdatedInSpace(player);
         }
 
         if (entityHostSpace != null) {
@@ -161,10 +162,10 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         ServerLevel oldLevel = ((ServerCelestialBody)celestialBody).getLevel();
         ServerLevel newLevel = psServer.getMCServer().getLevel(Level.NETHER);
 
-        ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(new Vector3d(0d, 250d, 0d), new Quaterniond(),
-                new Vector3d(), new Vector3d(), VSGameUtilsKt.getDimensionId(newLevel),null, null);
-
-        shipTeleporter.teleportShipsWithEntities(loadedServerShip, shipTeleportData, oldLevel, newLevel);
+//        ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(new Vector3d(0d, 250d, 0d), new Quaterniond(),
+//                new Vector3d(), new Vector3d(), VSGameUtilsKt.getDimensionId(newLevel),null, null);
+//
+//        shipTeleporter.teleportShipsWithEntities(loadedServerShip, shipTeleportData, oldLevel, newLevel);
     }
 
     private void checkEntityTeleportToPlanet() {
@@ -177,6 +178,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                         teleportEntity(playerOrbitBody.getPlayerEntity(), planetLevel, pos.x, teleportToGroundHeight, pos.y);
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));
+                        PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), (ServerPlayer)playerOrbitBody.getPlayerEntity());
                     }
                 }
             }

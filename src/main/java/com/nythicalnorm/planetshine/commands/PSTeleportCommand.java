@@ -11,6 +11,9 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import org.valkyrienskies.core.api.ships.LoadedServerShip;
+import org.valkyrienskies.core.api.ships.LoadedShip;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Collection;
 
@@ -52,7 +55,14 @@ public class PSTeleportCommand {
                     }
                     long startingAnomaly = psServer.getCurrentTime();
                     OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingAnomaly, inclination, 0d, 0d, planet.getMass());
-                    psServer.playerTeleportOrbit(planet, (ServerPlayer) entity, orbitalElement);
+
+                    LoadedShip shipMountedTo = VSGameUtilsKt.getShipMountedTo(entity);
+
+                    if (shipMountedTo == null) {
+                        psServer.playerTeleportOrbit(planet, (ServerPlayer) entity, orbitalElement);
+                    } else {
+                        psServer.shipTeleportOrbit(planet, (LoadedServerShip) shipMountedTo, orbitalElement);
+                    }
                 }
             }
             pSource.sendSuccess(() -> {

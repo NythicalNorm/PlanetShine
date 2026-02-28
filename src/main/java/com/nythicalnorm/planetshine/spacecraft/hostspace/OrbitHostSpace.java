@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.Calc;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector2ic;
 import org.joml.Vector3d;
@@ -13,18 +14,17 @@ import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public abstract class OrbitHostSpace {
+public abstract class OrbitHostSpace implements OrbitHostAccessor {
     protected final OrbitId orbitIdOfHost;
     protected final Vector2ic originPos;
     protected final EntityOrbitBody hostBody;
 
     @GameTickOnly
-    protected final List<Entity> nonHostEntities;
-    protected final List<ServerPlayer> nonHostPlayers;
+    protected final ConcurrentLinkedQueue<Entity> nonHostEntities;
+    protected final ConcurrentLinkedQueue<ServerPlayer> nonHostPlayers;
 
     private final ConcurrentLinkedQueue<Vector3dc> velocityForLastGameTick;
     private final ConcurrentLinkedQueue<Vector3dc> velocityForLastPhysTick;
@@ -32,11 +32,26 @@ public abstract class OrbitHostSpace {
     public OrbitHostSpace(OrbitId orbitIdOfHost, Vector2ic originPos, EntityOrbitBody entityOrbitBody) {
         this.orbitIdOfHost = orbitIdOfHost;
         this.originPos = originPos;
-        this.nonHostEntities = new ArrayList<>();
-        this.nonHostPlayers = new ArrayList<>();
+        this.nonHostEntities = new ConcurrentLinkedQueue<>();
+        this.nonHostPlayers = new ConcurrentLinkedQueue<>();
         this.hostBody = entityOrbitBody;
         this.velocityForLastGameTick = new ConcurrentLinkedQueue<>();
         this.velocityForLastPhysTick = new ConcurrentLinkedQueue<>();
+    }
+
+    @Override
+    public EntityOrbitBody getHostBody() {
+        return hostBody;
+    }
+
+    @Override
+    public Vector3d getOriginPos() {
+        return new Vector3d(originPos.x(), 128, originPos.y());
+    }
+
+    @Override
+    public OrbitId getOrbitIdOfHost() {
+        return orbitIdOfHost;
     }
 
     public void OnGameTick() {
@@ -46,14 +61,18 @@ public abstract class OrbitHostSpace {
             return;
         }
 
-        for (Entity entity : nonHostEntities) {
-            if (! PSServer.get().getEntityShipManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y())) {
+        Iterator<Entity> entityIterator = this.nonHostEntities.iterator();
+
+        while (entityIterator.hasNext()) {
+            Entity entity = entityIterator.next();
+            if (PSServer.get().getEntityShipManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y())
+                    && !entity.isPassenger()) {
+                Vec3 ogVel = entity.getDeltaMovement();
+                entity.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
+                        ogVel.z - velocity.z());
+            } else {
                 removeEntityFromHostSpace(entity);
-                continue;
             }
-            Vec3 ogVel = entity.getDeltaMovement();
-            entity.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
-                    ogVel.z - velocity.z());
         }
     }
 
@@ -63,35 +82,31 @@ public abstract class OrbitHostSpace {
     }
 
     public void hostLeft() {
-//        for (Entity entity : nonHostEntities) { // doesn't work yet.
-//            if (!(entity instanceof Player)) {
-//                entity.remove(Entity.RemovalReason.DISCARDED);
-//            }
-//        }
+        for (Entity entity : nonHostEntities) { // doesn't work yet.
+            if (!(entity instanceof Player)) {
+                entity.remove(Entity.RemovalReason.DISCARDED);
+            }
+        }
         PSServer.get().getEntityShipManager().removeHostSpace(this);
-    }
-
-    public Vector3d getOriginPos() {
-        return new Vector3d(originPos.x(), 128, originPos.y());
     }
 
     public Vector2ic getOriginPos2I() {
         return originPos;
     }
 
-    public OrbitId getOrbitIdOfHost() {
-        return orbitIdOfHost;
-    }
-
     public void addEntityToHostSpace(Entity entity) {
         if (entity instanceof ServerPlayer player) {
-            if (hostBody.getOrbitId().getUUID().equals(player.getUUID())) {
-                return;
-            } else {
-                this.nonHostPlayers.add(player);
-            }
+            addPlayerToHostSpace(player);
         }
         nonHostEntities.add(entity);
+    }
+
+    public void addPlayerToHostSpace(ServerPlayer player) {
+        if (hostBody.getOrbitId().getUUID().equals(player.getUUID())) {
+            return;
+        } else {
+            this.nonHostPlayers.add(player);
+        }
     }
 
     public void removeEntityFromHostSpace(Entity entity) {
