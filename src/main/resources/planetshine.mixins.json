@@ -42,9 +42,11 @@
     "daynightcycle.ClientLevelMixin",
     "daynightcycle.FogRendererMixin",
     "screen.DebugScreenOverlayMixin",
+    "screen.KeyboardHandlerMixin",
     "screen.ProgressScreenMixin",
     "screen.ReceivingLevelScreenMixin",
     "spaceentites.PlayerRendererSpaceMixin",
-    "vs.TempFrustumMixin"
+    "vs.TempFrustumMixin",
+    "vs.VSCameraMixinMixin"
   ]
 }

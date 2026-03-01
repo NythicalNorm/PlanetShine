@@ -67,7 +67,7 @@ public class LivingEntitySpaceMixin {
 
     @WrapOperation(method = "updateFallFlying", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;setSharedFlag(IZ)V"))
     private void setFallFlyingFlag(LivingEntity instance, int flag, boolean value, Operation<Void> original) {
-        if (OrbitalBodyUtils.isSpaceLevel(instance.level())) {
+        if (OrbitalBodyUtils.isSpaceLevel(instance.level()) && !instance.isPassenger()) {
             original.call(instance, flag, true);
         } else {
             original.call(instance, flag, value);

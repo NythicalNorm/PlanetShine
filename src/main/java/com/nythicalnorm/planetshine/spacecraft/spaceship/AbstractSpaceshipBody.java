@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaterniondc;
 import org.joml.Vector2ic;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.Ship;
@@ -31,7 +32,7 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     @Override
     public OrbitHostSpace createHostSpace(Vector2ic posNew) {
         OrbitHostSpace hostSpace = new ShipHostSpace(this.id, posNew, this);
-        this.orbitHostSpace.set(hostSpace);
+        this.setHostOrbitSpace(hostSpace);
         return hostSpace;
     }
 
@@ -56,11 +57,19 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
         return null;
     }
 
+    @Override
+    public Quaterniondc getMCRotation() {
+        if (this.ship != null) {
+            return ship.getKinematics().getRotation();
+        }
+        return null;
+    }
+
     public void setShip(@Nullable Ship ship) {
         this.ship = ship;
     }
 
-    public Ship getShip() {
+    public @Nullable Ship getShip() {
         return ship;
     }
 

@@ -15,7 +15,7 @@
   "key.planetshine.increase_time_warp": "Increase Time Warp Speed",
   "key.planetshine.decrease_time_warp": "Decrease Time Warp Speed",
   "key.planetshine.open_solar_system_map": "Open Solar System Map",
-  "key.planetshine.use_player_jetpack_key": "Use your Spacesuit's jetpack",
+  "key.planetshine.open_spacecraft_hud_key": "Open Space HUD key",
 
   "planetshine.commands.dimTeleport": "Teleported to the Space Dimension",
   "planetshine.commands.planet_invalid": "Invalid Planet at: ",

@@ -6,14 +6,14 @@ import org.valkyrienskies.core.api.events.ShipLoadEvent;
 import org.valkyrienskies.core.api.events.TickEndEvent;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
-public class VSEvents {
+public class VSServerEvents {
     public static void addListeners() {
-        ValkyrienSkies.api().getPhysTickEvent().on(VSEvents::onPhysTick);
-        ValkyrienSkies.api().getTickEndEvent().on(VSEvents::onTickEnd);
-        ValkyrienSkies.api().getShipLoadEvent().on(VSEvents::onShipLoadEvent);
+        ValkyrienSkies.api().getPhysTickEvent().on(VSServerEvents::onPhysTick);
+        ValkyrienSkies.api().getTickEndEvent().on(VSServerEvents::onTickEnd);
+        ValkyrienSkies.api().getShipLoadEvent().on(VSServerEvents::onShipLoadEvent);
     }
 
-    public static void onPhysTick(PhysTickEvent event) {
+    private static void onPhysTick(PhysTickEvent event) {
        if (PSServer.get() != null) {
            PSServer solarSys = PSServer.get();
            if (event.getWorld().getDimension().equals(solarSys.getSpaceLevelString())) {
@@ -22,7 +22,7 @@ public class VSEvents {
        }
     }
 
-    public static void onTickEnd(TickEndEvent event){
+    private static void onTickEnd(TickEndEvent event){
     }
 
     private static void onShipLoadEvent(ShipLoadEvent shipLoadEvent) {

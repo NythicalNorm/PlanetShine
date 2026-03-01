@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.mixin.vs;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.spongepowered.asm.mixin.Final;
@@ -45,9 +46,9 @@ public abstract class PhysShipImplMixin {
     @Inject(method = "applyQueuedForces", at = @At(value = "HEAD"), remap = false)
     public void applyForces(CallbackInfo ci) {
         if (PSServer.get() != null) {
-            ServerSpaceshipBody serverSpaceshipBody = PSServer.get().getSolarSystem().getShipFromVSId(getId());
+            ServerSpaceshipBody serverSpaceshipBody = (ServerSpaceshipBody) PSServer.get().getSolarSystem().getShipFromVSId(getId());
 
-            if (serverSpaceshipBody != null && serverSpaceshipBody.isHostOfItsSpace()) {
+            if (serverSpaceshipBody != null && serverSpaceshipBody.isHostOfItsSpace() && !PSServer.get().isTimeWarping()) {
                 double forceThreshold = 0.1 * getMass();
                 double forceThresholdSquared = forceThreshold * forceThreshold;
 
@@ -64,9 +65,16 @@ public abstract class PhysShipImplMixin {
                     serverSpaceshipBody.addVelocityForUpdate(rotForcesTotal);
                 }
 
-                // need to figure out the moment of inertia shit, with rotation and force with this.
-                invPosForces.clear();
+                while(!invPosForces.isEmpty()) {
+                    Vector3dc invPosPosition = invPosPositions.removeFirst(); // need to figure out the moment of inertia rotation shit
+                    Vector3dc invPosForce = invPosForces.removeFirst();
+                    if (invPosForce.lengthSquared() > forceThresholdSquared) {
+                        serverSpaceshipBody.addVelocityForUpdate(new Vector3d(invPosForce).div(getMass() * TimeCalc.PhysTickPerSec));
+                    }
+                }
+
                 invPosPositions.clear();
+                invPosForces.clear();
             }
         }
     }

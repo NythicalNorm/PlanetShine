@@ -6,7 +6,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -96,6 +96,7 @@ public class SolarSystem {
 
     @PhysTickOnly // not sure if this is true but better safe than sorry
     public void entityRemoveOrbital(EntityOrbitBody entityOrbitBody) {
+        entityOrbitBody.OnRemove();
         entityOrbitBody.removeParent();
         entityOrbitBody.removeHostSpaces();
         entityOrbitBody.setOrbitalElements(null);
@@ -134,8 +135,8 @@ public class SolarSystem {
         return planetDimensions.get(dim);
     }
 
-    public ServerSpaceshipBody getShipFromVSId(long id) {
-        if (this.allSpacecraftBodies.get(new OrbitId(id)) instanceof ServerSpaceshipBody serverSpaceshipBody) {
+    public AbstractSpaceshipBody getShipFromVSId(long id) { // very sus to store ship id has part of the 128 bit uuid
+        if (this.allSpacecraftBodies.get(new OrbitId(id)) instanceof AbstractSpaceshipBody serverSpaceshipBody) {
             return serverSpaceshipBody;
         }
         return null;

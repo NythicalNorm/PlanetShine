@@ -12,10 +12,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector2i;
-import org.joml.Vector2ic;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
+import org.joml.*;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 
@@ -43,7 +40,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
 
     @PhysTickOnly
     public void simulate(long TimeElapsed, boolean isTimeWarping) {
-        if (this.orbitalElements == null || this.parent == null || this.hostSpaceID == null) {
+        if (this.orbitalElements == null || this.parent == null || this.hostSpaceID.get() == null) {
             return;
         }
 
@@ -109,11 +106,18 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     public abstract boolean isBodyEntityLoaded();
-    public abstract Vector3dc getMcPosition();
-    public abstract Vector3dc getMcVelocity();
+    public abstract @Nullable Vector3dc getMcPosition();
+    public abstract @Nullable Vector3dc getMcVelocity();
+    public abstract @Nullable Quaterniondc getMCRotation();
 
     public void setHostOrbitSpace(OrbitHostSpace playerHostSpace) {
-        this.orbitHostSpace.set(playerHostSpace);
+        if (playerHostSpace != null) {
+            this.hostSpaceID.set(playerHostSpace.getOrbitIdOfHost());
+            this.orbitHostSpace.set(playerHostSpace);
+        } else {
+            this.hostSpaceID.set(null);
+            this.orbitHostSpace.set(null);
+        }
     }
 
     public void removeHostSpaces() {
@@ -143,7 +147,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     // Thread safe, don't call this while time warping
-    public void addVelocityForUpdate(Vector3d impulse) {
+    public void addVelocityForUpdate(Vector3dc impulse) {
         velocityApplyQueue.add(impulse);
         OrbitHostSpace hostSpace = this.orbitHostSpace.get();
         if (hostSpace != null) {
@@ -156,5 +160,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     @OnlyIn(Dist.CLIENT) // kinda sus but hey it works without having generics glorp.
     public boolean drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
         return false;
+    }
+
+    // called when the entity is leaving orbit and entering a another dimension
+    public void OnRemove() {
+
     }
 }

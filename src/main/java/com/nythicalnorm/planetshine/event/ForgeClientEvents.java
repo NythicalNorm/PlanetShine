@@ -50,10 +50,9 @@ public class ForgeClientEvents {
                 }
             });
         }
-        else if (PSKeyBinds.USE_PLAYER_JETPACK_KEY.consumeClick()) {
-            PSClient.getInstance().ifPresent(psClient -> {
-
-            });
+        else if (PSKeyBinds.OPEN_SPACECRAFT_HUD_KEY.consumeClick()) {
+            PSClient.getInstance().ifPresent(psClient ->
+                    psClient.getScreenManager().openSpaceHUDScreen(psClient));
         }
     }
 

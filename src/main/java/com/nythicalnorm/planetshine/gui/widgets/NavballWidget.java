@@ -4,15 +4,16 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
-import com.mojang.math.Axis;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.gui.screen.ISpacecraftDataDisplay;
+import com.nythicalnorm.planetshine.gui.screen.ISpacecraftControlStateDisplay;
+import com.nythicalnorm.planetshine.gui.screen.ISpacecraftOrbitDataDisplay;
 import com.nythicalnorm.planetshine.rendering.generators.QuadSphereModelGenerator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
@@ -22,6 +23,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
+import org.joml.Quaterniondc;
 import org.joml.Quaternionf;
 
 @OnlyIn(Dist.CLIENT)
@@ -36,24 +38,28 @@ public class NavballWidget extends AbstractWidget {
         super(pX, pY, pWidth, pHeight, pMessage);
     }
 
+
     @Override
-    protected void renderWidget(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+    protected void renderWidget(@NotNull GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
         int xPos = getX() - 47;
         int yPos = getY() - 86;
+        Screen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
 
-        PSClient.getInstance().ifPresent(psClient -> renderNavBall(psClient, pGuiGraphics));
+        if (spacecraftScreen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
+            this.renderNavBall(orbitDataDisplay, pGuiGraphics);
+            pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos, yPos, 0, 0, 94, 86);
+            double bodyVelocity = orbitDataDisplay.getVelocity();
+            this.renderRelativeVelocity(pGuiGraphics, xPos, yPos,(int) bodyVelocity);
+            this.renderGForceBar(pGuiGraphics, xPos, yPos);
+        }
 
-        pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos, yPos,0,0,94,86);
-
-        if (PSClient.getInstance().get().getScreenManager().getSpacecraftScreen() instanceof ISpacecraftDataDisplay spacecraftDataDisplay) {
+        if (spacecraftScreen instanceof ISpacecraftControlStateDisplay spacecraftDataDisplay) {
             renderThrottleBar(pGuiGraphics, xPos, yPos, spacecraftDataDisplay);
             renderButtons(pGuiGraphics, xPos, yPos, spacecraftDataDisplay);
-            renderGForceBar(pGuiGraphics, xPos, yPos);
-            renderRelativeVelocity(pGuiGraphics, xPos, yPos);
         }
     }
 
-    private void renderNavBall(PSClient css, GuiGraphics pGuiGraphics) {
+    private void renderNavBall(ISpacecraftOrbitDataDisplay orbitData, GuiGraphics pGuiGraphics) {
         RenderSystem.depthMask(false);
         RenderSystem.enableDepthTest();
 
@@ -71,10 +77,12 @@ public class NavballWidget extends AbstractWidget {
 
         float navballScale = (float) gameWindow.getGuiScale() * (124f/gameWindow.getHeight());
         navballPosestack.scale(navballScale, navballScale, navballScale);
+        Quaterniondc rotation = orbitData.getSpacecraftRotation();
 
-        if (css.getPlayerOrbit().getPlayerOnPlanetRotation() != null) {
-            navballPosestack.mulPose(Axis.YP.rotation(Mth.HALF_PI));
-            navballPosestack.mulPose(new Quaternionf().set(css.getPlayerOrbit().getPlayerOnPlanetRotation()));
+        if (rotation != null) {
+            Quaternionf setupRot = new Quaternionf().rotateYXZ(Mth.HALF_PI, 0f, Mth.HALF_PI);
+            navballPosestack.mulPose(setupRot);
+            navballPosestack.mulPose(new Quaternionf().set(rotation).invert());
         }
 
         QuadSphereModelGenerator.getSphereBuffer().bind();
@@ -88,7 +96,7 @@ public class NavballWidget extends AbstractWidget {
         RenderSystem.depthMask(true);
     }
 
-    private void renderButtons(GuiGraphics pGuiGraphics, int xPos, int yPos, ISpacecraftDataDisplay spacecraftScreen) {
+    private void renderButtons(GuiGraphics pGuiGraphics, int xPos, int yPos, ISpacecraftControlStateDisplay spacecraftScreen) {
         if (spacecraftScreen.isRCS()) {
             pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos + 17, yPos + 18, 96, 0, 12, 6);
         }
@@ -97,25 +105,24 @@ public class NavballWidget extends AbstractWidget {
         }
     }
 
-    private void renderRelativeVelocity(GuiGraphics pGuiGraphics, int xPos, int yPos) {
-        if (PSClient.get().weInSpaceDim()) {
-            int speed = (int) PSClient.get().getPlayerOrbit().getRelativeVelocity().length();
-            Component orbitalSpeedComp = Component.translatable("planetshine.screen.orbital_speed", speed);
-            pGuiGraphics.drawString(Minecraft.getInstance().font, orbitalSpeedComp,xPos + 22, yPos + 5, 0x00ff2b, false);
-        }
+    private void renderRelativeVelocity(GuiGraphics pGuiGraphics, int xPos, int yPos, int speed) {
+        Component orbitalSpeedComp = Component.translatable("planetshine.screen.orbital_speed", speed);
+        pGuiGraphics.drawString(Minecraft.getInstance().font, orbitalSpeedComp,xPos + 22, yPos + 5, 0x00ff2b, false);
     }
 
-    private void renderThrottleBar(GuiGraphics graphics, int xPos, int yPos, ISpacecraftDataDisplay spacecraftScreen) {
-            int barHeight = Math.round(Mth.lerp(spacecraftScreen.getThrottleSetting(), 0, 70));
-            int pointerHeight = Mth.clamp(barHeight,1, 67);
-            //drawing the blue bar
-            graphics.blit(NAVBALL_GUI_TEXTURE, xPos + 3, yPos + 72 - barHeight,95,105 - barHeight,9, barHeight);
-            //drawing the arrow
-            graphics.blit(NAVBALL_GUI_TEXTURE, xPos - 3, yPos + 66 - pointerHeight,95,23,14,12);
+    private void renderThrottleBar(GuiGraphics graphics, int xPos, int yPos, ISpacecraftControlStateDisplay spacecraftScreen) {
+        int barHeight = Math.round(Mth.lerp(spacecraftScreen.getThrottleSetting(), 0, 70));
+        int pointerHeight = Mth.clamp(barHeight,1, 67);
+        //drawing the blue bar
+        graphics.blit(NAVBALL_GUI_TEXTURE, xPos + 3, yPos + 72 - barHeight,95,105 - barHeight,9, barHeight);
+        //drawing the arrow
+        graphics.blit(NAVBALL_GUI_TEXTURE, xPos - 3, yPos + 66 - pointerHeight,95,23,14,12);
     }
 
-    private void renderGForceBar(GuiGraphics pGuiGraphics, int xPos, int yPos) {
-
+    private void renderGForceBar(GuiGraphics graphics, int xPos, int yPos) {
+        double acceleration = 0d; // (Math.abs(this.velocityLastTick - velocity)) * (TimeCalc.PhysTickPerSec / OrbitalCalc.ACCELERATION_DUE_TO_GRAVITY_EARTH);
+        int barHeight = (int) Math.round(acceleration * 14);
+        graphics.blit(NAVBALL_GUI_TEXTURE, xPos + 80, yPos + 72 - barHeight,110,72 - barHeight,13, barHeight);
     }
 
     @Override

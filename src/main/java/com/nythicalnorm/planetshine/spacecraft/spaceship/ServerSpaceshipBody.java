@@ -20,7 +20,6 @@ public class ServerSpaceshipBody extends AbstractSpaceshipBody {
         }
         ServerShipWorld serverShipWorld = ValkyrienSkies.api().getServerShipWorld(PSServer.get().getMCServer());
         if (serverShipWorld != null) {
-            serverShipWorld.getLoadedShips().getById(0);
             this.setShip(serverShipWorld.getLoadedShips().getById(this.id.getShipID()));
         }
     }

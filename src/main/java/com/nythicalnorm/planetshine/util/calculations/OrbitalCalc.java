@@ -5,6 +5,8 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 public class OrbitalCalc {
+    public static final double ACCELERATION_DUE_TO_GRAVITY_EARTH = 9.80665d;
+
     public static Vector3d getNewtonAcceleration(double parentMass, Vector3dc relativeOrbitalPos) {
         double distance = relativeOrbitalPos.length();
         Vector3d angleVector = new Vector3d(relativeOrbitalPos).div(distance);

@@ -2,7 +2,6 @@ package com.nythicalnorm.planetshine.spacecraft.hostspace;
 
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.network.PacketHandler;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -59,6 +58,9 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     }
 
     public OrbitHostSpace getOrCreateHostSpace(EntityOrbitBody entityOrbitBody){
+        if (entityOrbitBody == null) {
+            return null;
+        }
         Vector2ic hostSpaceLoc = allRegisteredHostSpaces.computeIfAbsent(entityOrbitBody.getOrbitId(), (k) -> {
             this.markDirty(true);
             return genNewHostSpaceLoc(allRegisteredHostSpaces.size());
@@ -76,6 +78,13 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     public OrbitHostSpace getHostSpaceAt(Vec3 spaceDimPos) {
         int x = (int) (Math.round(spaceDimPos.x / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         int z = (int) (Math.round(spaceDimPos.z / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+        Vector2ic pos = new Vector2i(x,z);
+        return loadedHostSpaces.get(pos);
+    }
+
+    public OrbitHostSpace getHostSpaceAt(Vector3dc spaceDimPos) {
+        int x = (int) (Math.round(spaceDimPos.x() / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+        int z = (int) (Math.round(spaceDimPos.z() / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         Vector2ic pos = new Vector2i(x,z);
         return loadedHostSpaces.get(pos);
     }
@@ -116,11 +125,9 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     public void spaceEntitySpawn(Entity entity) {
         OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
 
-        if (entityHostSpace == null && entity instanceof ServerPlayer player) {
-            psServer.get().playerUpdatedInSpace(player);
-        }
-
-        if (entityHostSpace != null) {
+        if (entity instanceof ServerPlayer player) {
+            psServer.playerUpdatedInSpace(player);
+        } else if (entityHostSpace != null) {
             entityHostSpace.addEntityToHostSpace(entity);
         }
     }
@@ -170,7 +177,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     private void checkEntityTeleportToPlanet() {
         psServer.getSolarSystem().getAllSpacecraftBodies().values().forEach(entityOrbitBody -> {
-            if (entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.getAltitude(entityOrbitBody.getParent()) < teleportToGroundHeight) {
+            if (entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.getAltitude() < teleportToGroundHeight) {
                 ServerLevel planetLevel = ((ServerCelestialBody)entityOrbitBody.getParent()).getLevel();
                 if (planetLevel != null) {
                     Vector2d pos = PlanetBodyCalc.vectorToPlanetDimPos(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent().getRotation());
@@ -178,7 +185,6 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                         teleportEntity(playerOrbitBody.getPlayerEntity(), planetLevel, pos.x, teleportToGroundHeight, pos.y);
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));
-                        PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), (ServerPlayer)playerOrbitBody.getPlayerEntity());
                     }
                 }
             }

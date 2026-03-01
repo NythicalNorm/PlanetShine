@@ -33,7 +33,7 @@ public class ModClientEvents {
         event.register(PSKeyBinds.INC_TIME_WARP_KEY);
         event.register(PSKeyBinds.DEC_TIME_WARP_KEY);
         event.register(PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY);
-        event.register(PSKeyBinds.USE_PLAYER_JETPACK_KEY);
+        event.register(PSKeyBinds.OPEN_SPACECRAFT_HUD_KEY);
     }
 
     @SubscribeEvent

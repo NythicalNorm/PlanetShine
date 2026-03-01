@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.spacecraft.hostspace;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
 import com.nythicalnorm.planetshine.util.Calc;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -26,8 +27,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     protected final ConcurrentLinkedQueue<Entity> nonHostEntities;
     protected final ConcurrentLinkedQueue<ServerPlayer> nonHostPlayers;
 
-    private final ConcurrentLinkedQueue<Vector3dc> velocityForLastGameTick;
-    private final ConcurrentLinkedQueue<Vector3dc> velocityForLastPhysTick;
+    protected final ConcurrentLinkedQueue<Vector3dc> velocityForLastGameTick;
 
     public OrbitHostSpace(OrbitId orbitIdOfHost, Vector2ic originPos, EntityOrbitBody entityOrbitBody) {
         this.orbitIdOfHost = orbitIdOfHost;
@@ -36,7 +36,6 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         this.nonHostPlayers = new ConcurrentLinkedQueue<>();
         this.hostBody = entityOrbitBody;
         this.velocityForLastGameTick = new ConcurrentLinkedQueue<>();
-        this.velocityForLastPhysTick = new ConcurrentLinkedQueue<>();
     }
 
     @Override
@@ -78,7 +77,6 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
 
     @PhysTickOnly
     public void onPhysTick() {
-        velocityForLastPhysTick.clear();
     }
 
     public void hostLeft() {
@@ -102,9 +100,10 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     }
 
     public void addPlayerToHostSpace(ServerPlayer player) {
-        if (hostBody.getOrbitId().getUUID().equals(player.getUUID())) {
-            return;
-        } else {
+        if (((PlayerOrbitAccessor) player).getOrbitalBody() != null) {
+            ((PlayerOrbitAccessor) player).getOrbitalBody().setHostOrbitSpace(this);
+        }
+        if (! this.hostBody.getOrbitId().getUUID().equals(player.getUUID())) {
             this.nonHostPlayers.add(player);
         }
     }
@@ -113,8 +112,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         nonHostEntities.remove(entity);
     }
 
-    public void applyHostVelocity(Vector3d addedVel) {
+    public void applyHostVelocity(Vector3dc addedVel) {
         this.velocityForLastGameTick.add(addedVel);
-        this.velocityForLastPhysTick.add(addedVel);
     }
 }

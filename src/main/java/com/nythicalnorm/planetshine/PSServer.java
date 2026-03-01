@@ -13,6 +13,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.planettexgen.handlers.PlanetTexHandler;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.ShipHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
@@ -192,7 +193,6 @@ public class PSServer extends Stage {
 
             AbstractPlayerOrbitBody playerOrbitBody = builder.build();
             OrbitHostSpace playerHostSpace = hostSpaceManager.getOrCreateHostSpace(playerOrbitBody);
-            playerOrbitBody.setHostSpaceId(playerHostSpace.getOrbitIdOfHost());
             playerOrbitBody.setHostOrbitSpace(playerHostSpace);
 
             solarSystem.entityJoinedOrbital(planet, playerOrbitBody);
@@ -220,8 +220,6 @@ public class PSServer extends Stage {
 
             AbstractSpaceshipBody spaceshipOrbitBody = builder.build();
             OrbitHostSpace shipHostSpace = hostSpaceManager.getOrCreateHostSpace(spaceshipOrbitBody);
-            spaceshipOrbitBody.setHostSpaceId(shipHostSpace.getOrbitIdOfHost());
-            spaceshipOrbitBody.setHostOrbitSpace(shipHostSpace);
 
             ServerLevel levelOld = server.getLevel(VSGameUtilsKt.getResourceKey(ship.getChunkClaimDimension()));
 
@@ -253,9 +251,22 @@ public class PSServer extends Stage {
     }
 
     public void onShipLoad(LoadedServerShip ship) {
-        ServerSpaceshipBody serverSpaceshipBody = this.getSolarSystem().getShipFromVSId(ship.getId());
-        if (serverSpaceshipBody != null) {
+        ServerSpaceshipBody serverSpaceshipBody = (ServerSpaceshipBody) this.getSolarSystem().getShipFromVSId(ship.getId());
+
+        if (serverSpaceshipBody != null && serverSpaceshipBody.getHostSpaceID().isPresent()) {
             serverSpaceshipBody.setShip(ship);
+            OrbitHostSpace hostSpace = this.hostSpaceManager.getOrCreateHostSpace(
+                    this.solarSystem.getSpacecraftOrbit(serverSpaceshipBody.getHostSpaceID().get()));
+
+            if (hostSpace == null) {
+                PlanetShine.logError("ship: " + ship.getSlug() + " shouldn't be here");
+                return;
+            }
+
+            if (!hostSpace.getOrbitIdOfHost().equals(serverSpaceshipBody.getOrbitId())) {
+                ((ShipHostSpace)hostSpace).addShipToHostSpace(ship);
+                serverSpaceshipBody.setHostOrbitSpace(hostSpace);
+            }
         }
     }
 
@@ -269,7 +280,6 @@ public class PSServer extends Stage {
                 // For some reason this don't get received on the client, so putting it on the next tick for now
                 gameTickRunnable.addRun(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(entitySpacecraftBody.getOrbitId())));
                 gameTickRunnable.addRun(() -> PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), (ServerPlayer) player));
-
             }
         } else {
             this.playerUpdatedInSpace((ServerPlayer) player);
@@ -297,9 +307,7 @@ public class PSServer extends Stage {
             Optional<OrbitId> hostSpaceID = entityOrbitBody.getHostSpaceID();
             if (hostSpaceID.isPresent()) {
                 OrbitHostSpace entityHostSpace = this.hostSpaceManager.getOrCreateHostSpace(this.solarSystem.getSpacecraftOrbit(hostSpaceID.get()));
-                entityOrbitBody.setHostSpaceId(hostSpaceID.get());
-                entityOrbitBody.setHostOrbitSpace(entityHostSpace);
-                PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(entityHostSpace.getOrbitIdOfHost(), entityHostSpace.getOriginPos()), player);
+                entityHostSpace.addPlayerToHostSpace(player);
             } else {
                 PlanetShine.logError(player.getName() + " entity is in space without a host space.");
             }
@@ -311,17 +319,14 @@ public class PSServer extends Stage {
             }
 
             if (!hostSpace.getOrbitIdOfHost().equals(new OrbitId(player))) {
-                hostSpace.addPlayerToHostSpace(player);
-
                 AbstractPlayerOrbitBody.PlayerOrbitBuilder builder = new AbstractPlayerOrbitBody.PlayerOrbitBuilder();
                 builder.setPlayer(player);
                 builder.setStableOrbit(false);
                 builder.setOrbitalElements(hostSpace.getHostBody().getOrbitalElements());
                 AbstractPlayerOrbitBody playerOrbitBody = builder.build();
 
-                playerOrbitBody.setHostOrbitSpace(hostSpace);
-                playerOrbitBody.setHostSpaceId(hostSpace.getOrbitIdOfHost());
-                PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(hostSpace.getOrbitIdOfHost(), hostSpace.getOriginPos()), player);
+                hostSpace.addPlayerToHostSpace(player);
+
                 this.solarSystem.entityJoinedOrbital(hostSpace.getHostBody().getParent(), playerOrbitBody);
                 this.sendPacketsPlayerJoinOrbital(player, playerOrbitBody);
             }

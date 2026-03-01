@@ -2,10 +2,12 @@ package com.nythicalnorm.planetshine.gui.widgets;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.gui.screen.ISpacecraftOrbitDataDisplay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -36,10 +38,12 @@ public class AltitudeWidget extends AbstractWidget {
         int y = getY();
 
         pGuiGraphics.blit(Altitude_GUI_TEXTURE, x, y,0,0,92,28);
+        Screen screen = PSClient.get().getScreenManager().getSpacecraftScreen();
 
-        PSClient.getInstance().ifPresent(css -> renderAltitudeNumbers(css, pGuiGraphics, x, y));
-
-        pGuiGraphics.blit(Altitude_GUI_TEXTURE, x + 10, y + 15,96,0,5,13);
+        if (screen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
+            this.renderAltitudeNumbers(orbitDataDisplay, pGuiGraphics, x, y);
+            pGuiGraphics.blit(Altitude_GUI_TEXTURE, x + 10, y + 15, 96, 0, 5, 13);
+        }
     }
 
     @Override
@@ -47,13 +51,8 @@ public class AltitudeWidget extends AbstractWidget {
 
     }
 
-    private void renderAltitudeNumbers(PSClient css, GuiGraphics pGuiGraphics, int xPos, int yPos) {
-        double altitude = 0d;
-        if (css.getCurrentPlanet().isPresent()) {
-            altitude = css.getPlayerOrbit().getAltitude(css.getCurrentPlanet().get());
-        }
-
-        altitude = Math.abs(altitude);
+    private void renderAltitudeNumbers(ISpacecraftOrbitDataDisplay orbitDataDisplay, GuiGraphics pGuiGraphics, int xPos, int yPos) {
+        double altitude = Math.abs(orbitDataDisplay.getAltitude());
 
         String altitudeMeters =  Long.toString((long) altitude);
         int altitudeUnitIndex;

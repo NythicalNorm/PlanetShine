@@ -1,5 +1,8 @@
 package com.nythicalnorm.planetshine.spacecraft.player;
 
+import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
 import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
@@ -7,13 +10,12 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.PlayerHostSpace;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Vector2ic;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
+import org.joml.*;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 
 public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
@@ -35,8 +37,19 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     @Override
     public OrbitHostSpace createHostSpace(Vector2ic posNew) {
         OrbitHostSpace hostSpace = new PlayerHostSpace(this.id, posNew, this);
-        this.orbitHostSpace.set(hostSpace);
+        this.setHostOrbitSpace(hostSpace);
         return hostSpace;
+    }
+
+    @Override
+    public void setHostOrbitSpace(OrbitHostSpace playerHostSpace) {
+        super.setHostOrbitSpace(playerHostSpace);
+        if (this.player != null) {
+            PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(playerHostSpace.getOrbitIdOfHost(),
+                    playerHostSpace.getOriginPos()), (ServerPlayer) player);
+        } else {
+            PlanetShine.log("no players to set host space to");
+        }
     }
 
     @Override
@@ -56,6 +69,14 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     public Vector3dc getMcVelocity() {
         if (this.player != null) {
             return new Vector3d(this.player.getDeltaMovement().x, this.player.getDeltaMovement().y, this.player.getDeltaMovement().z);
+        }
+        return null;
+    }
+
+    @Override
+    public Quaterniondc getMCRotation() {
+        if (this.player != null) {
+            return new Quaterniond().rotateY(this.player.getYRot()).rotateX(this.player.getXRot());
         }
         return null;
     }

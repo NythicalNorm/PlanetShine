@@ -14,7 +14,6 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     protected float cameraYrot = 0f;
     protected float cameraXrot = 0f;
     protected float zoomLevel = 2f;
-    protected double radiusZoomLevel = 0f;
 
     protected MouseLookScreen(Component pTitle) {
         super(pTitle);
@@ -40,10 +39,11 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     @Override
     public boolean mouseScrolled(double pMouseX, double pMouseY, double pDelta) {
         zoomLevel =  zoomLevel * (float) Math.pow(1.1, -pDelta);
-        float maxDistanceZoom = 1424600000000f/((float) radiusZoomLevel);
-        zoomLevel = Mth.clamp(zoomLevel, 1.000001f, maxDistanceZoom);
+        zoomLevel = Mth.clamp(zoomLevel, 1.000001f, getMaxDistanceZoom());
         return true;
     }
+
+    protected abstract float getMaxDistanceZoom();
 
     @Override
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
@@ -63,6 +63,10 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
 
     public boolean movePlayerCamera() {
         return false;
+    }
+
+    public float getZoomLevel() {
+        return zoomLevel;
     }
 
     public float getViewYrot() {

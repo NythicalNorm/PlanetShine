@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.gui.PSScreenManager;
 import com.nythicalnorm.planetshine.gui.widgets.AltitudeWidget;
-import com.nythicalnorm.planetshine.gui.widgets.LeftPanelWidget;
 import com.nythicalnorm.planetshine.gui.widgets.NavballWidget;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -31,6 +30,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     private int currentFocusedBodyIndex;
     private final boolean isSpacecraftScreenOpen;
     private MapRenderer mapRenderer;
+    protected double radiusZoomLevel = 0f;
 
     public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen) {
         super(Component.empty());
@@ -55,7 +55,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         this.addRenderableWidget(new TimeWarpWidget(0,0, width, height, Component.empty()));
         if (isSpacecraftScreenOpen) {
             this.addRenderableWidget(new NavballWidget(width/2, height, width, height, Component.empty()));
-            this.addRenderableWidget(new LeftPanelWidget(0, height, width, height, Component.empty()));
+            // this.addRenderableWidget(new LeftPanelWidget(0, height, width, height, Component.empty()));
             this.addRenderableWidget(new AltitudeWidget(width/2, 0, width, height, Component.empty()));
         }
         super.init();
@@ -104,14 +104,15 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     }
 
     @Override
+    protected float getMaxDistanceZoom() {
+        return 1424600000000f/((float) radiusZoomLevel);
+    }
+
+    @Override
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
         if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.matches(pKeyCode, pScanCode)) {
             this.onClose();
             return true;
-        }  else if (isSpacecraftScreenOpen) {
-            if (screenManager.getSpacecraftScreen().keyPressed(pKeyCode, pScanCode, pModifiers)) {
-                return true;
-            }
         }
 
         if (GLFW.GLFW_KEY_TAB == pKeyCode){

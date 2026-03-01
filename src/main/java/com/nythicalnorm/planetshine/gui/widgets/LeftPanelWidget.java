@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.gui.widgets;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.gui.screen.ISpacecraftDataDisplay;
+import com.nythicalnorm.planetshine.gui.screen.ISpacecraftControlStateDisplay;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -28,7 +28,7 @@ public class LeftPanelWidget extends AbstractWidget {
 
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x, y,0,0,66,35);
 
-        if (PSClient.getInstance().get().getScreenManager().getSpacecraftScreen() instanceof  ISpacecraftDataDisplay spacecraftDataDisplay) {
+        if (PSClient.getInstance().get().getScreenManager().getSpacecraftScreen() instanceof  ISpacecraftControlStateDisplay spacecraftDataDisplay) {
            if (spacecraftDataDisplay.isDockingMode()) {
                drawDockingMode(spacecraftDataDisplay, pGuiGraphics, x, y);
            } else {
@@ -37,7 +37,7 @@ public class LeftPanelWidget extends AbstractWidget {
         }
     }
 
-    private void drawDockingMode(ISpacecraftDataDisplay spacecraftScreen, GuiGraphics pGuiGraphics, int x, int y) {
+    private void drawDockingMode(ISpacecraftControlStateDisplay spacecraftScreen, GuiGraphics pGuiGraphics, int x, int y) {
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 7, y + 23,7,36,10,10);
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 23, y + 2,23,36,41,32);
 
@@ -50,7 +50,7 @@ public class LeftPanelWidget extends AbstractWidget {
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 51, y + 29 - yAxis,67,0,7,5);
     }
 
-    private void drawNormalMode(ISpacecraftDataDisplay spacecraftScreen,GuiGraphics pGuiGraphics, int x, int y) {
+    private void drawNormalMode(ISpacecraftControlStateDisplay spacecraftScreen, GuiGraphics pGuiGraphics, int x, int y) {
         int pitch = (int) (spacecraftScreen.getSWAxis().getPositiveAxisValue()*23.5f);
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x + 51, y + 29 - pitch,67,0,7,5);
 

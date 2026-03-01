@@ -10,7 +10,6 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.ClientCelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.rendering.networking.ClientTimeHandler;
@@ -29,6 +28,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
 import java.util.Optional;
@@ -40,7 +40,6 @@ public class PSClient extends Stage {
 
     private final @NotNull ClientPlayerOrbitBody playerOrbit;
     private CelestialBody currentPlanetOn;
-    private ClientPlayerOrbitBody controllingBody;
     private ClientHostSpace clientHostSpace;
     private final DaylightRegion daylightRegion;
     public ClientTimeHandler clientTimeHandler;
@@ -235,15 +234,11 @@ public class PSClient extends Stage {
         }
     }
 
-    public Optional<OrbitalBody> getControllingBody() {
-        if (controllingBody != null) {
-            return  Optional.of(controllingBody);
+    public @Nullable EntityOrbitBody getControllingBody() {
+        if (this.clientHostSpace != null && this.clientHostSpace.getHostBody() != null) {
+            return  this.clientHostSpace.getHostBody();
         }
-        return Optional.empty();
-    }
-
-    public void setControllingBody(ClientPlayerOrbitBody controllingBody) {
-        this.controllingBody = controllingBody;
+        return null;
     }
 
     public boolean isOnPlanet()

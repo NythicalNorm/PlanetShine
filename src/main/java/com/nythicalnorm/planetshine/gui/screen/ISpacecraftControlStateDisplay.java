@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.gui.screen;
 
 import com.nythicalnorm.planetshine.gui.input.PlayerInputDirection;
 
-public interface ISpacecraftDataDisplay {
+public interface ISpacecraftControlStateDisplay {
     float getThrottleSetting();
 
     boolean isDockingMode();
