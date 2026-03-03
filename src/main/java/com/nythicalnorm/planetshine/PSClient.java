@@ -57,7 +57,7 @@ public class PSClient extends Stage {
         this.playerOrbit = playerDataFromServer;
         this.screenManager = new PSScreenManager();
         this.planetTexManager = new ClientTexManager(this);
-        this.updatePlanets();
+        this.initPlanets();
 
         this.clientTimeHandler = new ClientTimeHandler();
         this.daylightRegion = new DaylightRegion();
@@ -80,8 +80,8 @@ public class PSClient extends Stage {
     }
 
     @Override
-    protected void updatePlanets() {
-        super.updatePlanets();
+    protected void initPlanets() {
+        super.initPlanets();
         this.renderPlanets = SpaceObjRenderer.PopulateRenderPlanets(solarSystem);
     }
 

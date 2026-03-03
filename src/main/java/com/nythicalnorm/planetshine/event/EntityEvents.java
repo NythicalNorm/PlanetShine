@@ -57,7 +57,7 @@ public class EntityEvents {
 
         Entity entity = event.getEntity();
         if (OrbitalBodyUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
-            PSServer.get().getEntityShipManager().spaceEntitySpawn(entity);
+            PSServer.get().getHostSpaceManager().spaceEntitySpawn(entity);
         }
 
         if (entity instanceof LivingEntity) {
@@ -97,7 +97,7 @@ public class EntityEvents {
 
         Entity entity = event.getEntity();
         if (OrbitalBodyUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
-            PSServer.get().getEntityShipManager().spaceEntityLeave(entity);
+            PSServer.get().getHostSpaceManager().spaceEntityLeave(entity);
         }
     }
 

@@ -10,6 +10,7 @@
   "mixins": [
     "ClimateMixin",
     "LevelMixin",
+    "MinecraftServerMixin",
     "daynightcycle.DaylightDetectorBlockMixin",
     "daynightcycle.LevelReaderMixin",
     "daynightcycle.LevelTimeAccessMixin",

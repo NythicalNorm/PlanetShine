@@ -22,7 +22,7 @@ public abstract class Stage {
         }
     }
 
-    protected void updatePlanets() {
+    protected void initPlanets() {
         this.solarSystem.getRootStar().initCalcs();
     }
 

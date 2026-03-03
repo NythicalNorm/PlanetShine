@@ -1,8 +1,10 @@
 package com.nythicalnorm.planetshine.util;
 
 import com.nythicalnorm.planetshine.dimensions.SpaceDimension;
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.util.calculations.PlanetBodyCalc;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -40,6 +42,10 @@ public class OrbitalBodyUtils {
 
     public static boolean isSpaceLevel(Level level) {
         return level.dimension().equals(SpaceDimension.SPACE_LEVEL_KEY);
+    }
+
+    public static boolean isSpaceLevel(ServerLevel serverLevel) {
+        return serverLevel instanceof SpaceServerLevel;
     }
 
     public static boolean isSpaceLevel(String chunkClaimDimension) {

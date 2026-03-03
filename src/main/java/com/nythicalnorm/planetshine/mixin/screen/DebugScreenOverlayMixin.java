@@ -49,6 +49,12 @@ public abstract class DebugScreenOverlayMixin {
                         Math.toDegrees(orbitalElements.getLongitudeOfAscendingNode()),
                         Math.toDegrees(orbitalElements.getArgumentOfPeriapsis())
                 ));
+
+//                OrbitalElements.SOIIntercept timeToEscape = css.getPlayerOrbit().getOrbitalElements().findTimeForEscapeFromBody(css.getPlayerOrbit().getParent(), css.getCurrentTime());
+//                if (timeToEscape != null) {
+//                    list.add(String.format(Locale.ROOT, "Time To escape: %d", timeToEscape.timeElapsed()));
+//                    list.add(String.format(Locale.ROOT, "currentTime: %d", css.getCurrentTime()));
+//                }
             }
         }
     }

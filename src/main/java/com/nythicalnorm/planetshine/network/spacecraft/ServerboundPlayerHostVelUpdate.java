@@ -32,7 +32,7 @@ public class ServerboundPlayerHostVelUpdate {
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER ) {
             NetworkEvent.Context context = contextSupplier.get();
-            context.enqueueWork(() -> PSServer.get().getEntityShipManager().handleHostPlayerMove(context.getSender(), playerBodyID, addedVel));
+            context.enqueueWork(() -> PSServer.get().getHostSpaceManager().handleHostPlayerMove(context.getSender(), playerBodyID, addedVel));
             context.setPacketHandled(true);
         }
     }

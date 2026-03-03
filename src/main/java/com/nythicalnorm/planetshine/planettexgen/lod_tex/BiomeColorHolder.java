@@ -11,7 +11,7 @@ import net.minecraft.world.level.biome.Biomes;
 import java.util.Map;
 import java.util.Objects;
 
-public class BiomeColorHolder {
+public class BiomeColorHolder { // Need to change this to non-static at some point
     private static final Map<Biome, Integer> BIOME_COLOR_MAP = new Object2ObjectOpenHashMap<>();
 
     public static void init(RegistryAccess registryAccess) {

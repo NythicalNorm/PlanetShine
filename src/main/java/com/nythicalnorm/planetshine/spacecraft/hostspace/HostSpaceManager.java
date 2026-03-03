@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.spacecraft.hostspace;
 
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
@@ -42,7 +43,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     private final ShipTeleporter shipTeleporter;
     private final ConcurrentMap<Vector2ic, OrbitHostSpace> loadedHostSpaces;
     private final Map<OrbitId, Vector2ic> allRegisteredHostSpaces;
-    private final ServerLevel spaceLevel;
+    private SpaceServerLevel spaceLevel;
 
     private static final int HOST_SPACE_GAP_SIZE = 16000;
     private static final int HOST_SPACE_DIAMETER = HOST_SPACE_GAP_SIZE / 2;
@@ -54,7 +55,10 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         this.shipTeleporter = new ShipTeleporter(VSGameUtilsKt.getShipObjectWorld(psServer.getMCServer()));
         this.allRegisteredHostSpaces = allRegisteredHostSpaces;
         this.loadedHostSpaces = new ConcurrentHashMap<>();
-        this.spaceLevel = psServer.getSpaceLevel();
+    }
+
+    public void setSpaceLevel(SpaceServerLevel spaceLevel) {
+        this.spaceLevel = spaceLevel;
     }
 
     public OrbitHostSpace getOrCreateHostSpace(EntityOrbitBody entityOrbitBody){

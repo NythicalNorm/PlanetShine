@@ -1,7 +1,10 @@
 package com.nythicalnorm.planetshine.solarsystem.orbits;
 
+import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -261,19 +264,12 @@ public class OrbitalElements {
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
         } else {
             double cosTrueAnomoly = Math.cos(trueAnomoly);
-            double H = invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
+            double H = OrbitalCalc.invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
 
             this.MeanAngularMotion = Math.sqrt(Mu / -(SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
             double timeDiffTerm = (Eccentricity * Math.sinh(H) - H) / this.MeanAngularMotion;
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
         }
-    }
-
-    private double invCosh(double x) {
-        if (x < 1.0) {
-            return Double.NaN;
-        }
-        return Math.log(x + Math.sqrt(x*x - 1));
     }
 
     //Called for the first time on planet load don't use this
@@ -322,4 +318,49 @@ public class OrbitalElements {
     public double getOrbitalPeriod() {
         return (2*Math.PI)/this.MeanAngularMotion;
     }
+
+    public long getLastPeriapsisTime(long elapsedTime) {
+        return elapsedTime - (elapsedTime - this.periapsisTime);
+    }
+
+    public boolean isHyperbolic() {
+        return Eccentricity >= 1;
+    }
+
+    public double getApoapsis() {
+        if (this.isHyperbolic()) {
+            return Double.NaN;
+        } else {
+            return this.SemiMajorAxis * (1 + Eccentricity);
+        }
+    }
+
+    public double getPeriapsis() {
+        return this.SemiMajorAxis * (1 - Eccentricity);
+    }
+
+    public @Nullable OrbitalElements.SOIIntercept findOrbitEscapeIntercept(CelestialBody body, long elapsedTime) {
+        if (this.getApoapsis() < body.getSphereOfInfluence()) {
+            return null;
+        }
+
+        double semiLatusRectum = SemiMajorAxis * (1 - (Eccentricity * Eccentricity));
+        double value = (semiLatusRectum - body.getSphereOfInfluence()) / (Eccentricity * body.getSphereOfInfluence());
+        double trueAnomaly = Math.acos(value);
+
+        if (Double.isNaN(trueAnomaly)) {
+            return null;
+        }
+
+        long escapeTime = OrbitalCalc.getTimeStampFromTrueAnomaly(
+                MeanAngularMotion,
+                trueAnomaly,
+                Eccentricity,
+                this.getLastPeriapsisTime(elapsedTime)
+        );
+
+        return new SOIIntercept(trueAnomaly, escapeTime);
+    }
+
+    public record SOIIntercept(double trueAnomaly, long timeElapsed) {}
 }

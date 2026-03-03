@@ -64,7 +64,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
 
         while (entityIterator.hasNext()) {
             Entity entity = entityIterator.next();
-            if (PSServer.get().getEntityShipManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y())
+            if (PSServer.get().getHostSpaceManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y())
                     && !entity.isPassenger()) {
                 Vec3 ogVel = entity.getDeltaMovement();
                 entity.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
@@ -85,7 +85,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                 entity.remove(Entity.RemovalReason.DISCARDED);
             }
         }
-        PSServer.get().getEntityShipManager().removeHostSpace(this);
+        PSServer.get().getHostSpaceManager().removeHostSpace(this);
     }
 
     public Vector2ic getOriginPos2I() {

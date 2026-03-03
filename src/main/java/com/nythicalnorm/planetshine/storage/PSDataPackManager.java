@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,8 +48,8 @@ public class PSDataPackManager {
         new PSServer(pServer, solarSystem);
     }
 
-    public static PSCommonSaveData createOrLoadSaveData(MinecraftServer server) {
-       return server.overworld().getDataStorage().computeIfAbsent(PSCommonSaveData::load, PSCommonSaveData::new, PSCommonData);
+    public static PSCommonSaveData createOrLoadSaveData(DimensionDataStorage dataStorage) {
+       return dataStorage.computeIfAbsent(PSCommonSaveData::load, PSCommonSaveData::new, PSCommonData);
     }
 
     private static void loadPlanetData(Map<OrbitId, CelestialBody> pAllPlanetaryBodies, Map<ResourceKey<Level>, CelestialBody> pPlanetDimensions) {

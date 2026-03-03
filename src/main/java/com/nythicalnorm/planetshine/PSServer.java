@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine;
 
 import com.nythicalnorm.planetshine.dimensions.SpaceDimension;
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.network.*;
 import com.nythicalnorm.planetshine.network.orbitaldata.*;
 import com.nythicalnorm.planetshine.network.time.ClientboundSolarSystemTimeUpdate;
@@ -35,6 +36,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
@@ -58,15 +60,30 @@ public class PSServer extends Stage {
     private final RunnableExecutor physTickRunnable;
     private final RunnableExecutor gameTickRunnable;
 
+    // Called on the server starting event
     public PSServer(MinecraftServer server, SolarSystem solarSystem) {
         super(solarSystem);
         instance = this;
         this.server = server;
         BiomeColorHolder.init(server.registryAccess());
-        serverRunningTicks = 0;
-        spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
+        this.serverRunningTicks = 0;
+        this.spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
         this.physTickRunnable = new RunnableExecutor();
         this.gameTickRunnable = new RunnableExecutor();
+    }
+
+    public void onDimensionDataLoaded(DimensionDataStorage dataStorage) {
+        PSCommonSaveData PSCommonSaveData = PSDataPackManager.createOrLoadSaveData(dataStorage);
+        this.setCurrentTime(PSCommonSaveData.getCurrentTime());
+        this.setTimePassPerTick(PSCommonSaveData.getTimeWarp());
+        this.spacecraftDataStorage.readSpacecraftData(solarSystem);
+        this.planetTexHandler = new PlanetTexHandler();
+        this.hostSpaceManager = new HostSpaceManager(this, spacecraftDataStorage.readHostSpaces());
+    }
+
+    public void serverStarted() {
+        initPlanets();
+        server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
     }
 
     public static PSServer get() {
@@ -110,18 +127,6 @@ public class PSServer extends Stage {
         PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
         hostSpaceManager.onGameTick();
         this.gameTickRunnable.executeAll();
-    }
-
-    public void serverStarted() {
-        updatePlanets();
-        PSCommonSaveData PSCommonSaveData = PSDataPackManager.createOrLoadSaveData(server);
-        setCurrentTime(PSCommonSaveData.getCurrentTime());
-        setTimePassPerTick(PSCommonSaveData.getTimeWarp());
-        spacecraftDataStorage.readSpacecraftData(solarSystem);
-        this.planetTexHandler = new PlanetTexHandler();
-
-        this.hostSpaceManager = new HostSpaceManager(this, spacecraftDataStorage.readHostSpaces());
-        server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
     }
 
     public void saveSolarSys() {
@@ -286,11 +291,11 @@ public class PSServer extends Stage {
         }
     }
 
-    public ServerLevel getSpaceLevel() {
-        return server.getLevel(SpaceDimension.SPACE_LEVEL_KEY);
+    public SpaceServerLevel getSpaceLevel() {
+        return (SpaceServerLevel) server.getLevel(SpaceDimension.SPACE_LEVEL_KEY);
     }
 
-    public HostSpaceManager getEntityShipManager() {
+    public HostSpaceManager getHostSpaceManager() {
         return hostSpaceManager;
     }
 
