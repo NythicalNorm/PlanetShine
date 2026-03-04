@@ -1,17 +1,21 @@
 package com.nythicalnorm.planetshine.spacecraft.hostspace;
 
+import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitSOIChange;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import org.joml.Vector2ic;
 import org.joml.Vector3dc;
-import org.valkyrienskies.core.api.ships.LoadedServerShip;
-import org.valkyrienskies.core.api.ships.ServerShip;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ShipHostSpace extends OrbitHostSpace{
     protected final ConcurrentLinkedQueue<Vector3dc> velocityForLastPhysTick;
-    protected final ConcurrentLinkedQueue<ServerShip> nonHostShips;
+    protected final ConcurrentLinkedQueue<ServerSpaceshipBody> nonHostShips;
 
     public ShipHostSpace(OrbitId orbitIdOfHost, Vector2ic originPos, EntityOrbitBody entityOrbitBody) {
         super(orbitIdOfHost, originPos, entityOrbitBody);
@@ -24,7 +28,7 @@ public class ShipHostSpace extends OrbitHostSpace{
         velocityForLastPhysTick.clear();
     }
 
-    public void addShipToHostSpace(LoadedServerShip ship) {
+    public void addShipToHostSpace(ServerSpaceshipBody ship) {
         nonHostShips.add(ship);
     }
 
@@ -32,5 +36,16 @@ public class ShipHostSpace extends OrbitHostSpace{
     public void applyHostVelocity(Vector3dc addedVel) {
         super.applyHostVelocity(addedVel);
         this.velocityForLastPhysTick.add(addedVel);
+    }
+
+    @Override
+    public void changeSOI(OrbitId newParent, OrbitalElements orbitalElements) {
+        super.changeSOI(newParent, orbitalElements);
+        SolarSystem solarSystem = PSServer.get().getSolarSystem();
+
+        this.nonHostShips.forEach(spaceshipBody -> {
+            solarSystem.entityChangeOrbitalSOIs(spaceshipBody, newParent, orbitalElements);
+            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(spaceshipBody.getOrbitId(), newParent, orbitalElements));
+        });
     }
 }

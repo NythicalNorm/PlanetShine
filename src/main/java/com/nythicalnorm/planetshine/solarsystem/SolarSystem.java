@@ -39,6 +39,15 @@ public class SolarSystem {
                 entityOrbitBody.simulate(currentTime, isTimeWarping)));
     }
 
+    @PhysTickOnly
+    public void calculateSpacecraftIntercepts(long timeElapsed) {
+        for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
+            if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
+                entityBody.calculateIntercept(timeElapsed);
+            }
+        }
+    }
+
     public Map<OrbitId, EntityOrbitBody> getAllSpacecraftBodies() {
         return allSpacecraftBodies;
     }
@@ -61,12 +70,12 @@ public class SolarSystem {
     }
 
     @PhysTickOnly
-    public void playerChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, OrbitId newParentID, OrbitalElements orbitalElementsNew) {
-        playerChangeOrbitalSOIs(spacecraftBody, getPlanet(newParentID), orbitalElementsNew);
+    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, OrbitId newParentID, OrbitalElements orbitalElementsNew) {
+        entityChangeOrbitalSOIs(spacecraftBody, getPlanet(newParentID), orbitalElementsNew);
     }
 
     @PhysTickOnly
-    public void playerChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElements orbitalElementsNew) {
+    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElements orbitalElementsNew) {
         //removing the old reference to the object
         spacecraftBody.removeParent();
         // adding reference to new object

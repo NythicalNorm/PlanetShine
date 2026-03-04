@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.util.calculations;
 
+import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -38,4 +39,6 @@ public class OrbitalCalc {
         }
         return Math.log(x + Math.sqrt(x*x - 1));
     }
+
+    public record SOIIntercept(double trueAnomaly, long timeElapsed, OrbitId interceptingBody, boolean isEscape) {}
 }

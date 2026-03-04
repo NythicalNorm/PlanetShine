@@ -324,12 +324,13 @@ public class OrbitalElements {
     }
 
     public boolean isHyperbolic() {
-        return Eccentricity >= 1;
+        return this.Eccentricity >= 1;
     }
 
     public double getApoapsis() {
         if (this.isHyperbolic()) {
-            return Double.NaN;
+            // Hyperbolic orbits have no defined apoapsis but returning positive infinity behaves consistently with the math
+            return Double.POSITIVE_INFINITY;
         } else {
             return this.SemiMajorAxis * (1 + Eccentricity);
         }
@@ -339,7 +340,7 @@ public class OrbitalElements {
         return this.SemiMajorAxis * (1 - Eccentricity);
     }
 
-    public @Nullable OrbitalElements.SOIIntercept findOrbitEscapeIntercept(CelestialBody body, long elapsedTime) {
+    public @Nullable OrbitalCalc.SOIIntercept findOrbitEscapeIntercept(CelestialBody body, long elapsedTime) {
         if (this.getApoapsis() < body.getSphereOfInfluence()) {
             return null;
         }
@@ -359,8 +360,6 @@ public class OrbitalElements {
                 this.getLastPeriapsisTime(elapsedTime)
         );
 
-        return new SOIIntercept(trueAnomaly, escapeTime);
+        return new OrbitalCalc.SOIIntercept(trueAnomaly, escapeTime, body.getParent().getOrbitId(), true);
     }
-
-    public record SOIIntercept(double trueAnomaly, long timeElapsed) {}
 }

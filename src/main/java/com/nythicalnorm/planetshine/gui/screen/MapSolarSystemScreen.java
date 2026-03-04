@@ -155,7 +155,15 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         } else if (FocusableBodies[currentFocusedBodyIndex] instanceof EntityOrbitBody) {
             radiusZoomLevel = 1000000;
         }
-        mapRenderer.updateMapRenderables(PSClient.get(), FocusableBodies[currentFocusedBodyIndex]);
+        updateMapRenderables();
+    }
+
+    public OrbitalBody getFocusedOrbitalBody() {
+        return this.FocusableBodies[currentFocusedBodyIndex];
+    }
+
+    public void updateMapRenderables() {
+        this.mapRenderer.updateMapRenderables(PSClient.get(), FocusableBodies[currentFocusedBodyIndex]);
     }
 
     private void setInitialCameraAngle() {

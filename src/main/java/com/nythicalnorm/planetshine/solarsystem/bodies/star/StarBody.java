@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.solarsystem.bodies.star;
 
 import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
@@ -27,10 +28,10 @@ public abstract class StarBody extends CelestialBody {
     }
 
     @Override
-    public void initCalcs() {
-        this.setSphereOfInfluence(Double.POSITIVE_INFINITY);
+    public void initCalcs(SolarSystem solarSystem) {
+        this.SOI = Double.POSITIVE_INFINITY;
         this.parent = null;
-        super.initCalcs();
+        super.initCalcs(solarSystem);
     }
 
     public static class StarBuilder extends OrbitalBody.Builder<StarBody> {

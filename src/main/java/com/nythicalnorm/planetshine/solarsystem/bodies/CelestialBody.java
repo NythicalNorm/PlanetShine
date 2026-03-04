@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies;
 
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
@@ -29,9 +30,12 @@ public abstract class CelestialBody extends OrbitalBody {
     protected final @Nullable ResourceKey<Level> dimension;
     protected final Map<OrbitId, CelestialBody> childCelestialBodies;
     protected final ConcurrentMap<OrbitId, EntityOrbitBody> childEntityBodies;
+    protected SolarSystem solarSystem;
 
-    //calculated on load
-    private double SOI;
+    //calculated on load i.e not serialized or networked
+    protected double SOI;
+    protected double minInterceptDistance; // basically the minimum distance from the parent body that someone has to be in this body's SOI;
+    protected double maxInterceptDistance; // same for the maximum distance
 
     public CelestialBody(String name, double radius, double mass, Quaternionf rotation, PlanetAtmosphere atmosphericEffects, @Nullable ResourceKey<Level> dimension, Builder<?> bodyBuilder) {
         super(bodyBuilder);
@@ -89,6 +93,10 @@ public abstract class CelestialBody extends OrbitalBody {
         childCelestialBodies.put(celestialBody.getOrbitId(), celestialBody);
     }
 
+    public CelestialBody getPlanetChild(OrbitId orbitId) {
+        return this.childCelestialBodies.get(orbitId);
+    }
+
     public void addChildBody(EntityOrbitBody entityOrbitBody) {
         entityOrbitBody.setParent(this);
         this.childEntityBodies.put(entityOrbitBody.getOrbitId(), entityOrbitBody);
@@ -143,10 +151,6 @@ public abstract class CelestialBody extends OrbitalBody {
         return SOI;
     }
 
-    public void setSphereOfInfluence(double SOI) {
-        this.SOI = SOI;
-    }
-
     public double getAtmosphereRadius() {
         if (!this.atmosphericEffects.hasAtmosphere()) {
             return 0;
@@ -158,15 +162,27 @@ public abstract class CelestialBody extends OrbitalBody {
         return this.mass;
     }
 
-    protected void initCalcs() {
+    public double getMinInterceptDistance() {
+        return minInterceptDistance;
+    }
+
+    public double getMaxInterceptDistance() {
+        return maxInterceptDistance;
+    }
+
+    protected void initCalcs(SolarSystem solarSystem) {
+        this.solarSystem = solarSystem;
         for (CelestialBody orbitBody : childCelestialBodies.values()) {
             if (orbitBody.getOrbitalElements() != null) {
                 orbitBody.getOrbitalElements().initCalcs(this.mass);
 
-                double soi = Math.pow(orbitBody.mass/this.mass, 0.4d);
-                soi = soi * orbitBody.getOrbitalElements().getSemiMajorAxis();
-                orbitBody.setSphereOfInfluence(soi);
-                orbitBody.initCalcs();
+                double divMass = Math.pow(orbitBody.mass/this.mass, 0.4d);
+                orbitBody.SOI = divMass * orbitBody.getOrbitalElements().getSemiMajorAxis();
+
+                orbitBody.minInterceptDistance = orbitBody.getOrbitalElements().getPeriapsis() - this.SOI;
+                orbitBody.maxInterceptDistance = orbitBody.getOrbitalElements().getApoapsis() + this.SOI;
+
+                orbitBody.initCalcs(solarSystem);
 
                 if (orbitBody instanceof ServerCelestialBody serverCelestialBody) {
                     serverCelestialBody.initServerPlanet();

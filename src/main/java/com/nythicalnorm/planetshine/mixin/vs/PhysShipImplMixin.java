@@ -48,7 +48,7 @@ public abstract class PhysShipImplMixin {
         if (PSServer.get() != null) {
             ServerSpaceshipBody serverSpaceshipBody = (ServerSpaceshipBody) PSServer.get().getSolarSystem().getShipFromVSId(getId());
 
-            if (serverSpaceshipBody != null && serverSpaceshipBody.isHostOfItsSpace() && !PSServer.get().isTimeWarping()) {
+            if (serverSpaceshipBody != null && serverSpaceshipBody.isHostOfItsSpace()) {
                 double forceThreshold = 0.1 * getMass();
                 double forceThresholdSquared = forceThreshold * forceThreshold;
 

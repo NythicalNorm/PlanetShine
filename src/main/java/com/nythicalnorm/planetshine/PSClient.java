@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine;
 
 import com.nythicalnorm.planetshine.gui.PSScreenManager;
+import com.nythicalnorm.planetshine.gui.screen.MapSolarSystemScreen;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.time.ServerboundTimeWarpChange;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
@@ -199,7 +200,12 @@ public class PSClient extends Stage {
         EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
 
         if (entityOrbitBody != null) {
-            solarSystem.playerChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
+            solarSystem.entityChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
+        }
+        if (minecraft.screen instanceof MapSolarSystemScreen mapScreen) {
+            if (mapScreen.getFocusedOrbitalBody().getOrbitId().equals(spacecraftID)) {
+                mapScreen.updateMapRenderables();
+            }
         }
     }
 

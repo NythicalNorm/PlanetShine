@@ -1,11 +1,14 @@
 package com.nythicalnorm.planetshine.spacecraft.hostspace;
 
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitSOIChange;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
+import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.planetshine.util.Calc;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -25,7 +28,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
 
     @GameTickOnly
     protected final ConcurrentLinkedQueue<Entity> nonHostEntities;
-    protected final ConcurrentLinkedQueue<ServerPlayer> nonHostPlayers;
+    protected final ConcurrentLinkedQueue<ServerPlayerOrbitBody> playerOrbitBodies;
 
     protected final ConcurrentLinkedQueue<Vector3dc> velocityForLastGameTick;
 
@@ -33,7 +36,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         this.orbitIdOfHost = orbitIdOfHost;
         this.originPos = originPos;
         this.nonHostEntities = new ConcurrentLinkedQueue<>();
-        this.nonHostPlayers = new ConcurrentLinkedQueue<>();
+        this.playerOrbitBodies = new ConcurrentLinkedQueue<>();
         this.hostBody = entityOrbitBody;
         this.velocityForLastGameTick = new ConcurrentLinkedQueue<>();
     }
@@ -93,18 +96,15 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     }
 
     public void addEntityToHostSpace(Entity entity) {
-        if (entity instanceof ServerPlayer player) {
-            addPlayerToHostSpace(player);
-        }
         nonHostEntities.add(entity);
     }
 
-    public void addPlayerToHostSpace(ServerPlayer player) {
-        if (((PlayerOrbitAccessor) player).getOrbitalBody() != null) {
-            ((PlayerOrbitAccessor) player).getOrbitalBody().setHostOrbitSpace(this);
-        }
-        if (! this.hostBody.getOrbitId().getUUID().equals(player.getUUID())) {
-            this.nonHostPlayers.add(player);
+    public void addPlayerToHostSpace(ServerPlayerOrbitBody player) {
+        if (player != null) {
+            player.setHostOrbitSpace(this);
+            if (! this.hostBody.getOrbitId().equals(player.getOrbitId())) {
+                this.playerOrbitBodies.add(player);
+            }
         }
     }
 
@@ -114,5 +114,16 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
 
     public void applyHostVelocity(Vector3dc addedVel) {
         this.velocityForLastGameTick.add(addedVel);
+    }
+
+    public void changeSOI(OrbitId newParent, OrbitalElements orbitalElements) {
+        SolarSystem solarSystem = PSServer.get().getSolarSystem();
+        solarSystem.entityChangeOrbitalSOIs(this.getHostBody(), newParent, orbitalElements);
+        PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(this.getHostBody().getOrbitId(), newParent, orbitalElements));
+
+        this.playerOrbitBodies.forEach(playerOrbit -> {
+            solarSystem.entityChangeOrbitalSOIs(playerOrbit, newParent, orbitalElements);
+            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(playerOrbit.getOrbitId(), newParent, orbitalElements));
+        });
     }
 }

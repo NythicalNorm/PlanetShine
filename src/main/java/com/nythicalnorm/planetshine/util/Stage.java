@@ -23,7 +23,7 @@ public abstract class Stage {
     }
 
     protected void initPlanets() {
-        this.solarSystem.getRootStar().initCalcs();
+        this.solarSystem.getRootStar().initCalcs(this.solarSystem);
     }
 
     // Returns the server solar system when on Singleplayer & on Dedicated Server,
@@ -57,7 +57,7 @@ public abstract class Stage {
     }
 
     public boolean isTimeWarping() {
-        return TimeCalc.TimePerMilliTickToTick(timePassPerTick) != timeWarpSettings.get(0);
+        return currentTimeWarpSetting > 0;
     }
 
     public long getTimePassPerTick() {
@@ -66,6 +66,6 @@ public abstract class Stage {
 
     public void setTimePassPerTick(long timePassPerTick) {
         this.timePassPerTick = timePassPerTick;
-        currentTimeWarpSetting = timeWarpSettings.indexOf(TimeCalc.TimePerMilliTickToTick(getTimePassPerTick()));
+        this.currentTimeWarpSetting = timeWarpSettings.indexOf(TimeCalc.TimePerMilliTickToTick(getTimePassPerTick()));
     }
 }
