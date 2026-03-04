@@ -147,7 +147,7 @@ public class OrbitalElements {
         double e = this.Eccentricity;
         boolean isElliptical = e < 1;
 
-        double M = this.MeanAngularMotion * (getModulusCurrentTime(timeElapsed));
+        double M = this.MeanAngularMotion * (getModulusCurrentTime(timeElapsed, periapsisTime, Eccentricity, MeanAngularMotion));
 
         //Eccentric anomaly also this works for circular orbits I think
         double Anomaly = isElliptical ? ellipticalEccentricAnomaly(M, e) : hyperbolicEccentricAnomaly(M, e);
@@ -180,10 +180,10 @@ public class OrbitalElements {
         return stateVectors;
     }
 
-    private double getModulusCurrentTime(long timeElapsed) {
-        long diff = timeElapsed - this.periapsisTime;
-        if (this.Eccentricity < 1) {
-            long orbitalPeriod = TimeCalc.timeDoubleToLong((2*Math.PI) / this.MeanAngularMotion);
+    public static double getModulusCurrentTime(long timeElapsed, long periapsisTime, double eccentricity, double meanAngularMotion) {
+        long diff = timeElapsed - periapsisTime;
+        if (eccentricity < 1) {
+            long orbitalPeriod = TimeCalc.timeDoubleToLong((2*Math.PI) / meanAngularMotion);
             diff = diff % orbitalPeriod;
         }
 
@@ -272,6 +272,19 @@ public class OrbitalElements {
         }
     }
 
+    public static double getTrueAnomalyFromStateVectors(Vector3dc position, Vector3dc velocity, double Mu) {
+        double PosMagnitude = position.length();
+
+        // incredibly jank to use velocity.negate but i don't know what the problem is...
+        Vector3d negatedVelocity = velocity.negate(new Vector3d());
+        Vector3d momentumVectorH = new Vector3d(position).cross(negatedVelocity);
+        Vector3d eccentricityVector = negatedVelocity.cross(momentumVectorH).div(Mu);
+        eccentricityVector.sub(position.x() / PosMagnitude, position.y() / PosMagnitude, position.z() / PosMagnitude);
+
+        double trueAnomalyAcosVar = eccentricityVector.dot(position)/(eccentricityVector.length()*PosMagnitude);
+        return Math.acos(Mth.clamp(trueAnomalyAcosVar, -1, 1));
+    }
+
     //Called for the first time on planet load don't use this
     public void initCalcs(double parentMass) {
         setOrbitalPeriod(parentMass);
@@ -299,6 +312,10 @@ public class OrbitalElements {
         return periapsisTime;
     }
 
+    public double getMeanAngularMotion() {
+        return MeanAngularMotion;
+    }
+
     public double getInclination() {
         return Inclination;
     }
@@ -313,6 +330,10 @@ public class OrbitalElements {
 
     public double getParentMass() {
         return Mu / UniversalGravitationalConstant;
+    }
+
+    public double getMu() {
+        return Mu;
     }
 
     public double getOrbitalPeriod() {

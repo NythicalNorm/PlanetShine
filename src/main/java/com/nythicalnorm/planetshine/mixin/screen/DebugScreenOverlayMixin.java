@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
-import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
 import net.minecraftforge.api.distmarker.Dist;
@@ -50,12 +49,15 @@ public abstract class DebugScreenOverlayMixin {
                         Math.toDegrees(orbitalElements.getLongitudeOfAscendingNode()),
                         Math.toDegrees(orbitalElements.getArgumentOfPeriapsis())
                 ));
-
-//                OrbitalCalc.SOIIntercept timeToEscape = css.getPlayerOrbit().getOrbitalElements().findOrbitEscapeIntercept(css.getPlayerOrbit().getParent(), css.getCurrentTime());
+//
+//                OrbitalCalc.SOIIntercept timeToEscape = OrbitalCalc.findAllRelativePlanetIntercepts(css.getPlayerOrbit(), css.getCurrentTime(),
+//                        css.getPlayerOrbit().getParent().getPlanetChildren());
+////                OrbitalCalc.SOIIntercept timeToEscape = css.getPlayerOrbit().getOrbitalElements().findOrbitEscapeIntercept(css.getPlayerOrbit().getParent(), css.getCurrentTime());
 //                if (timeToEscape != null) {
 //                    list.add(String.format(Locale.ROOT, "Time To escape: %d", timeToEscape.timeElapsed()));
 //                    list.add(String.format(Locale.ROOT, "currentTime: %d", css.getCurrentTime()));
 //                }
+//                list.add(String.format(Locale.ROOT, "tick time: %d", OrbitalCalc.tickTime));
             }
         }
     }

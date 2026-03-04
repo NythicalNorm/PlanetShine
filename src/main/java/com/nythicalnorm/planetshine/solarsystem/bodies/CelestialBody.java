@@ -179,8 +179,8 @@ public abstract class CelestialBody extends OrbitalBody {
                 double divMass = Math.pow(orbitBody.mass/this.mass, 0.4d);
                 orbitBody.SOI = divMass * orbitBody.getOrbitalElements().getSemiMajorAxis();
 
-                orbitBody.minInterceptDistance = orbitBody.getOrbitalElements().getPeriapsis() - this.SOI;
-                orbitBody.maxInterceptDistance = orbitBody.getOrbitalElements().getApoapsis() + this.SOI;
+                orbitBody.minInterceptDistance = orbitBody.getOrbitalElements().getPeriapsis() - orbitBody.SOI;
+                orbitBody.maxInterceptDistance = orbitBody.getOrbitalElements().getApoapsis() + orbitBody.SOI;
 
                 orbitBody.initCalcs(solarSystem);
 

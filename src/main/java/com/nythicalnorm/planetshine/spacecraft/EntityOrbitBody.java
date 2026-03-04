@@ -185,7 +185,13 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             PlanetShine.logError("Invalid state for EntityOrbitBody : " + this.getDisplayName());
             return null;
         }
-        this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+        // first calculate intercept with planets with the same parent
+        //this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
+
+        // if that fails than the final step is checking that escape Intercepts fail too:
+        if (this.nextOrbitIntercept == null) {
+            this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+        }
         return this.nextOrbitIntercept;
     }
 
