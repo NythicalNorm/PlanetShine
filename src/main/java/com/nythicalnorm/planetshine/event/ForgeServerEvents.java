@@ -7,7 +7,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.storage.PlanetDataResolver;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -58,7 +58,7 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void OnLevelSave(LevelEvent.Save event) {
         if (event.getLevel() instanceof Level level) {
-            if (OrbitalBodyUtils.isSpaceLevel(level) && PSServer.get() != null) {
+            if (SpaceUtils.isSpaceLevel(level) && PSServer.get() != null) {
                 PSServer.get().saveSolarSys();
             }
         }

@@ -29,7 +29,6 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         minecraftOptions.hideGui = true;
         zoomLevel = 1.1f;
 
-        // this only works when its is flipped around fuck knows why?
         this.cameraYrot = (float) -Math.toRadians(Minecraft.getInstance().player.getYRot());
         this.cameraXrot = (float) -Math.toRadians(Minecraft.getInstance().player.getXRot());
 
@@ -49,11 +48,14 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         } else if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.matches(pKeyCode, pScanCode)) {
             Minecraft.getInstance().setScreen(new MapSolarSystemScreen(true));
             keyPressed = true;
+        } else if (PSKeyBinds.CHANGE_SPACECRAFT_VIEW_KEY.matches(pKeyCode, pScanCode)) {
+//            this.isNonRotView = !this.isNonRotView;
+//            keyPressed = true;
         }
 
         if (keyPressed) {
             return keyPressed;
-        }else {
+        } else {
             return super.keyPressed(pKeyCode, pScanCode, pModifiers);
         }
     }

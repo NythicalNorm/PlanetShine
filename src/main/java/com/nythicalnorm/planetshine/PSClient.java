@@ -17,11 +17,12 @@ import com.nythicalnorm.planetshine.rendering.networking.ClientTimeHandler;
 import com.nythicalnorm.planetshine.rendering.textures.ClientTexManager;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.ClientHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.Stage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -124,6 +125,10 @@ public class PSClient extends Stage {
 
     public void tick() {
         clientTimeHandler.tick();
+
+        if (minecraft.screen instanceof MapSolarSystemScreen) {
+            this.solarSystem.calculateOnlyEscapeIntercepts(this.getCurrentTime());
+        }
     }
 
     public void onClientLevelLoad(ClientLevel clientLevel) {
@@ -133,11 +138,11 @@ public class PSClient extends Stage {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);
             this.currentPlanetOn = celestialBody;
             this.solarSystem.entityRemoveOrbital(this.playerOrbit);
-            this.currentPlanetOn.addChildBody(this.playerOrbit);
+            this.currentPlanetOn.addChildBody(this.playerOrbit); // I don't know how i feel about this, should client players be a child of a planet when they are on the planet itself?
         } else {
             this.playerOrbit.clearRotation();
             this.currentPlanetOn = null;
-            if (!OrbitalBodyUtils.isSpaceLevel(clientLevel)) {
+            if (!SpaceUtils.isSpaceLevel(clientLevel)) {
                 this.playerOrbit.removeParent();
             }
         }
@@ -187,7 +192,7 @@ public class PSClient extends Stage {
         }
     }
 
-    public void localPlayerJoinOrbital(OrbitId newParentID, OrbitalElements orbitalElements) {
+    public void localPlayerJoinOrbital(OrbitId newParentID, OrbitalElementsc orbitalElements) {
         this.playerOrbit.setOrbitalElements(orbitalElements);
         solarSystem.entityJoinedOrbital(this.playerOrbit, newParentID);
     }
@@ -196,7 +201,7 @@ public class PSClient extends Stage {
         this.solarSystem.entityJoinedOrbital(entityOrbitBody, orbitParent);
     }
 
-    public void orbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements orbitalElements) {
+    public void orbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElementsc orbitalElements) {
         EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
 
         if (entityOrbitBody != null) {
@@ -228,7 +233,7 @@ public class PSClient extends Stage {
             return false;
         }
         CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) minecraft.level;
-        return planetAccessor.ps$isPlanet() || OrbitalBodyUtils.isSpaceLevel(minecraft.level);
+        return planetAccessor.ps$isPlanet() || SpaceUtils.isSpaceLevel(minecraft.level);
     }
 
     public Optional<CelestialBody> getCurrentPlanet() {
@@ -242,9 +247,11 @@ public class PSClient extends Stage {
 
     public @Nullable EntityOrbitBody getControllingBody() {
         if (this.clientHostSpace != null && this.clientHostSpace.getHostBody() != null) {
-            return  this.clientHostSpace.getHostBody();
+            return this.clientHostSpace.getHostBody();
+        } else {
+            return this.playerOrbit;
         }
-        return null;
+        // return null;
     }
 
     public boolean isOnPlanet()
@@ -254,7 +261,7 @@ public class PSClient extends Stage {
 
     public boolean weInSpaceDim() {
         if (minecraft.level != null) {
-            return OrbitalBodyUtils.isSpaceLevel(minecraft.level);
+            return SpaceUtils.isSpaceLevel(minecraft.level);
         } else {
             return false;
         }

@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.mixin.spaceentites;
 
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
@@ -18,7 +18,7 @@ public class LocalPlayerSpaceMixin {
     public void serverAIstep(CallbackInfo ci) {
         LocalPlayer player = ((LocalPlayer)(Object) this);
 
-        if (player.level() != null && OrbitalBodyUtils.isSpaceLevel(player.level()) && !player.onGround() &&
+        if (player.level() != null && SpaceUtils.isSpaceLevel(player.level()) && !player.onGround() &&
                 !player.getAbilities().flying) {
             player.xxa = 0.0f;
             player.zza = 0.0f;

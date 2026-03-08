@@ -21,13 +21,13 @@ public class LodTexCalc {
     }
 
     public static Vector2i getPlanetTexCoordinates(Vec3 plrPos, int texturePixelSize) {
-        int xIndex = PlanetBodyCalc.getCellIndex(texturePixelSize, plrPos.x);
-        int zIndex = PlanetBodyCalc.getCellIndex(texturePixelSize, plrPos.z);
+        int xIndex = PlanetCalc.getCellIndex(texturePixelSize, plrPos.x);
+        int zIndex = PlanetCalc.getCellIndex(texturePixelSize, plrPos.z);
         return new Vector2i(xIndex, zIndex);
     }
 
     public static int getTexturePixelSize(CelestialBody planet) {
-        double cellSize = PlanetBodyCalc.getSquareCellSize(planet.getRadius());
+        double cellSize = PlanetCalc.getSquareCellSize(planet.getRadius());
         return (int) Math.ceil(cellSize / texQuadsPerCubeCell);
     }
 }

@@ -5,7 +5,7 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.gui.screen.MapSolarSystemScreen;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.ItemProperties;
@@ -80,7 +80,7 @@ public class ForgeClientEvents {
         PSClient.getInstance().ifPresent(css -> {
             css.getPlayerOrbit().setPlayer(event.getNewPlayer());
 
-            if (!OrbitalBodyUtils.isSpaceLevel(event.getNewPlayer().level())) {
+            if (!SpaceUtils.isSpaceLevel(event.getNewPlayer().level())) {
                 css.orbitRemove(css.getPlayerOrbit().getOrbitId());
             }
         });

@@ -14,6 +14,7 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     protected float cameraYrot = 0f;
     protected float cameraXrot = 0f;
     protected float zoomLevel = 2f;
+    protected boolean isNonRotView = false;
 
     protected MouseLookScreen(Component pTitle) {
         super(pTitle);
@@ -43,6 +44,10 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
         return true;
     }
 
+    public boolean isNonRotView() {
+        return isNonRotView;
+    }
+
     protected abstract float getMaxDistanceZoom();
 
     @Override
@@ -70,10 +75,10 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     }
 
     public float getViewYrot() {
-        return -cameraYrot*57.29577951308232f;
+        return -cameraYrot*Mth.RAD_TO_DEG;
     }
 
     public float getViewXrot() {
-        return -cameraXrot*57.29577951308232f;
+        return -cameraXrot*Mth.RAD_TO_DEG;
     }
 }

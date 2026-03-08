@@ -5,7 +5,7 @@ import com.google.common.collect.Multimap;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -44,7 +44,7 @@ public class EntityEvents {
             event.setDistance(fallDistance/(float) multfactor);
         }
 
-        if (OrbitalBodyUtils.isSpaceLevel(level)) {
+        if (SpaceUtils.isSpaceLevel(level)) {
             event.setDistance(0);
         }
     }
@@ -56,7 +56,7 @@ public class EntityEvents {
         }
 
         Entity entity = event.getEntity();
-        if (OrbitalBodyUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
+        if (SpaceUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
             PSServer.get().getHostSpaceManager().spaceEntitySpawn(entity);
         }
 
@@ -96,7 +96,7 @@ public class EntityEvents {
         }
 
         Entity entity = event.getEntity();
-        if (OrbitalBodyUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
+        if (SpaceUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
             PSServer.get().getHostSpaceManager().spaceEntityLeave(entity);
         }
     }
@@ -114,7 +114,7 @@ public class EntityEvents {
     }
 
     private static void applyBlockUseVelocity(Player player, double force) {
-        if (OrbitalBodyUtils.isSpaceLevel(player.level()) && player.level().isClientSide() && !player.isShiftKeyDown()) {
+        if (SpaceUtils.isSpaceLevel(player.level()) && player.level().isClientSide() && !player.isShiftKeyDown()) {
             Vec3 lookAngle = player.getLookAngle().normalize();
             player.addDeltaMovement(lookAngle.scale(force));
         }

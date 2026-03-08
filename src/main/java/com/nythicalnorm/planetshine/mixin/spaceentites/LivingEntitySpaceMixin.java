@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.WalkAnimationState;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +24,7 @@ public class LivingEntitySpaceMixin {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
         float frictionVal = constant;
 
-        if (livingEntity.level() != null && OrbitalBodyUtils.isSpaceLevel(livingEntity.level()) && !livingEntity.onGround()) {
+        if (livingEntity.level() != null && SpaceUtils.isSpaceLevel(livingEntity.level()) && !livingEntity.onGround()) {
             frictionVal = 1.0F;
             if (livingEntity instanceof Player player && player.getAbilities().flying) {
                 frictionVal = constant;
@@ -36,7 +36,7 @@ public class LivingEntitySpaceMixin {
     @WrapMethod(method = "onBelowWorld")
     public void onBelowWorld(Operation<Void> original) {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
-        if (!OrbitalBodyUtils.isSpaceLevel(livingEntity.level())) {
+        if (!SpaceUtils.isSpaceLevel(livingEntity.level())) {
             original.call();
         }
     }
@@ -44,7 +44,7 @@ public class LivingEntitySpaceMixin {
     @WrapMethod(method = "calculateEntityAnimation")
     public void calculateEntityAnimation(boolean pIncludeHeight, Operation<Void> original) {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
-        if (!OrbitalBodyUtils.isSpaceLevel(livingEntity.level())) {
+        if (!SpaceUtils.isSpaceLevel(livingEntity.level())) {
             original.call(pIncludeHeight);
         }
     }
@@ -52,7 +52,7 @@ public class LivingEntitySpaceMixin {
     @WrapOperation(method = "handleDamageEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/WalkAnimationState;setSpeed(F)V"))
     public void walkAnimSetSpeed1(WalkAnimationState instance, float pSpeed, Operation<Void> original) {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
-        if (!OrbitalBodyUtils.isSpaceLevel(livingEntity.level())) {
+        if (!SpaceUtils.isSpaceLevel(livingEntity.level())) {
             original.call(instance, speed);
         }
     }
@@ -60,14 +60,14 @@ public class LivingEntitySpaceMixin {
     @WrapOperation(method = "hurt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/WalkAnimationState;setSpeed(F)V"))
     public void walkAnimSetSpeed2(WalkAnimationState instance, float pSpeed, Operation<Void> original) {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
-        if (!OrbitalBodyUtils.isSpaceLevel(livingEntity.level())) {
+        if (!SpaceUtils.isSpaceLevel(livingEntity.level())) {
             original.call(instance, speed);
         }
     }
 
     @WrapOperation(method = "updateFallFlying", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;setSharedFlag(IZ)V"))
     private void setFallFlyingFlag(LivingEntity instance, int flag, boolean value, Operation<Void> original) {
-        if (OrbitalBodyUtils.isSpaceLevel(instance.level()) && !instance.isPassenger()) {
+        if (SpaceUtils.isSpaceLevel(instance.level()) && !instance.isPassenger()) {
             original.call(instance, flag, true);
         } else {
             original.call(instance, flag, value);
@@ -77,7 +77,7 @@ public class LivingEntitySpaceMixin {
     @ModifyExpressionValue(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isFallFlying()Z"))
     private boolean isFallFlyingMoveCalculation(boolean original) {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
-        if (OrbitalBodyUtils.isSpaceLevel(livingEntity.level())) {
+        if (SpaceUtils.isSpaceLevel(livingEntity.level())) {
             return false;
         } else {
             return original;

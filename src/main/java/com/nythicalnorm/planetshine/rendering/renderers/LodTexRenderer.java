@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.util.calculations.PlanetBodyCalc;
+import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import com.nythicalnorm.planetshine.util.calculations.LodTexCalc;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -39,7 +39,7 @@ public class LodTexRenderer {
     }
 
     private static void renderQuad(BufferBuilder bufferbuilder, CelestialBody planetIn, Vector2i worldPos, Vector2i atlasCoords, int totalSize) {
-        double cellSize = PlanetBodyCalc.getSquareCellSize(planetIn.getRadius());
+        double cellSize = PlanetCalc.getSquareCellSize(planetIn.getRadius());
         double texQuadPlanetSize = (cellSize / LodTexCalc.texQuadsPerCubeCell);
         double halfQuad = (texQuadPlanetSize) * 0.5d;
 
@@ -57,7 +57,7 @@ public class LodTexRenderer {
     }
 
     private static void createQuad(BufferBuilder builder, double xPos, double yPos, float u, float v, CelestialBody celestialBody) {
-        Vector3d normalizedPlanetPos = PlanetBodyCalc.planetDimPosToNormalizedVector(xPos, 0d, yPos, celestialBody, true);
+        Vector3d normalizedPlanetPos = PlanetCalc.planetDimPosToNormalizedVector(xPos, 0d, yPos, celestialBody, true);
         builder.vertex(identityPose, (float) normalizedPlanetPos.x, (float)normalizedPlanetPos.y, (float)normalizedPlanetPos.z)
                 .uv(u, v).endVertex();
     }

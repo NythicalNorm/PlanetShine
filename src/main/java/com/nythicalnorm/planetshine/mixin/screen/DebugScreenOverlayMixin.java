@@ -2,8 +2,8 @@ package com.nythicalnorm.planetshine.mixin.screen;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.nythicalnorm.planetshine.PSClient;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
 import net.minecraftforge.api.distmarker.Dist;
@@ -34,10 +34,10 @@ public abstract class DebugScreenOverlayMixin {
         if (css != null && css.doRender()) {
             Vector3dc relativeVelocity = css.getPlayerOrbit().getRelativeVelocity();
             Vector3dc relativePos = css.getPlayerOrbit().getRelativePos();
-            OrbitalElements orbitalElements = css.getPlayerOrbit().getOrbitalElements();
+            OrbitalElementsc orbitalElements = css.getPlayerOrbit().getOrbitalElements();
 
             if (css.getCurrentPlanet().isPresent()) {
-                Vector2dc latLong = OrbitalBodyUtils.getLatLongCoordinates(minecraft.player.position(), css.getCurrentPlanet().get());
+                Vector2dc latLong = SpaceUtils.getLatLongCoordinates(minecraft.player.position(), css.getCurrentPlanet().get());
                 list.add(String.format(Locale.ROOT, "Lat: %.5f, Long: %.5f", latLong.x(), latLong.y()));
             } else if (orbitalElements != null && relativeVelocity != null) {
                 list.add(String.format(Locale.ROOT, "Relative Velocity XYZ: %.2f / %.2f / %.2f", relativeVelocity.x(), relativeVelocity.y(), relativeVelocity.z()));
@@ -49,7 +49,7 @@ public abstract class DebugScreenOverlayMixin {
                         Math.toDegrees(orbitalElements.getLongitudeOfAscendingNode()),
                         Math.toDegrees(orbitalElements.getArgumentOfPeriapsis())
                 ));
-//
+
 //                OrbitalCalc.SOIIntercept timeToEscape = OrbitalCalc.findAllRelativePlanetIntercepts(css.getPlayerOrbit(), css.getCurrentTime(),
 //                        css.getPlayerOrbit().getParent().getPlanetChildren());
 ////                OrbitalCalc.SOIIntercept timeToEscape = css.getPlayerOrbit().getOrbitalElements().findOrbitEscapeIntercept(css.getPlayerOrbit().getParent(), css.getCurrentTime());

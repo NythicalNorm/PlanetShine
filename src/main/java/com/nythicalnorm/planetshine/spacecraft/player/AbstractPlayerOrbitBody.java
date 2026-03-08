@@ -16,7 +16,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
+import org.valkyrienskies.core.api.ships.LoadedShip;
 import org.valkyrienskies.core.api.util.GameTickOnly;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     protected Player player;
@@ -60,7 +62,12 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     @Override
     public Vector3dc getMcPosition() {
         if (this.player != null) {
-            return new Vector3d(this.player.position().x, this.player.position().y, this.player.position().z);
+            LoadedShip ship = VSGameUtilsKt.getShipMountedTo(this.player);
+            if (ship == null) {
+                return new Vector3d(this.player.position().x, this.player.position().y, this.player.position().z);
+            } else {
+                return ship.getKinematics().getPosition();
+            }
         }
         return null;
     }
@@ -68,7 +75,12 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     @Override
     public Vector3dc getMcVelocity() {
         if (this.player != null) {
-            return new Vector3d(this.player.getDeltaMovement().x, this.player.getDeltaMovement().y, this.player.getDeltaMovement().z);
+            LoadedShip ship = VSGameUtilsKt.getShipMountedTo(this.player);
+            if (ship == null) {
+                return new Vector3d(this.player.getDeltaMovement().x, this.player.getDeltaMovement().y, this.player.getDeltaMovement().z);
+            } else {
+                return ship.getKinematics().getVelocity();
+            }
         }
         return null;
     }
@@ -76,7 +88,12 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     @Override
     public Quaterniondc getMCRotation() {
         if (this.player != null) {
-            return new Quaterniond().rotateY(this.player.getYRot()).rotateX(this.player.getXRot());
+            LoadedShip ship = VSGameUtilsKt.getShipMountedTo(this.player);
+            if (ship == null) {
+                return new Quaterniond().rotateY(this.player.getYRot()).rotateX(this.player.getXRot());
+            } else {
+                return ship.getKinematics().getRotation();
+            }
         }
         return null;
     }

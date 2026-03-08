@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.mixin.spaceentites;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,7 +16,7 @@ public class EntitySpaceMixin {
 
     @ModifyReturnValue(method = "isNoGravity", at = @At(value = "TAIL"))
     public boolean isNoGravity(boolean original) {
-        if (OrbitalBodyUtils.isSpaceLevel(level)) {
+        if (SpaceUtils.isSpaceLevel(level)) {
             return true;
         } else {
             return original;
@@ -25,7 +25,7 @@ public class EntitySpaceMixin {
 
     @ModifyExpressionValue(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;isNoGravity()Z"))
     private boolean saveNoGravity(boolean original) {
-        if (!OrbitalBodyUtils.isSpaceLevel(level)) {
+        if (!SpaceUtils.isSpaceLevel(level)) {
             return original;
         } else {
             return false;

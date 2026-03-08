@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
@@ -70,12 +71,12 @@ public class ClientPacketHandler {
 //        });
     }
 
-    public static void localPlayerJoinOrbital(OrbitId newParentID, OrbitalElements orbitalElements) {
+    public static void localPlayerJoinOrbital(OrbitId newParentID, OrbitalElementsc orbitalElements) {
         PSClient.getInstance().ifPresent(psClient ->
                 psClient.localPlayerJoinOrbital(newParentID, orbitalElements));
     }
 
-    public static void OrbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements orbitalElements) {
+    public static void OrbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElementsc orbitalElements) {
         PSClient.getInstance().ifPresent(psClient ->
                 psClient.orbitSOIChange(spacecraftID, newParentID, orbitalElements));
     }

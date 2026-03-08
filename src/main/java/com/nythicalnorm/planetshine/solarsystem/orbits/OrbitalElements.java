@@ -6,10 +6,11 @@ import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
+import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
-public class OrbitalElements {
+public class OrbitalElements implements OrbitalElementsc{
     public static final int MAX_ITERATIONS_ELLIPTICAL = 100;
     // Hyperbolic orbits take more iterations than elliptical orbits, increase this value if your state vectors are increasing to infinity.
     public static final int MAX_ITERATIONS_HYPERBOLIC = 500;
@@ -36,24 +37,24 @@ public class OrbitalElements {
         setOrbitalPeriod(parentBodyMass);
     }
 
-    public OrbitalElements(OrbitalElements orbitalElements) {
+    public OrbitalElements(OrbitalElementsc orbitalElements) {
         set(orbitalElements);
     }
 
     // called with rotational orbital elements set from fromCartesian function, the negation is kinda wierd maybe need to change at the source
-    public void set(OrbitalElements orbitalElements) {
-        this.SemiMajorAxis = orbitalElements.SemiMajorAxis;
-        this.Eccentricity = orbitalElements.Eccentricity;
-        this.periapsisTime = orbitalElements.periapsisTime;
+    public void set(OrbitalElementsc orbitalElements) {
+        this.SemiMajorAxis = orbitalElements.getSemiMajorAxis();
+        this.Eccentricity = orbitalElements.getEccentricity();
+        this.periapsisTime = orbitalElements.getPeriapsisTime();
 
-        this.Inclination = orbitalElements.Inclination;
-        this.ArgumentOfPeriapsis = orbitalElements.ArgumentOfPeriapsis;
-        this.LongitudeOfAscendingNode = orbitalElements.LongitudeOfAscendingNode;
+        this.ArgumentOfPeriapsis = orbitalElements.getArgumentOfPeriapsis();
+        this.Inclination = orbitalElements.getInclination();
+        this.LongitudeOfAscendingNode = orbitalElements.getLongitudeOfAscendingNode();
 
-        this.Mu = orbitalElements.Mu;
-        this.MeanAngularMotion = orbitalElements.MeanAngularMotion;
+        this.Mu = orbitalElements.getMu();
+        this.MeanAngularMotion = orbitalElements.getMeanAngularMotion();
+
         this.orbitRotation = new Quaterniond();
-
         setOrbitRotationFromElements(this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);
     }
 
@@ -124,7 +125,7 @@ public class OrbitalElements {
 
         // I don't get this equation, but it cuts the no. of iterations from over 700 to 4 in a few cases.
         // Reference: https://arxiv.org/html/2411.15374v1#S4.F2
-        double e0 = Math.log((2.0 * meanAnomaly) / (eccentricity + 1.8));
+        double e0 = Math.log((2.0 * Math.abs(meanAnomaly)) / (eccentricity + 1.8));
 
         int i = 1;
 
@@ -141,8 +142,7 @@ public class OrbitalElements {
     }
 
     // Reference: https://space.stackexchange.com/questions/8911/determining-orbital-position-at-a-future-point-in-time
-    public Vector3d[] ToCartesian(long timeElapsed) {
-        Vector3d[] stateVectors = new Vector3d[2];
+    public void ToCartesian(long timeElapsed, Vector3d outPos, Vector3d outVel) {
         double a = this.SemiMajorAxis;
         double e = this.Eccentricity;
         boolean isElliptical = e < 1;
@@ -159,7 +159,7 @@ public class OrbitalElements {
 
         double P = a * (cosAnomaly - e);
         double Q = -semiMinorAxis * sinAnomaly;
-        stateVectors[0] = perifocalToEquatorial(P, Q); //, this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);
+        this.perifocalToEquatorial(P, Q, outPos);
 
         // Velocity Calculation:
         // Determine the square root of the standard gravitational parameter divided by the semi-latus rectum.
@@ -175,9 +175,7 @@ public class OrbitalElements {
         // cos of atan2 = x/(y^2+x^2)
         double vQ = -sqrtSgpOverSlr*(e+P/prearctanDivSquareRoot);
 
-        stateVectors[1] = perifocalToEquatorial(vP, vQ); //, this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);
-
-        return stateVectors;
+        this.perifocalToEquatorial(vP, vQ, outVel);
     }
 
     public static double getModulusCurrentTime(long timeElapsed, long periapsisTime, double eccentricity, double meanAngularMotion) {
@@ -190,7 +188,7 @@ public class OrbitalElements {
         return TimeCalc.timeLongToDouble(diff);
     }
 
-    public Quaterniond getOrbitRotation() {
+    public Quaterniondc getOrbitRotation() {
         return orbitRotation;
     }
 
@@ -199,9 +197,9 @@ public class OrbitalElements {
         this.orbitRotation.normalize();
     }
 
-    private Vector3d perifocalToEquatorial(double P, double Q) {
-        Vector3d stateVec = new Vector3d(P, 0d, Q);
-        return orbitRotation.transform(stateVec);
+    private void perifocalToEquatorial(double P, double Q, Vector3d vector) {
+        vector.set(P, 0d, Q);
+        this.orbitRotation.transform(vector);
     }
 
 
@@ -265,24 +263,12 @@ public class OrbitalElements {
         } else {
             double cosTrueAnomoly = Math.cos(trueAnomoly);
             double H = OrbitalCalc.invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
+            H = (trueAnomoly > Math.PI) ? -H : H;
 
             this.MeanAngularMotion = Math.sqrt(Mu / -(SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
             double timeDiffTerm = (Eccentricity * Math.sinh(H) - H) / this.MeanAngularMotion;
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
         }
-    }
-
-    public static double getTrueAnomalyFromStateVectors(Vector3dc position, Vector3dc velocity, double Mu) {
-        double PosMagnitude = position.length();
-
-        // incredibly jank to use velocity.negate but i don't know what the problem is...
-        Vector3d negatedVelocity = velocity.negate(new Vector3d());
-        Vector3d momentumVectorH = new Vector3d(position).cross(negatedVelocity);
-        Vector3d eccentricityVector = negatedVelocity.cross(momentumVectorH).div(Mu);
-        eccentricityVector.sub(position.x() / PosMagnitude, position.y() / PosMagnitude, position.z() / PosMagnitude);
-
-        double trueAnomalyAcosVar = eccentricityVector.dot(position)/(eccentricityVector.length()*PosMagnitude);
-        return Math.acos(Mth.clamp(trueAnomalyAcosVar, -1, 1));
     }
 
     //Called for the first time on planet load don't use this

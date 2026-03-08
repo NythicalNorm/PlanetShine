@@ -17,11 +17,12 @@ import net.minecraft.world.level.storage.ServerLevelData;
 import org.jetbrains.annotations.Nullable;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executor;
 
 public class SpaceServerLevel extends ServerLevel {
-    private final HostSpaceManager hostSpaceManager;
+    private HostSpaceManager hostSpaceManager;
 
     public SpaceServerLevel (MinecraftServer pServer, Executor pDispatcher, LevelStorageSource.LevelStorageAccess pLevelStorageAccess, ServerLevelData pServerLevelData, ResourceKey<Level> pDimension, LevelStem pLevelStem, ChunkProgressListener pProgressListener, boolean pIsDebug, long pBiomeZoomSeed, List<CustomSpawner> pCustomSpawners, boolean pTickTime, @Nullable RandomSequences pRandomSequences) {
         super(pServer, pDispatcher, pLevelStorageAccess, pServerLevelData, pDimension, pLevelStem, pProgressListener, pIsDebug, pBiomeZoomSeed, pCustomSpawners, pTickTime, pRandomSequences);
@@ -50,5 +51,11 @@ public class SpaceServerLevel extends ServerLevel {
     @Override
     public boolean isThundering() {
         return false;
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.hostSpaceManager = null;
+        super.close();
     }
 }

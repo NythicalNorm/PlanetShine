@@ -46,6 +46,7 @@ public class MapRenderablePlanet extends MapRenderable {
     }
 
     private void renderChildBodies(GuiGraphics graphics, CelestialBody planetBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+        RenderSystem.enableBlend();
         planetBody.getPlanetChildren().forEach(celestialBody ->
                 OrbitDrawer.drawOrbit(celestialBody, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix));
         planetBody.getEntityChildren().forEach(entityOrbitBody -> {
@@ -53,6 +54,7 @@ public class MapRenderablePlanet extends MapRenderable {
                 OrbitDrawer.drawOrbit(entityOrbitBody, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix);
             }
         });
+        RenderSystem.disableBlend();
     }
 
     public boolean renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {

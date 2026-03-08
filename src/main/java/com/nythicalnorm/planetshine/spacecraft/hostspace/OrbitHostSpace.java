@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitSOIChang
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.planetshine.util.Calc;
@@ -82,6 +83,15 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     public void onPhysTick() {
     }
 
+    public void removeOrbitBody(EntityOrbitBody entityOrbitBody) {
+        if (entityOrbitBody.equals(this.getHostBody())) {
+            this.hostLeft();
+        }
+        if (entityOrbitBody instanceof ServerPlayerOrbitBody serverPlayerOrbitBody) {
+            this.playerOrbitBodies.remove(serverPlayerOrbitBody);
+        }
+    }
+
     public void hostLeft() {
         for (Entity entity : nonHostEntities) { // doesn't work yet.
             if (!(entity instanceof Player)) {
@@ -116,14 +126,15 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         this.velocityForLastGameTick.add(addedVel);
     }
 
-    public void changeSOI(OrbitId newParent, OrbitalElements orbitalElements) {
+    public void changeSOI(OrbitId newParent, OrbitalElementsc orbitalElements) {
         SolarSystem solarSystem = PSServer.get().getSolarSystem();
         solarSystem.entityChangeOrbitalSOIs(this.getHostBody(), newParent, orbitalElements);
         PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(this.getHostBody().getOrbitId(), newParent, orbitalElements));
 
         this.playerOrbitBodies.forEach(playerOrbit -> {
-            solarSystem.entityChangeOrbitalSOIs(playerOrbit, newParent, orbitalElements);
-            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(playerOrbit.getOrbitId(), newParent, orbitalElements));
+            OrbitalElements nonHostOrbit = new OrbitalElements(orbitalElements);
+            solarSystem.entityChangeOrbitalSOIs(playerOrbit, newParent, nonHostOrbit);
+            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(playerOrbit.getOrbitId(), newParent, nonHostOrbit));
         });
     }
 }

@@ -1,6 +1,6 @@
 package com.nythicalnorm.planetshine.mixin.spaceentites;
 
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.world.entity.item.ItemEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
@@ -12,7 +12,7 @@ public class ItemEntitySpaceMixin {
     public float changeFrictionMultiplier(float constant) {
         ItemEntity itemEntity = ((ItemEntity)(Object) this);
 
-        if (itemEntity.level() != null && OrbitalBodyUtils.isSpaceLevel(itemEntity.level())) {
+        if (itemEntity.level() != null && SpaceUtils.isSpaceLevel(itemEntity.level())) {
             return 1.0F;
         } else {
             return constant;

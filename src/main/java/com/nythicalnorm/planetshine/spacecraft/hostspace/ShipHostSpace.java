@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitSOIChang
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import org.joml.Vector2ic;
@@ -39,13 +40,22 @@ public class ShipHostSpace extends OrbitHostSpace{
     }
 
     @Override
-    public void changeSOI(OrbitId newParent, OrbitalElements orbitalElements) {
+    public void changeSOI(OrbitId newParent, OrbitalElementsc orbitalElements) {
         super.changeSOI(newParent, orbitalElements);
         SolarSystem solarSystem = PSServer.get().getSolarSystem();
 
         this.nonHostShips.forEach(spaceshipBody -> {
-            solarSystem.entityChangeOrbitalSOIs(spaceshipBody, newParent, orbitalElements);
-            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(spaceshipBody.getOrbitId(), newParent, orbitalElements));
+            OrbitalElements nonHostOrbit = new OrbitalElements(orbitalElements);
+            solarSystem.entityChangeOrbitalSOIs(spaceshipBody, newParent, nonHostOrbit);
+            PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(spaceshipBody.getOrbitId(), newParent, nonHostOrbit));
         });
+    }
+
+    @Override
+    public void removeOrbitBody(EntityOrbitBody entityOrbitBody) {
+        super.removeOrbitBody(entityOrbitBody);
+        if (entityOrbitBody instanceof ServerSpaceshipBody spaceshipBody) {
+            this.nonHostShips.remove(spaceshipBody);
+        }
     }
 }

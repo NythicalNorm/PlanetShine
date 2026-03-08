@@ -8,7 +8,7 @@ import org.joml.*;
 
 import java.lang.Math;
 
-public class PlanetBodyCalc {
+public class PlanetCalc {
     public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, double planetRadius, Quaternionfc planetRot, boolean isNormalized) {
         Vector3d quadSpherePos = getNonRotatedDimPosFromNormalizeVector(pos, planetRadius, isNormalized);
         quadSpherePos.rotate(new Quaterniond(planetRot.x(), planetRot.y(), planetRot.z(), planetRot.w()));

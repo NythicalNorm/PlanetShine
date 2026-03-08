@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
@@ -107,7 +108,7 @@ public class NetworkEncoders {
         return tempEntityOrbitHolder;
     }
 
-    public static void writeOrbitalElements(FriendlyByteBuf friendlyByteBuf, OrbitalElements orbitalElements) {
+    public static void writeOrbitalElements(FriendlyByteBuf friendlyByteBuf, OrbitalElementsc orbitalElements) {
         friendlyByteBuf.writeDouble(orbitalElements.getSemiMajorAxis());
         friendlyByteBuf.writeDouble(orbitalElements.getEccentricity());
         friendlyByteBuf.writeLong(orbitalElements.getPeriapsisTime());

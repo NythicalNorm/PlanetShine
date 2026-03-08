@@ -5,7 +5,8 @@ import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
-import com.nythicalnorm.planetshine.util.calculations.PlanetBodyCalc;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
+import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
@@ -20,8 +21,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
-
-import java.lang.Math;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
@@ -46,19 +45,14 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     private void updatePlanetRot(CelestialBody currentPlanet) {
-        //quaternion to rotate the output of lookalong function to the correct -y direction.
-        this.playerOnPlanetRotation.set(new AxisAngle4d(Math.PI*0.5d,1d,0d,0d));
-        Vector3d playerRelativePos = new Vector3d(this.getRelativePos());
-        playerRelativePos.normalize();
-        Vector3d upVector = PlanetBodyCalc.getUpVectorForPlanetRot(new Vector3d(playerRelativePos), currentPlanet);
-        this.playerOnPlanetRotation.lookAlong(playerRelativePos, upVector);
+        this.playerOnPlanetRotation.set(SpaceUtils.getSpaceRotationFromPlanetPos(this.relativeOrbitalPos, currentPlanet));
     }
 
     private void updatePlanetPos(Level level, Vec3 position, CelestialBody currentPlanetOn) {
         double seaLevel = level.getMinBuildHeight() + 127;
         position = new Vec3(position.x, position.y - seaLevel, position.z);
 
-        this.relativeOrbitalPos.set(PlanetBodyCalc.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false));
+        this.relativeOrbitalPos.set(PlanetCalc.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false));
         this.absoluteOrbitalPos.set(currentPlanetOn.getAbsolutePos()).add(relativeOrbitalPos);
     }
 

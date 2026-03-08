@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.mixin.spaceentites;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerRendererSpaceMixin {
     @Inject(method = "setupRotations(Lnet/minecraft/client/player/AbstractClientPlayer;Lcom/mojang/blaze3d/vertex/PoseStack;FFF)V", at = @At(value = "RETURN"))
     void spaceFlyingPose(AbstractClientPlayer pEntityLiving, PoseStack pPoseStack, float pAgeInTicks, float pRotationYaw, float pPartialTicks, CallbackInfo ci) {
-        if (OrbitalBodyUtils.isSpaceLevel(pEntityLiving.level()) && pEntityLiving.isFallFlying()) {
+        if (SpaceUtils.isSpaceLevel(pEntityLiving.level()) && pEntityLiving.isFallFlying()) {
             pPoseStack.translate(0f, -1.4f, 0f);
         }
     }

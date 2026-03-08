@@ -4,7 +4,7 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.bodies.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import net.minecraft.resources.ResourceKey;
@@ -43,7 +43,17 @@ public class SolarSystem {
     public void calculateSpacecraftIntercepts(long timeElapsed) {
         for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
             if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
-                entityBody.calculateIntercept(timeElapsed);
+                entityBody.calculateIntercepts(timeElapsed);
+            }
+        }
+    }
+
+    // used client side for orbit rendering
+    @PhysTickOnly
+    public void calculateOnlyEscapeIntercepts(long timeElapsed) {
+        for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
+            if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
+                entityBody.calculateEscapeOnly(timeElapsed);
             }
         }
     }
@@ -70,12 +80,12 @@ public class SolarSystem {
     }
 
     @PhysTickOnly
-    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, OrbitId newParentID, OrbitalElements orbitalElementsNew) {
+    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, OrbitId newParentID, OrbitalElementsc orbitalElementsNew) {
         entityChangeOrbitalSOIs(spacecraftBody, getPlanet(newParentID), orbitalElementsNew);
     }
 
     @PhysTickOnly
-    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElements orbitalElementsNew) {
+    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElementsc orbitalElementsNew) {
         //removing the old reference to the object
         spacecraftBody.removeParent();
         // adding reference to new object
@@ -144,7 +154,7 @@ public class SolarSystem {
         return planetDimensions.get(dim);
     }
 
-    public AbstractSpaceshipBody getShipFromVSId(long id) { // very sus to store ship id has part of the 128 bit uuid
+    public AbstractSpaceshipBody getShipFromVSId(long id) { // very sus to store ship id has part of the 128 bit uuid, need to change it
         if (this.allSpacecraftBodies.get(new OrbitId(id)) instanceof AbstractSpaceshipBody serverSpaceshipBody) {
             return serverSpaceshipBody;
         }

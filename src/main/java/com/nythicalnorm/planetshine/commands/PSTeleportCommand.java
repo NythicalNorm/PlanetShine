@@ -53,15 +53,15 @@ public class PSTeleportCommand {
                         semiMajorAxis = (semiMajorAxisInput*1000d) - planet.getRadius();
                         //return 0;
                     }
-                    long startingAnomaly = psServer.getCurrentTime();
+                    long startingAnomaly = psServer.getCurrentTime(); // + TimeCalc.timeDoubleToLong(12000f);
                     OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingAnomaly, inclination, 0d, 0d, planet.getMass());
 
                     LoadedShip shipMountedTo = VSGameUtilsKt.getShipMountedTo(entity);
 
                     if (shipMountedTo == null) {
-                        psServer.playerTeleportOrbit(planet, (ServerPlayer) entity, orbitalElement);
+                        psServer.playerTeleportToOrbit(planet, (ServerPlayer) entity, orbitalElement);
                     } else {
-                        psServer.shipTeleportOrbit(planet, (LoadedServerShip) shipMountedTo, orbitalElement);
+                        psServer.shipTeleportToOrbit(planet, (LoadedServerShip) shipMountedTo, orbitalElement, shipMountedTo.getTransform().getRotation(), shipMountedTo.getAngularVelocity());
                     }
                 }
             }

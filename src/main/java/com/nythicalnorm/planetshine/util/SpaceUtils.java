@@ -1,0 +1,84 @@
+package com.nythicalnorm.planetshine.util;
+
+import com.nythicalnorm.planetshine.dimensions.SpaceDimension;
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
+import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.joml.*;
+
+import java.lang.Math;
+import java.util.Collection;
+import java.util.HashSet;
+
+public class SpaceUtils {
+    // is this sus? I mean it's not like I am planning to change the dimension's name.
+    private static final String spaceLevelString = "minecraft:dimension:planetshine:spacedim";
+
+    public static boolean isSpaceLevel(Level level) {
+        return level.dimension().equals(SpaceDimension.SPACE_LEVEL_KEY);
+    }
+
+    public static boolean isSpaceLevel(ServerLevel serverLevel) {
+        return serverLevel instanceof SpaceServerLevel;
+    }
+
+    public static boolean isSpaceLevel(String chunkClaimDimension) {
+        return spaceLevelString.equals(chunkClaimDimension);
+    }
+
+    public static Vector3d getRelativePositon(Vector3dc pos, CelestialBody celestialBody) {
+        Vec3 vec3Pos = new Vec3(pos.x(), pos.y(), pos.z());
+        return PlanetCalc.planetDimPosToNormalizedVector(vec3Pos, celestialBody.getRadius(), celestialBody.getRotation(), false);
+    }
+
+    public static Quaterniond getSpaceRotationFromPlanetPos(Vector3dc relativePlanetPosition, CelestialBody celestialBody) {
+        Quaterniond planetRotation = new Quaterniond(new AxisAngle4d(Math.PI * 0.5d,1f,0f,0f));
+        Vector3d playerRelativePos = new Vector3d(relativePlanetPosition);
+        playerRelativePos.normalize();
+        Vector3d upVector = PlanetCalc.getUpVectorForPlanetRot(new Vector3d(playerRelativePos), celestialBody);
+        planetRotation.lookAlong(playerRelativePos, upVector);
+
+        return planetRotation;
+    }
+
+    public static Vector2dc getLatLongCoordinates(Vec3 pos, CelestialBody planet) {
+        if (planet != null) {
+            Vector3d planetNonRotPos = PlanetCalc.getNonRotatedDimPosFromNormalizeVector(pos,
+                    planet.getRadius(), true);
+            double latitude = Math.asin(planetNonRotPos.y);
+            double longitude = Math.atan2(-planetNonRotPos.z, planetNonRotPos.x);
+            return new Vector2d(Math.toDegrees(latitude), Math.toDegrees(longitude));
+        }
+        return null;
+    }
+
+    private static final double distanceToSearch = 2000;
+
+    //don't call this while time warping
+    private HashSet<ShipIntercept> getEntityBodyIntersections(Collection<EntityOrbitBody> childEntityBodies) {
+        double dist = distanceToSearch * distanceToSearch;
+        HashSet<ShipIntercept> shipIntercepts = new HashSet<>();
+        
+        return shipIntercepts;
+    }
+
+    public record ShipIntercept(EntityOrbitBody bodyA, EntityOrbitBody bodyB) {
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            ShipIntercept shipIntercept = (ShipIntercept) obj;
+            if (shipIntercept.bodyA() == this.bodyA && shipIntercept.bodyB() == this.bodyB) {
+                return true;
+            } else if (shipIntercept.bodyA() == this.bodyB() && shipIntercept.bodyB() == this.bodyA) {
+                return true;
+            }
+            return false;
+        }
+    }
+}

@@ -2,8 +2,8 @@ package com.nythicalnorm.planetshine.network.orbitaldata;
 
 import com.nythicalnorm.planetshine.network.ClientPacketHandler;
 import com.nythicalnorm.planetshine.network.NetworkEncoders;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -15,9 +15,9 @@ import java.util.function.Supplier;
 public class ClientboundOrbitSOIChange {
     private final OrbitId spacecraftID;
     private final OrbitId newParentID;
-    private final OrbitalElements orbitalElements;
+    private final OrbitalElementsc orbitalElements;
 
-    public ClientboundOrbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElements elements) {
+    public ClientboundOrbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElementsc elements) {
         this.spacecraftID = spacecraftID;
         this.newParentID = newParentID;
         this.orbitalElements = elements;

@@ -24,7 +24,7 @@ import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.storage.SpacecraftDataStorage;
 import com.nythicalnorm.planetshine.storage.PSCommonSaveData;
 import com.nythicalnorm.planetshine.storage.PSDataPackManager;
-import com.nythicalnorm.planetshine.util.OrbitalBodyUtils;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.Stage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
@@ -38,7 +38,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaterniondc;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
@@ -55,7 +57,7 @@ public class PSServer extends Stage {
     private PlanetTexHandler planetTexHandler;
     private HostSpaceManager hostSpaceManager;
     private final SpacecraftDataStorage spacecraftDataStorage;
-    private long serverRunningTicks; // in VSPhysTicks
+    private long runningPhysTicks; // in VSPhysTicks
     private volatile boolean sleepTimeWarping = false;
     private final RunnableExecutor physTickRunnable;
     private final RunnableExecutor gameTickRunnable;
@@ -66,7 +68,7 @@ public class PSServer extends Stage {
         instance = this;
         this.server = server;
         BiomeColorHolder.init(server.registryAccess());
-        this.serverRunningTicks = 0;
+        this.runningPhysTicks = 0;
         this.spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
         this.physTickRunnable = new RunnableExecutor();
         this.gameTickRunnable = new RunnableExecutor();
@@ -82,11 +84,9 @@ public class PSServer extends Stage {
     }
 
     public void serverStarted() {
-        initPlanets();
+        this.initPlanets();
+        this.hostSpaceManager.serverStarted();
         server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
-        if (this.isTimeWarping()) {
-            physTickRunnable.addRun(() -> this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime()));
-        }
     }
 
     public static PSServer get() {
@@ -102,6 +102,7 @@ public class PSServer extends Stage {
 
     public static void close() {
         Stage.close();
+        instance.hostSpaceManager.close();
         instance = null;
     }
 
@@ -112,7 +113,7 @@ public class PSServer extends Stage {
     @PhysTickOnly
     public void OnPhysTick(double delta) {
         physTickRunnable.executeAll();
-        serverRunningTicks++;
+        runningPhysTicks++;
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
         solarSystem.UpdateSpacecraft(currentTime, this.isTimeWarping());
 
@@ -123,13 +124,15 @@ public class PSServer extends Stage {
         }
         hostSpaceManager.onPhysTick();
 
-        //server.execute(() -> PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime)));
+        if (runningPhysTicks % 60 == 0) {
+            this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
+        }
     }
 
     public void OnGameTick() {
+        this.gameTickRunnable.executeAll();
         PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
         hostSpaceManager.onGameTick();
-        this.gameTickRunnable.executeAll();
     }
 
     public void saveSolarSys() {
@@ -140,11 +143,8 @@ public class PSServer extends Stage {
     public void ChangeTimeWarp(long proposedSetTimeWarpSpeed, ServerPlayer player) {
         long timePassPerSec = (long) Mth.clamp(proposedSetTimeWarpSpeed, 0, 5000000);
         timePassPerSec = TimeCalc.TimePerTickToTimePerMilliTick(timePassPerSec);
-
         setTimePassPerTick(timePassPerSec);
-        if (this.isTimeWarping()) {
-            physTickRunnable.addRun(() -> this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime()));
-        }
+
         server.getPlayerList().broadcastSystemMessage(Component.translatable("planetshine.state.settimewarp",
                 proposedSetTimeWarpSpeed), true);
         PacketHandler.sendToAllClients(new ClientboundTimeWarpUpdate(true, timePassPerSec));
@@ -162,7 +162,7 @@ public class PSServer extends Stage {
         if (solarSystem.getSpacecraftOrbit(playerEntityID) instanceof ServerPlayerOrbitBody pPlrSpacecraftBody) {
             playerSpacecraftBody = pPlrSpacecraftBody;
             pPlrSpacecraftBody.setPlayer(player);
-        } else if (OrbitalBodyUtils.isSpaceLevel(player.level())) {
+        } else if (SpaceUtils.isSpaceLevel(player.level())) {
             Vec3 spawnPosition = server.overworld().getSharedSpawnPos().getCenter();
             hostSpaceManager.teleportEntity(player, server.overworld(), spawnPosition.x, spawnPosition.y, spawnPosition.z);
         }
@@ -189,7 +189,7 @@ public class PSServer extends Stage {
     }
 
     // Called when the player changes SOIs or joins on orbit artificially like the teleport command
-    public void playerTeleportOrbit(CelestialBody planet, ServerPlayer player, OrbitalElements elements) {
+    public void playerTeleportToOrbit(CelestialBody planet, ServerPlayer player, OrbitalElements elements) {
         OrbitId PlayerID = new OrbitId(player.getUUID());
 
         if (solarSystem.getSpacecraftOrbit(PlayerID) instanceof ServerPlayerOrbitBody playerOrbitBody) {
@@ -211,12 +211,13 @@ public class PSServer extends Stage {
             hostSpaceManager.teleportEntity(player, server.getLevel(SpaceDimension.SPACE_LEVEL_KEY),
                     playerHostSpace.getOriginPos().x, playerHostSpace.getOriginPos().y, playerHostSpace.getOriginPos().z);
 
-            sendPacketsPlayerJoinOrbital(player, playerOrbitBody);
+            this.sendPacketsPlayerJoinOrbital(player, playerOrbitBody);
         }
     }
 
-    // player teleport and this are very similar, but eh can't be bother to actually make a common method or generic glorp.
-    public void shipTeleportOrbit(CelestialBody planet, LoadedServerShip ship, OrbitalElements elements) {
+    // player teleport and this are very similar, but eh can't be bothered to actually make a common method or generic glorp.
+    public void shipTeleportToOrbit(CelestialBody planet, LoadedServerShip ship, OrbitalElements elements,
+                                    Quaterniondc shipNewRotation, Vector3dc shipNewOmega) {
         OrbitId shipID = new OrbitId(ship.getId());
 
         if (solarSystem.getSpacecraftOrbit(shipID) instanceof ServerSpaceshipBody serverSpaceshipBody) {
@@ -234,8 +235,8 @@ public class PSServer extends Stage {
 
             ServerLevel levelOld = server.getLevel(VSGameUtilsKt.getResourceKey(ship.getChunkClaimDimension()));
 
-            ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(shipHostSpace.getOriginPos(), ship.getTransform().getRotation(),
-            new Vector3d(), new Vector3d(), VSGameUtilsKt.getDimensionId(this.getSpaceLevel()),null, null);
+            ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(shipHostSpace.getOriginPos(), shipNewRotation,
+            new Vector3d(), shipNewOmega, VSGameUtilsKt.getDimensionId(this.getSpaceLevel()),null, null);
 
             this.solarSystem.entityJoinedOrbital(planet, spaceshipOrbitBody);
             this.hostSpaceManager.getShipTeleporter().teleportShipsWithEntities(ship, shipTeleportData, levelOld, this.getSpaceLevel());

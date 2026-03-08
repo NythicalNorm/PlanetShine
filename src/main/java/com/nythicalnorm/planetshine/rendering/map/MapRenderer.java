@@ -9,7 +9,6 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.renderTypes.*;
 import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.*;
@@ -46,7 +45,7 @@ public class MapRenderer { // this is full of memory leaks like chock-full of th
             starMapState = MapRelativeState.FocusedBody;
         }
 
-        renderTree = new MapRenderablePlanet(rootStar, starMapState, null);
+        this.renderTree = new MapRenderablePlanet(rootStar, starMapState, null);
         traverseAndPopulateList(css.getSolarSystem().getRootStar(), currentFocusedBody, renderTree);
     }
 

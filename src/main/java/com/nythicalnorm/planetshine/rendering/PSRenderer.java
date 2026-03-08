@@ -52,6 +52,7 @@ public class PSRenderer {
     private static void setupShaders() {
         PlanetRenderer.setupShader();
         AtmosphereRenderer.setupShader(Skybox_Buffer);
+        OrbitDrawer.setupShader();
         // enable depth clamping shouldn't break stuff i don't think anyway.
     }
 

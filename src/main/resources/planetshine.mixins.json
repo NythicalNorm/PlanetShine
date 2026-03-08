@@ -44,6 +44,7 @@
     "daynightcycle.FogRendererMixin",
     "screen.DebugScreenOverlayMixin",
     "screen.KeyboardHandlerMixin",
+    "screen.MinecraftMixin",
     "screen.ProgressScreenMixin",
     "screen.ReceivingLevelScreenMixin",
     "spaceentites.PlayerRendererSpaceMixin",

@@ -4,8 +4,10 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import net.minecraft.Util;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
@@ -37,10 +39,27 @@ public class OrbitalCalc {
         } else {
             double cosTrueAnomoly = Math.cos(trueAnomaly);
             double H = invCosh((eccentricity + cosTrueAnomoly) / (1 + eccentricity * cosTrueAnomoly));
+            H = (trueAnomaly > Math.PI) ? -H : H;
 
             double timeDiffTerm = (eccentricity * Math.sinh(H) - H) / meanAngularMotion;
             return (lastPeriapsisTime + TimeCalc.timeDoubleToLong(timeDiffTerm));
         }
+    }
+
+    public static double getTrueAnomalyFromStateVectors(Vector3dc position, Vector3dc velocity, double Mu) {
+        double PosMagnitude = position.length();
+
+        // incredibly jank to use velocity.negate but i don't know what the problem is...
+        Vector3d negatedVelocity = velocity.negate(new Vector3d());
+        Vector3d momentumVectorH = new Vector3d(position).cross(negatedVelocity);
+        Vector3d eccentricityVector = negatedVelocity.cross(momentumVectorH).div(Mu);
+        eccentricityVector.sub(position.x() / PosMagnitude, position.y() / PosMagnitude, position.z() / PosMagnitude);
+
+        double trueAnomalyAcosVar = eccentricityVector.dot(position)/(eccentricityVector.length()*PosMagnitude);
+        double trueAnomaly = Math.acos(Mth.clamp(trueAnomalyAcosVar, -1, 1));
+        trueAnomaly = position.dot(velocity) < 0 ? (2 * Math.PI) - trueAnomaly : trueAnomaly;
+
+        return trueAnomaly;
     }
 
     public static double invCosh(double x) {
@@ -74,32 +93,41 @@ public class OrbitalCalc {
             }
         });
         SimpleOrbit entityOrbit = new SimpleOrbit(orbitBody.getOrbitalElements());
-
-        return calculateFutureForNextOrbit(entityOrbit, planetInterceptCandidateList, timeElapsed);
+        double startingAnomaly = getTrueAnomalyFromStateVectors(orbitBody.getRelativePos(), orbitBody.getRelativeVelocity(), orbitBody.getOrbitalElements().getMu());
+        return calculateFutureForNextOrbit(entityOrbit, startingAnomaly, planetInterceptCandidateList, timeElapsed);
     }
 
-
-    private static SOIIntercept calculateFutureForNextOrbit(SimpleOrbit entityOrbit,
+    private static SOIIntercept calculateFutureForNextOrbit(SimpleOrbit entityOrbit, double startingAnomaly,
                                                     List<PlanetInterceptCandidate> planetInterceptCandidates, long timeElapsed) {
         boolean calculatedThisTime;
-        double orbitalPeriod = (2*Math.PI)/entityOrbit.MeanAngularMotion;
-        long maxTime = timeElapsed + TimeCalc.timeDoubleToLong(orbitalPeriod);
-        long timeChange = TimeCalc.timeDoubleToLong(orbitalPeriod) / 52;
+        double timeChange = 0.12083048667d;
+        double maxAnomaly = startingAnomaly + (2 * Math.PI);
         Vector3d distanceCheckVector = new Vector3d();
 
-        for (long time = timeElapsed; time <= maxTime; time += timeChange) {
-            entityOrbit.toEntityCartesian(time);
+        for (double trueAnomoly = startingAnomaly; trueAnomoly <= maxAnomaly; trueAnomoly += timeChange) {
+            calculatedThisTime = false;
+            double radius = entityOrbit.getRadius(trueAnomoly);
 
             for (PlanetInterceptCandidate planetIntersect : planetInterceptCandidates) {
-                planetIntersect.orbitalElements().ToCartesianRot(time);
+                if (radius > planetIntersect.minIntersect && radius < planetIntersect.maxIntersect) {
+                    if (!calculatedThisTime) {
+                        entityOrbit.calculateCurrentPos(radius, trueAnomoly);
+                        calculatedThisTime = true;
+                    }
 
-                distanceCheckVector.set(entityOrbit.getRelativePosition());
-                double dist = distanceCheckVector.distanceSquared(planetIntersect.orbitalElements.getRelativePosition());
+                    long time = getTimeStampFromTrueAnomaly(entityOrbit.MeanAngularMotion, trueAnomoly,
+                            entityOrbit.Eccentricity, entityOrbit.getLastPeriapsisTime(timeElapsed));
 
-                if (dist < planetIntersect.SoiSquare()) {
-                    PlanetShine.log("Holy Shit, I am cooking; Time: " + time);
-                    tickTime = Util.getNanos() - tickTime;
-                    return new SOIIntercept(0d, time, planetIntersect.orbitId(), false);
+                    planetIntersect.orbitalElements().ToCartesianRot(time);
+
+                    distanceCheckVector.set(entityOrbit.getRelativePosition());
+                    double dist = distanceCheckVector.distanceSquared(planetIntersect.orbitalElements.getRelativePosition());
+
+                    if (dist < planetIntersect.SoiSquare()) {
+                        tickTime = Util.getNanos() - tickTime;
+                        PlanetShine.log("Holy Shit, I am cooking; Time: " + time);
+                        return new SOIIntercept(trueAnomoly, time, planetIntersect.orbitId(), false);
+                    }
                 }
             }
         }
@@ -122,7 +150,7 @@ public class OrbitalCalc {
 
         protected final Vector3d relativePosition = new Vector3d();
 
-        public SimpleOrbit(OrbitalElements elements) {
+        public SimpleOrbit(OrbitalElementsc elements) {
             this.SemiMajorAxis = elements.getSemiMajorAxis();
             this.Eccentricity = elements.getEccentricity();
             this.periapsisTime = elements.getPeriapsisTime();
@@ -150,12 +178,15 @@ public class OrbitalCalc {
             return semiLatus / (1 + Eccentricity * Math.cos(trueAnomaly));
         }
 
-//
-//        public void calculateCurrentPos(double radius, double trueAnomaly) {
-//            double sinVal = Math.sin(trueAnomaly);
-//            double cosVal = org.joml.Math.cosFromSin(sinVal, trueAnomaly);
-//            this.relativePosition.set(radius * cosVal, 0d, radius * sinVal);
-//        }
+        public void calculateCurrentPos(double radius, double trueAnomaly) {
+            double sinVal = Math.sin(trueAnomaly);
+            double cosVal = org.joml.Math.cosFromSin(sinVal, trueAnomaly);
+            this.relativePosition.set(radius * cosVal, 0d, radius * sinVal);
+        }
+
+        public long getLastPeriapsisTime(long elapsedTime) {
+            return elapsedTime - (elapsedTime - this.periapsisTime);
+        }
 
         public Vector3d getRelativePosition() {
             return relativePosition;
@@ -165,12 +196,12 @@ public class OrbitalCalc {
     private static class SimplePlanetOrbit extends SimpleOrbit {
         private final Quaterniondc relativeRotation;
 
-        public SimplePlanetOrbit(OrbitalElements elements, Quaterniondc relativeRotation) {
+        public SimplePlanetOrbit(OrbitalElementsc elements, Quaterniondc relativeRotation) {
             super(elements);
             this.relativeRotation = relativeRotation;
         }
 
-        // only works for elliptical planet orbits
+        // only works for elliptical planet orbits, hyperbolic orbits for planets don't work anyway.
         public void ToCartesianRot(long timeElapsed) {
             double M = this.MeanAngularMotion * OrbitalElements.getModulusCurrentTime(timeElapsed, periapsisTime, Eccentricity, MeanAngularMotion);
 

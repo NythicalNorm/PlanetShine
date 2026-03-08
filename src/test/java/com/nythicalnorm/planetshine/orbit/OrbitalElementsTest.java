@@ -27,9 +27,9 @@ class OrbitalElementsTest {
 
        for (int i = 0; i < 100; i++) {
            long timeElapsed = i*1000000;
-           Vector3d[] stateVectors = elementsNila.ToCartesian(timeElapsed);
-           Vector3d pos = stateVectors[0];
-           Vector3d vel = stateVectors[1];
+           Vector3d pos = new Vector3d();
+           Vector3d vel = new Vector3d();
+           elementsNila.ToCartesian(timeElapsed, pos, vel);
 
            OrbitalElements orbitFromState = new OrbitalElements(pos, vel, timeElapsed, earthMass);
 
@@ -68,9 +68,9 @@ class OrbitalElementsTest {
         OrbitalElements orbitFromState = new OrbitalElements(posInit, velInit, 0, sunMass);
 
         long timeElapsed = 0;
-        Vector3d[] stateVectors = orbitFromState.ToCartesian(timeElapsed);
-        Vector3d pos = stateVectors[0];
-        Vector3d vel = stateVectors[1];
+        Vector3d pos = new Vector3d();
+        Vector3d vel = new Vector3d();
+        elementsNila.ToCartesian(timeElapsed, pos, vel);
 
         long timepassed = System.nanoTime() - currentnanotime;
         System.out.println("took: " + (double)timepassed/1000000);
@@ -91,9 +91,10 @@ class OrbitalElementsTest {
         for (int i = 0; i < 100; i++) {
             long time = i;
 
-            Vector3d[] stateVectors = orbitFromState.ToCartesian(time);
-            Vector3d pos = stateVectors[0];
-            Vector3d vel = stateVectors[1];
+            Vector3d pos = new Vector3d();
+            Vector3d vel = new Vector3d();
+            elementsNila.ToCartesian(time, pos, vel);
+
 
             //orbitFromState.fromCartesian(pos, vel, time);
 
@@ -113,9 +114,9 @@ class OrbitalElementsTest {
 
        OrbitalElements elem = new OrbitalElements(position, velocity, timeElapsed, 5.972E24);
 
-       Vector3d[] stateVectors = elem.ToCartesian(timeElapsed);
-       Vector3d pos = stateVectors[0];
-       Vector3d vel = stateVectors[1];
+       Vector3d pos = new Vector3d();
+       Vector3d vel = new Vector3d();
+       elementsNila.ToCartesian(timeElapsed, pos, vel);
 
        System.out.println("posX: " + pos.x + " posY: " + pos.y + " posZ: " + pos.z);
        System.out.println("velX: " + vel.x + " velY: " + vel.y + " velZ: " + vel.z);
@@ -127,9 +128,10 @@ class OrbitalElementsTest {
 
        for (int i = 0; i < 1000000; i++) {
            long timeElapsed = i * 100000L;
-           Vector3d[] stateVectors = elements.ToCartesian(timeElapsed);
-           Vector3d pos = stateVectors[0];
-           Vector3d vel = stateVectors[1];
+           Vector3d pos = new Vector3d();
+           Vector3d vel = new Vector3d();
+           elementsNila.ToCartesian(timeElapsed, pos, vel);
+
        }
 
        long timepassed = System.nanoTime() - currentnanotime;

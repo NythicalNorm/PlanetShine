@@ -13,7 +13,6 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
-import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 import java.util.Collection;
@@ -68,10 +67,7 @@ public abstract class CelestialBody extends OrbitalBody {
 
     protected void simulate(long TimeElapsed, Vector3dc parentPos) {
         if (orbitalElements != null) {
-            Vector3d[] stateVectors = orbitalElements.ToCartesian(TimeElapsed);
-            this.relativeOrbitalPos.set(stateVectors[0]);
-            this.relativeVelocity.set(stateVectors[1]);
-
+            this.orbitalElements.ToCartesian(TimeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
             this.absoluteOrbitalPos.set(parentPos).add(relativeOrbitalPos);
         }
     }

@@ -71,15 +71,17 @@ public abstract class OrbitalBody {
         isStableOrbit = stableOrbit;
     }
 
-    public void setOrbitalElements(OrbitalElements orbitalElements) {
+    public void setOrbitalElements(OrbitalElementsc orbitalElements) {
         if (this.orbitalElements != null && orbitalElements != null) {
             this.orbitalElements.set(orbitalElements);
+        } else if (orbitalElements != null){
+            this.orbitalElements = new OrbitalElements(orbitalElements);
         } else {
-            this.orbitalElements = orbitalElements;
+            this.orbitalElements = null;
         }
     }
 
-    public @Nullable OrbitalElements getOrbitalElements() {
+    public @Nullable OrbitalElementsc getOrbitalElements() {
         return orbitalElements;
     }
 
@@ -130,8 +132,8 @@ public abstract class OrbitalBody {
             this.relativeVelocity = relativeVelocity;
         }
 
-        public void setOrbitalElements(@Nullable OrbitalElements orbitalElements) {
-            this.orbitalElements = orbitalElements;
+        public void setOrbitalElements(@Nullable OrbitalElementsc orbitalElements) {
+            this.orbitalElements = new OrbitalElements(orbitalElements);
         }
 
         public void setParent(@Nullable OrbitalBody parent) {

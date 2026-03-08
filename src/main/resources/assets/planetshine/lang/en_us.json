@@ -16,6 +16,7 @@
   "key.planetshine.decrease_time_warp": "Decrease Time Warp Speed",
   "key.planetshine.open_solar_system_map": "Open Solar System Map",
   "key.planetshine.open_spacecraft_hud_key": "Open Space HUD key",
+  "key.planetshine.change_spacecraft_view" : "Change Spacecraft View",
 
   "planetshine.commands.dimTeleport": "Teleported to the Space Dimension",
   "planetshine.commands.planet_invalid": "Invalid Planet at: ",

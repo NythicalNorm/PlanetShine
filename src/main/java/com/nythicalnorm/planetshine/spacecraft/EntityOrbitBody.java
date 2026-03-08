@@ -31,7 +31,8 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected ConcurrentLinkedQueue<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
     protected final boolean isClientSide;
     // basically whether the next planet intercept of escape or intersection is calculated yet.
-    private OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
+    private @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
+    private boolean isInterceptsCalculated;
 
     public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID, boolean isClientSide) {
         super(orbitalBuilder);
@@ -39,7 +40,9 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.orbitHostSpace = new AtomicReference<>();
         this.hostSpaceID.set(hostSpaceID);
         this.isClientSide = isClientSide;
+        this.isInterceptsCalculated = false;
     }
+
 
     @GameTickOnly
     public void init() { }
@@ -47,10 +50,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     @PhysTickOnly
     public void simulate(long TimeElapsed, boolean isTimeWarping) {
         if (this.orbitalElements == null || this.parent == null || this.hostSpaceID.get() == null) {
-            PlanetShine.logError("Entity Orbit of " + this.getDisplayName() + "is Not in a state for Orbital Calculations");
+            // PlanetShine.logError("Entity Orbit of " + this.getDisplayName().getString() + "is Not in a state for Orbital Calculations");
             return;
         }
-        // checking if its time for the predicted SOI change
+        // checking if it's time for the predicted SOI change and doing it
         if (this.nextOrbitIntercept != null && this.nextOrbitIntercept.timeElapsed() <= TimeElapsed && this.isHostOfItsSpace() && !this.isClientSide) {
             CelestialBody newParent = this.calculateSOIChange(this.nextOrbitIntercept);
             this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
@@ -66,16 +69,16 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         // if this isn't the host of its space set the orbit based on the host.
         if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null && this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
             Vector3dc originPos = this.getHostSpaceAccess().getOriginPos();
-            Vector3dc hostPos = this.getHostSpaceAccess().getHostBody().getRelativePos();
-            this.setStateVectorsFromHostBody(originPos, hostPos, TimeElapsed);
+            this.setStateVectorsFromHostBody(originPos, this.getHostSpaceAccess().getHostBody(), TimeElapsed);
         } else { // if its not accelerating do the normal simulation
             if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
                 this.simulateFromKeplerian(TimeElapsed);
-            } else if (!isClientSide && !isTimeWarping) {
-                simulateNonTimeWarp();
+            } else if (!isClientSide) { // if it is accelerating do the special calc for this tick
+                this.simulateNonTimeWarp();
                 this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
                 this.sendOrbitUpdateToRelevantPlayers();
                 this.nextOrbitIntercept = null;
+                this.isInterceptsCalculated = false;
             }
         }
 
@@ -83,9 +86,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     protected void simulateFromKeplerian(long timeElapsed) {
-        Vector3d[] stateVectors = orbitalElements.ToCartesian(timeElapsed);
-        this.relativeOrbitalPos.set(stateVectors[0]);
-        this.relativeVelocity.set(stateVectors[1]);
+        this.orbitalElements.ToCartesian(timeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
     }
 
     private void simulateNonTimeWarp() {
@@ -100,15 +101,21 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.relativeOrbitalPos.add(velocityPerTick);
     }
 
-    protected void setStateVectorsFromHostBody(Vector3dc originPos, Vector3dc hostPos, long TimeElapsed) {
+    protected void setStateVectorsFromHostBody(Vector3dc originPos, EntityOrbitBody hostBody, long TimeElapsed) {
         Vector3d relativePos = new Vector3d();
         Vector3d relativeVel = new Vector3d(this.getMcVelocity());
         this.getMcPosition().sub(originPos, relativePos);
 
-        this.relativeOrbitalPos.set(relativePos.add(hostPos));
-        this.relativeVelocity.set(relativeVel.add(this.getHostSpaceAccess().getHostBody().getRelativeVelocity()));
+        if (relativePos.lengthSquared() > 1 || relativeVel.lengthSquared() > 1) {
+            this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
+            this.relativeVelocity.set(relativeVel.add(this.getHostSpaceAccess().getHostBody().getRelativeVelocity()));
 
-        this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+            this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+        } else {
+            this.relativeOrbitalPos.set(hostBody.getRelativePos());
+            this.relativeVelocity.set(hostBody.getRelativeVelocity());
+            this.orbitalElements.set(hostBody.getOrbitalElements());
+        }
     }
 
     protected void sendOrbitUpdateToRelevantPlayers() {
@@ -146,8 +153,8 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     public void removeHostSpaces() {
-        if (this.isHostOfItsSpace() && !this.isClientSide) {
-            this.orbitHostSpace.get().hostLeft();
+        if (!this.isClientSide && this.orbitHostSpace.get() != null) {
+            this.orbitHostSpace.get().removeOrbitBody(this);
         }
         this.hostSpaceID.set(null);
         this.orbitHostSpace.set(null);
@@ -180,23 +187,34 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         }
     }
 
-    public @Nullable OrbitalCalc.SOIIntercept calculateIntercept(long elapsedTime) {
+    @PhysTickOnly
+    public void calculateIntercepts(long elapsedTime) {
         if (this.orbitalElements == null || this.parent == null) {
             PlanetShine.logError("Invalid state for EntityOrbitBody : " + this.getDisplayName());
-            return null;
+            return;
         }
-        // first calculate intercept with planets with the same parent
-        //this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
+            // first calculate intercept with planets with the same parent
+            if (!this.parent.getPlanetChildren().isEmpty()) {
+                //this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
+            }
 
-        // if that fails than the final step is checking that escape Intercepts fail too:
-        if (this.nextOrbitIntercept == null) {
-            this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
-        }
-        return this.nextOrbitIntercept;
+            // if that fails than start checking that escape Intercepts fail too:
+            if (this.nextOrbitIntercept == null) {
+                this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+            }
+            this.isInterceptsCalculated = true;
+    }
+
+    //client-side
+    public void calculateEscapeOnly(long elapsedTime) {
+        assert this.orbitalElements != null;
+        assert this.parent != null;
+        this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+        this.isInterceptsCalculated = true;
     }
 
     public boolean isOrbitInterceptsCalculated() {
-        return this.nextOrbitIntercept != null;
+        return isInterceptsCalculated;
     }
 
     public Optional<OrbitId> getHostSpaceID() {
@@ -220,6 +238,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     // Thread safe, don't call this while time warping
     public void addVelocityForUpdate(Vector3dc impulse) {
         if (PSServer.get().isTimeWarping()) {
+            velocityApplyQueue.clear();
             return;
         }
         velocityApplyQueue.add(impulse);

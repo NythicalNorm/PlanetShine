@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.rendering.generators;
 
 import com.mojang.blaze3d.vertex.*;
-import com.nythicalnorm.planetshine.util.calculations.PlanetBodyCalc;
+import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -67,10 +67,10 @@ public class QuadSphereModelGenerator {
         for (int squareSide = 0; squareSide < 6; squareSide++) {
             for (int sidesUpIter = -MaxPerSide; sidesUpIter < MaxPerSide; sidesUpIter++) {
                 for (int sidesRightIter = -MaxPerSide; sidesRightIter < MaxPerSide; sidesRightIter++) {
-                    BakedQuad quad0 = quad(PlanetBodyCalc.getQuadSquarePos(sidesUpIter, sidesRightIter, MaxPerSide, squareSide, radius),
-                            PlanetBodyCalc.getQuadSquarePos(sidesUpIter, sidesRightIter + 1, MaxPerSide, squareSide, radius),
-                            PlanetBodyCalc.getQuadSquarePos(sidesUpIter + 1, sidesRightIter + 1, MaxPerSide, squareSide, radius),
-                            PlanetBodyCalc.getQuadSquarePos(sidesUpIter + 1, sidesRightIter, MaxPerSide, squareSide, radius),
+                    BakedQuad quad0 = quad(PlanetCalc.getQuadSquarePos(sidesUpIter, sidesRightIter, MaxPerSide, squareSide, radius),
+                            PlanetCalc.getQuadSquarePos(sidesUpIter, sidesRightIter + 1, MaxPerSide, squareSide, radius),
+                            PlanetCalc.getQuadSquarePos(sidesUpIter + 1, sidesRightIter + 1, MaxPerSide, squareSide, radius),
+                            PlanetCalc.getQuadSquarePos(sidesUpIter + 1, sidesRightIter, MaxPerSide, squareSide, radius),
                             sidesUpIter, sidesRightIter, QuadsPerSide, squareSide);
                     quads.add(quad0);
                 }

@@ -11,7 +11,7 @@ public class DayNightCycleCalc {
     private static final Vector3d upVector = new Vector3d(0d, 1d, 0d);
 
     public static float getSunAngle(int x, int z, CelestialBody planet) {
-        Vector3d blockPosOnPlanet = PlanetBodyCalc.planetDimPosToNormalizedVector(new Vec3(x, 0, z),
+        Vector3d blockPosOnPlanet = PlanetCalc.planetDimPosToNormalizedVector(new Vec3(x, 0, z),
                 planet.getRadius(), planet.getRotation(), true);
         Vector3d planetAbsolutePos = new Vector3d(planet.getAbsolutePos()).add(blockPosOnPlanet);
 

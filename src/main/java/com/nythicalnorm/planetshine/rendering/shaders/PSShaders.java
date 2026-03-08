@@ -13,12 +13,15 @@ import java.io.IOException;
 public class PSShaders {
     private static ShaderInstance PLANET_SHADER;
     private static ShaderInstance SKYBOX_SHADER;
+    private static ShaderInstance ORBIT_SHADER;
 
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         event.registerShader(new ShaderInstance(event.getResourceProvider(), PlanetShine.rl("planetshine_planet"),
                 DefaultVertexFormat.POSITION_TEX), shaderInstance -> PLANET_SHADER = shaderInstance);
         event.registerShader(new ShaderInstance(event.getResourceProvider(), PlanetShine.rl("planetshine_skybox"),
                 DefaultVertexFormat.POSITION_TEX), shaderInstance -> SKYBOX_SHADER = shaderInstance);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(), PlanetShine.rl("planetshine_orbit"),
+                DefaultVertexFormat.POSITION_COLOR), shaderInstance -> ORBIT_SHADER = shaderInstance);
     }
 
     public static ShaderInstance getPlanetShader(){
@@ -27,5 +30,9 @@ public class PSShaders {
 
     public static ShaderInstance getSkyboxShader(){
         return SKYBOX_SHADER;
+    }
+
+    public static ShaderInstance getOrbitShader() {
+        return ORBIT_SHADER;
     }
 }

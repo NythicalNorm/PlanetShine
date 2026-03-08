@@ -1,6 +1,5 @@
 package com.nythicalnorm.planetshine.spacecraft.vs;
 
-import com.nythicalnorm.planetshine.PlanetShine;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
@@ -10,7 +9,6 @@ import org.joml.primitives.AABBd;
 import org.joml.primitives.AABBdc;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
-import org.valkyrienskies.core.api.ships.properties.IShipActiveChunksSet;
 import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
@@ -21,7 +19,6 @@ import org.valkyrienskies.mod.common.util.IEntityDraggingInformationProvider;
 import java.util.*;
 
 public class ShipTeleporter {
-    public static final int TELEPORT_Y_HEIGHT = 500;
     public static final double shipExtraRange = 20;
     private final VsiServerShipWorld serverShipWorld;
     private final List<Long> alreadyTeleported;
