@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin.screen;
+package com.nythicalnorm.planetshine.mixin.ship_gui;
 
 import com.nythicalnorm.planetshine.gui.screen.MouseLookScreen;
 import net.minecraft.client.KeyboardHandler;

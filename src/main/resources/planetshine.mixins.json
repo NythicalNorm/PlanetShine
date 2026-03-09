@@ -8,9 +8,9 @@
     "defaultRequire": 1
   },
   "mixins": [
-    "ClimateMixin",
-    "LevelMixin",
-    "MinecraftServerMixin",
+    "worldgen.ClimateMixin",
+    "core.LevelMixin",
+    "core.MinecraftServerMixin",
     "daynightcycle.DaylightDetectorBlockMixin",
     "daynightcycle.LevelReaderMixin",
     "daynightcycle.LevelTimeAccessMixin",
@@ -37,18 +37,19 @@
     "vs.PhysShipImplMixin"
   ],
   "client": [
-    "CameraMixin",
-    "LevelRendererMixin",
-    "PlayerSocialManagerMixin",
+    "ship_gui.CameraMixin",
+    "core.LevelRendererMixin",
+    "core.PlayerSocialManagerMixin",
     "daynightcycle.ClientLevelMixin",
     "daynightcycle.FogRendererMixin",
-    "screen.DebugScreenOverlayMixin",
-    "screen.KeyboardHandlerMixin",
-    "screen.MinecraftMixin",
-    "screen.ProgressScreenMixin",
-    "screen.ReceivingLevelScreenMixin",
+    "ship_gui.DebugScreenOverlayMixin",
+    "ship_gui.KeyboardHandlerMixin",
+    "ship_gui.MinecraftMixin",
+    "ship_gui.ProgressScreenMixin",
+    "ship_gui.ReceivingLevelScreenMixin",
     "spaceentites.PlayerRendererSpaceMixin",
     "vs.TempFrustumMixin",
-    "vs.VSCameraMixinMixin"
+    "vs.VSCameraMixinMixin",
+    "vs.VSGameRendererMixinMixin"
   ]
 }

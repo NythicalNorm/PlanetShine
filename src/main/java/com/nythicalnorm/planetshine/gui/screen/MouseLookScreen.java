@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.gui.screen;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -70,8 +71,9 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
         return false;
     }
 
-    public float getZoomLevel() {
-        return zoomLevel;
+    public float getCameraZoomLevel(double shipCameraMinDist) {
+        float maxRenderDist = Minecraft.getInstance().gameRenderer.getDepthFar() * 0.5f;
+        return (float) Math.min(zoomLevel * shipCameraMinDist, maxRenderDist);
     }
 
     public float getViewYrot() {

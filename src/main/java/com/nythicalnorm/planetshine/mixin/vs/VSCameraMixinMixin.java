@@ -15,7 +15,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(value = Camera.class, priority = 1500)
-public class VSCameraMixinMixin {
+public abstract class VSCameraMixinMixin { // Yes I am going to name all mixin^2 mixins this way.
+
     @TargetHandler(mixin = "org.valkyrienskies.mod.mixin.client.MixinCamera", name = "setupWithShipMounted")
     @WrapOperation(
             method = "@MixinSquared:Handler",
@@ -49,7 +50,7 @@ public class VSCameraMixinMixin {
             require = 0)
     public double modifyMaxZoom(double original) {
         if (Minecraft.getInstance().screen instanceof MouseLookScreen spacecraftScreen && spacecraftScreen.movePlayerCamera()) {
-            return spacecraftScreen.getZoomLevel() * original;
+            return spacecraftScreen.getCameraZoomLevel(original);
         }
         return original;
     }

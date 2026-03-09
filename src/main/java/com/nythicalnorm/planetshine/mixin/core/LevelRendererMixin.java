@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin;
+package com.nythicalnorm.planetshine.mixin.core;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;

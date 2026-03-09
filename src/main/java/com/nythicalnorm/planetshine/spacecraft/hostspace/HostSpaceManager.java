@@ -201,9 +201,9 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));
                     } else if (entityOrbitBody instanceof ServerSpaceshipBody spaceshipBody) {
-//                        this.teleportShipToGround(spaceshipBody, pos, this.spaceLevel, planetLevel);
-//                        psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
-//                        PacketHandler.sendToAllClients(new ClientboundOrbitRemove(spaceshipBody.getOrbitId()));
+                        this.teleportShipToGround(spaceshipBody, pos, this.spaceLevel, planetLevel);
+                        psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
+                        PacketHandler.sendToAllClients(new ClientboundOrbitRemove(spaceshipBody.getOrbitId()));
                     }
                 }
             }

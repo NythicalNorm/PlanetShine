@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin;
+package com.nythicalnorm.planetshine.mixin.worldgen;
 
 import net.minecraft.world.level.biome.Climate;
 import org.spongepowered.asm.mixin.Mixin;

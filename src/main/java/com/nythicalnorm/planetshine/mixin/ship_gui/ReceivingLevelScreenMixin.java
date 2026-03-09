@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin.screen;
+package com.nythicalnorm.planetshine.mixin.ship_gui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;

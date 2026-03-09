@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin;
+package com.nythicalnorm.planetshine.mixin.core;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

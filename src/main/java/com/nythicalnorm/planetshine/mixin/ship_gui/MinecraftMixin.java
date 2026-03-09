@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin.screen;
+package com.nythicalnorm.planetshine.mixin.ship_gui;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

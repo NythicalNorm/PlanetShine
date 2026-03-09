@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin;
+package com.nythicalnorm.planetshine.mixin.core;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;

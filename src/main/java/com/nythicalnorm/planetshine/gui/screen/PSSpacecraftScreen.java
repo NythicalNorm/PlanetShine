@@ -49,8 +49,8 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
             Minecraft.getInstance().setScreen(new MapSolarSystemScreen(true));
             keyPressed = true;
         } else if (PSKeyBinds.CHANGE_SPACECRAFT_VIEW_KEY.matches(pKeyCode, pScanCode)) {
-//            this.isNonRotView = !this.isNonRotView;
-//            keyPressed = true;
+            this.isNonRotView = !this.isNonRotView;
+            keyPressed = true;
         }
 
         if (keyPressed) {
