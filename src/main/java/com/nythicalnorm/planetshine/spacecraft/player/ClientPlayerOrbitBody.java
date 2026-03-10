@@ -5,7 +5,6 @@ import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.spacecraft.ServerboundPlayerHostVelUpdate;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
-import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -45,14 +44,14 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     private void updatePlanetRot(CelestialBody currentPlanet) {
-        this.playerOnPlanetRotation.set(SpaceUtils.getSpaceRotationFromPlanetPos(this.relativeOrbitalPos, currentPlanet));
+        this.playerOnPlanetRotation.set(PlanetCalc.getPlanetToSpaceRotation(this.getMcPosition(), this.relativeOrbitalPos, currentPlanet));
     }
 
     private void updatePlanetPos(Level level, Vec3 position, CelestialBody currentPlanetOn) {
         double seaLevel = level.getMinBuildHeight() + 127;
         position = new Vec3(position.x, position.y - seaLevel, position.z);
 
-        this.relativeOrbitalPos.set(PlanetCalc.planetDimPosToNormalizedVector(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false));
+        this.relativeOrbitalPos.set(PlanetCalc.getPlanetRelativePosition(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false));
         this.absoluteOrbitalPos.set(currentPlanetOn.getAbsolutePos()).add(relativeOrbitalPos);
     }
 

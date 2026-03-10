@@ -49,6 +49,12 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
         return isNonRotView;
     }
 
+    protected void loadRotState(MouseLookScreenState rotState) {
+        this.cameraYrot = rotState.getCameraYrot();
+        this.cameraXrot = rotState.getCameraXrot();
+        this.zoomLevel = rotState.getZoomLevel();
+    }
+
     protected abstract float getMaxDistanceZoom();
 
     @Override
@@ -72,8 +78,12 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     }
 
     public float getCameraZoomLevel(double shipCameraMinDist) {
-        float maxRenderDist = Minecraft.getInstance().gameRenderer.getDepthFar() * 0.5f;
+        float maxRenderDist = Minecraft.getInstance().gameRenderer.getDepthFar() * 0.10f;
         return (float) Math.min(zoomLevel * shipCameraMinDist, maxRenderDist);
+    }
+
+    public Screen getSpacecraftScreen () {
+        return this;
     }
 
     public float getViewYrot() {
@@ -82,5 +92,29 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
 
     public float getViewXrot() {
         return -cameraXrot*Mth.RAD_TO_DEG;
+    }
+
+    public static class MouseLookScreenState {
+        private final float cameraYrot;
+        private final float cameraXrot;
+        private final float zoomLevel;
+
+        public MouseLookScreenState(float cameraYrot, float cameraXrot, float zoomLevel) {
+            this.cameraYrot = cameraYrot;
+            this.cameraXrot = cameraXrot;
+            this.zoomLevel = zoomLevel;
+        }
+
+        public float getCameraYrot() {
+            return cameraYrot;
+        }
+
+        public float getCameraXrot() {
+            return cameraXrot;
+        }
+
+        public float getZoomLevel() {
+            return zoomLevel;
+        }
     }
 }

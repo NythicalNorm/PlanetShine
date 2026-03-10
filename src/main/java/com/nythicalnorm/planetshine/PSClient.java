@@ -132,7 +132,6 @@ public class PSClient extends Stage {
     }
 
     public void onClientLevelLoad(ClientLevel clientLevel) {
-        this.screenManager.resetMapState();
         CelestialBody celestialBody = solarSystem.getDimensionOfPlanet(clientLevel.dimension());
         if (celestialBody != null) {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);

@@ -18,4 +18,12 @@ public class ReceivingLevelScreenMixin {
 //            ci.cancel();
 //        }
     }
+
+//    @Inject( method = "onClose", at = @At("TAIL"))
+//    private void onClose(CallbackInfo ci) {
+//        PSClient psClient = PSClient.get();
+//        if (psClient != null) {
+//            psClient.getScreenManager().playerChangeDimension();
+//        }
+//    }
 }

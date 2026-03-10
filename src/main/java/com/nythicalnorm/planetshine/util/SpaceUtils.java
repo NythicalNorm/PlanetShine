@@ -30,24 +30,9 @@ public class SpaceUtils {
         return spaceLevelString.equals(chunkClaimDimension);
     }
 
-    public static Vector3d getRelativePositon(Vector3dc pos, CelestialBody celestialBody) {
-        Vec3 vec3Pos = new Vec3(pos.x(), pos.y(), pos.z());
-        return PlanetCalc.planetDimPosToNormalizedVector(vec3Pos, celestialBody.getRadius(), celestialBody.getRotation(), false);
-    }
-
-    public static Quaterniond getSpaceRotationFromPlanetPos(Vector3dc relativePlanetPosition, CelestialBody celestialBody) {
-        Quaterniond planetRotation = new Quaterniond(new AxisAngle4d(Math.PI * 0.5d,1f,0f,0f));
-        Vector3d playerRelativePos = new Vector3d(relativePlanetPosition);
-        playerRelativePos.normalize();
-        Vector3d upVector = PlanetCalc.getUpVectorForPlanetRot(new Vector3d(playerRelativePos), celestialBody);
-        planetRotation.lookAlong(playerRelativePos, upVector);
-
-        return planetRotation;
-    }
-
     public static Vector2dc getLatLongCoordinates(Vec3 pos, CelestialBody planet) {
         if (planet != null) {
-            Vector3d planetNonRotPos = PlanetCalc.getNonRotatedDimPosFromNormalizeVector(pos,
+            Vector3d planetNonRotPos = PlanetCalc.getPlanetRelativeNonRotatingPosition(pos,
                     planet.getRadius(), true);
             double latitude = Math.asin(planetNonRotPos.y);
             double longitude = Math.atan2(-planetNonRotPos.z, planetNonRotPos.x);

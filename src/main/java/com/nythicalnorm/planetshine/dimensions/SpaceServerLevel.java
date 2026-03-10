@@ -54,6 +54,12 @@ public class SpaceServerLevel extends ServerLevel {
     }
 
     @Override
+    protected void prepareWeather() {
+        this.rainLevel = 0.0f;
+        this.thunderLevel = 0.0f;
+    }
+
+    @Override
     public void close() throws IOException {
         this.hostSpaceManager = null;
         super.close();

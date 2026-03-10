@@ -22,9 +22,9 @@ import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix4f;
-import org.joml.Quaterniondc;
-import org.joml.Quaternionf;
+import org.joml.*;
+
+import java.lang.Math;
 
 @OnlyIn(Dist.CLIENT)
 public class NavballWidget extends AbstractWidget {
@@ -47,9 +47,11 @@ public class NavballWidget extends AbstractWidget {
 
         if (spacecraftScreen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
             this.renderNavBall(orbitDataDisplay, pGuiGraphics);
+            Vector3dc bodyVelocity = orbitDataDisplay.getVelocityVector();
+            this.renderNavballIcons(pGuiGraphics, xPos, yPos);
+
             pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos, yPos, 0, 0, 94, 86);
-            double bodyVelocity = orbitDataDisplay.getVelocity();
-            this.renderRelativeVelocity(pGuiGraphics, xPos, yPos,(int) bodyVelocity);
+            this.renderRelativeVelocity(pGuiGraphics, xPos, yPos,(int) bodyVelocity.length());
             this.renderGForceBar(pGuiGraphics, xPos, yPos);
         }
 
@@ -57,6 +59,10 @@ public class NavballWidget extends AbstractWidget {
             renderThrottleBar(pGuiGraphics, xPos, yPos, spacecraftDataDisplay);
             renderButtons(pGuiGraphics, xPos, yPos, spacecraftDataDisplay);
         }
+    }
+
+    private void renderNavballIcons(@NotNull GuiGraphics pGuiGraphics, int xPos, int yPos) {
+
     }
 
     private void renderNavBall(ISpacecraftOrbitDataDisplay orbitData, GuiGraphics pGuiGraphics) {

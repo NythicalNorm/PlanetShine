@@ -3,10 +3,8 @@ package com.nythicalnorm.planetshine.event;
 import com.nythicalnorm.planetshine.Item.PSItems;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.gui.screen.MapSolarSystemScreen;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
@@ -46,7 +44,7 @@ public class ForgeClientEvents {
         } else if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent(psClient -> {
                 if (psClient.doRender()) {
-                    Minecraft.getInstance().setScreen(new MapSolarSystemScreen(false));
+                    psClient.getScreenManager().openMapScreen();
                 }
             });
         }
@@ -77,11 +75,12 @@ public class ForgeClientEvents {
 
     @SubscribeEvent
     public static void onPlayerCloned(ClientPlayerNetworkEvent.Clone event) {
-        PSClient.getInstance().ifPresent(css -> {
-            css.getPlayerOrbit().setPlayer(event.getNewPlayer());
+        PSClient.getInstance().ifPresent(psClient -> {
+            psClient.getScreenManager().playerChangeDimension();
+            psClient.getPlayerOrbit().setPlayer(event.getNewPlayer());
 
             if (!SpaceUtils.isSpaceLevel(event.getNewPlayer().level())) {
-                css.orbitRemove(css.getPlayerOrbit().getOrbitId());
+                psClient.orbitRemove(psClient.getPlayerOrbit().getOrbitId());
             }
         });
     }

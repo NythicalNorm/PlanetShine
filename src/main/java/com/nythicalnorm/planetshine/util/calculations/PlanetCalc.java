@@ -5,17 +5,28 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.*;
+import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 
 import java.lang.Math;
 
 public class PlanetCalc {
-    public static Vector3d planetDimPosToNormalizedVector(Vec3 pos, double planetRadius, Quaternionfc planetRot, boolean isNormalized) {
-        Vector3d quadSpherePos = getNonRotatedDimPosFromNormalizeVector(pos, planetRadius, isNormalized);
-        quadSpherePos.rotate(new Quaterniond(planetRot.x(), planetRot.y(), planetRot.z(), planetRot.w()));
+
+    public static Vector3d getPlanetRelativePosition(Vector3dc pos, CelestialBody celestialBody) {
+        Vec3 vec3Pos = new Vec3(pos.x(), pos.y(), pos.z());
+        return PlanetCalc.getPlanetRelativePosition(vec3Pos, celestialBody.getRadius(), celestialBody.getRotation(), false);
+    }
+
+    public static Vector3d getPlanetRelativePosition(Vec3 pos, double planetRadius, Quaternionfc planetRot, boolean isNormalized) {
+        Vector3d quadSpherePos = getPlanetRelativeNonRotatingPosition(pos, planetRadius, isNormalized);
+        quadSpherePos.rotate(new Quaterniond().set(planetRot));
         return quadSpherePos;
     }
 
-    public static Vector3d getNonRotatedDimPosFromNormalizeVector(Vec3 pos, double planetRadius, boolean isNormalized) {
+    public static Vector3d getPlanetRelativePosition(double x, double y, double z, CelestialBody celestialBody, boolean isNormalized) {
+        return getPlanetRelativePosition(new Vec3(x, y, z), celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
+    }
+
+    public static Vector3d getPlanetRelativeNonRotatingPosition(Vec3 pos, double planetRadius, boolean isNormalized) {
         double cellSize = getSquareCellSize(planetRadius);
         double halfCellSize = cellSize*0.5d;
 
@@ -50,10 +61,6 @@ public class PlanetCalc {
             radius = planetRadius + pos.y; // + 10000000
         }
         return getQuadPlanettoSquarePos(zWithinCell, xWithinCell, halfCellSize, QuadId, radius);
-    }
-
-    public static Vector3d planetDimPosToNormalizedVector(double x, double y, double z, CelestialBody celestialBody, boolean isNormalized) {
-        return planetDimPosToNormalizedVector(new Vec3(x, y, z), celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
     }
 
     public static double getSquareCellSize(double planetRadius) {
@@ -124,14 +131,13 @@ public class PlanetCalc {
         return squarePos;
     }
 
-    public static Vector2d vectorToPlanetDimPos(Vector3dc pos, double planetRadius, Quaternionfc rotation) {
+    public static Vector2d getDimensionPosition(Vector3dc pos, double planetRadius, CelestialBody celestialBody) {
         int squareSide = 0;
         Vector3d position = new Vector3d(pos).normalize();
-        position.rotate(new Quaterniond(rotation).invert());
+        position.rotate(new Quaterniond(celestialBody.getRotation()).invert());
         //reversing the switch case in getSpherePos
         double[] axisVals = new double[]{position.z, position.x, -position.z, -position.x, position.y, -position.y};
         double searchedMax = 0;
-
 
         for (int i = 0; i < axisVals.length; i++) {
             if (axisVals[i] > searchedMax) {
@@ -166,7 +172,7 @@ public class PlanetCalc {
         return squarePos.add(squareSideCenterPos);
     }
 
-    //client side only
+    // This also gotta go, no idea what i was thinking here.
     public static Vector3d getUpVectorForPlanetRot(Vector3d playerRelativePos, CelestialBody planet) {
         Vector3d upDir = new Vector3d(0f,-1f,0f);
         if (planet instanceof PlanetaryBody planetaryBody) {
@@ -178,5 +184,29 @@ public class PlanetCalc {
 
         upDir.rotate(rot);
         return upDir;
+    }
+
+    // planet dimension pos is in mc coordinates, celestial body is probably not needed but i just put it here for now
+    // celestialbody.getRotation gets the planet's day-night cycle rotation inclined by 23 degree. its for the whole planet,
+    // not relative to anyone on the surface.
+    public static Quaterniond getPlanetToSpaceRotation(Vector3dc planetDimensionPos, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
+
+        // delete this crap and start over.
+        Quaterniond planetRotation = new Quaterniond(new AxisAngle4d(Math.PI * 0.5d,1f,0f,0f));
+        Vector3d playerRelativePos = new Vector3d(planetRelativePosition);
+        playerRelativePos.normalize();
+        Vector3d upVector = getUpVectorForPlanetRot(new Vector3d(playerRelativePos), celestialBody);
+        planetRotation.lookAlong(playerRelativePos, upVector);
+
+        return planetRotation;
+    }
+
+    // if you want you can do these functions as well basically its the same thing but ship rotation is a bit different cause it's not rotated up if you know what i mean.
+    public static Quaterniond getShipPlanetToSpaceRotation(ShipTransform shipTransform, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
+        return new Quaterniond();
+    }
+
+    public static Quaterniond getShipSpaceToPlanetRotation(Vector3dc planetDimensionPos, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
+        return new Quaterniond();
     }
 }

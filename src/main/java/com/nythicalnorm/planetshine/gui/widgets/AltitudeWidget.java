@@ -38,9 +38,9 @@ public class AltitudeWidget extends AbstractWidget {
         int y = getY();
 
         pGuiGraphics.blit(Altitude_GUI_TEXTURE, x, y,0,0,92,28);
-        Screen screen = PSClient.get().getScreenManager().getSpacecraftScreen();
+        Screen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
 
-        if (screen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
+        if (spacecraftScreen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
             this.renderAltitudeNumbers(orbitDataDisplay, pGuiGraphics, x, y);
             pGuiGraphics.blit(Altitude_GUI_TEXTURE, x + 10, y + 15, 96, 0, 5, 13);
         }

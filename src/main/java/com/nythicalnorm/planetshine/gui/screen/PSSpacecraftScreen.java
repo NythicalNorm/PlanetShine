@@ -11,15 +11,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.network.chat.Component;
 import org.joml.Quaterniondc;
+import org.joml.Vector3d;
+import org.joml.Vector3dc;
+
+import java.util.Objects;
 
 public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOrbitDataDisplay {
     private final EntityOrbitBody controllingBody;
     private final Options minecraftOptions;
 
-    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody controllingBody) {
+    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody controllingBody, SpacecraftScreenState spacecraftScreenState) {
         super(pTitle);
         this.controllingBody = controllingBody;
         this.minecraftOptions = Minecraft.getInstance().options;
+        this.loadState(spacecraftScreenState);
     }
 
     @Override
@@ -27,12 +32,7 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         super.init();
         minecraftOptions.setCameraType(CameraType.THIRD_PERSON_BACK);
         minecraftOptions.hideGui = true;
-        zoomLevel = 1.1f;
 
-        this.cameraYrot = (float) -Math.toRadians(Minecraft.getInstance().player.getYRot());
-        this.cameraXrot = (float) -Math.toRadians(Minecraft.getInstance().player.getXRot());
-
-        PSClient.get().getScreenManager().setOpenSpacecraftScreen(this);
         this.addRenderableWidget(new TimeWarpWidget(0,0, width, height, Component.empty()));
         this.addRenderableWidget(new NavballWidget(width/2, height, width, height, Component.empty()));
         this.addRenderableWidget(new AltitudeWidget(width/2, 0, width, height, Component.empty()));
@@ -46,7 +46,10 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
             this.onClose();
             keyPressed = true;
         } else if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.matches(pKeyCode, pScanCode)) {
-            Minecraft.getInstance().setScreen(new MapSolarSystemScreen(true));
+            PSClient.get().getScreenManager().setSpacecraftScreenState(new SpacecraftScreenState(
+                    this.cameraYrot, this.cameraXrot, this.zoomLevel, this.isNonRotView));
+
+            PSClient.get().getScreenManager().openMapScreen();
             keyPressed = true;
         } else if (PSKeyBinds.CHANGE_SPACECRAFT_VIEW_KEY.matches(pKeyCode, pScanCode)) {
             this.isNonRotView = !this.isNonRotView;
@@ -81,8 +84,11 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     }
 
     @Override
-    public double getVelocity() {
-        return controllingBody.getRelativeVelocity().length();
+    public Vector3dc getVelocityVector() {
+        Vector3dc velocity = controllingBody.getOrbitalElements() != null ?
+                controllingBody.getRelativeVelocity() : controllingBody.getMcVelocity();
+
+        return Objects.requireNonNullElseGet(velocity, Vector3d::new);
     }
 
     @Override
@@ -93,7 +99,32 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     @Override
     public void onClose() {
         super.onClose();
+        PSClient.get().getScreenManager().setSpacecraftScreenState(new SpacecraftScreenState(this.cameraYrot, this.cameraXrot, this.zoomLevel, this.isNonRotView));
         PSClient.get().getScreenManager().closeSpacecraftScreen();
         super.onClose();
+    }
+
+    private void loadState(SpacecraftScreenState spacecraftScreenState) {
+        if (spacecraftScreenState != null) {
+            super.loadRotState(spacecraftScreenState);
+            this.isNonRotView = spacecraftScreenState.isNonRotView();
+        } else {
+            this.zoomLevel = 1.1f;
+            this.cameraYrot = (float) -Math.toRadians(Minecraft.getInstance().player.getYRot());
+            this.cameraXrot = (float) -Math.toRadians(Minecraft.getInstance().player.getXRot());
+        }
+    }
+
+    public static class SpacecraftScreenState extends MouseLookScreen.MouseLookScreenState {
+        private final boolean isNonRotView;
+
+        public SpacecraftScreenState(float cameraYrot, float cameraXrot, float zoomLevel, boolean isNonRotView) {
+            super(cameraYrot, cameraXrot, zoomLevel);
+            this.isNonRotView = isNonRotView;
+        }
+
+        public boolean isNonRotView() {
+            return isNonRotView;
+        }
     }
 }

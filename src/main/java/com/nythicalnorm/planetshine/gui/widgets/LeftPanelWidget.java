@@ -28,7 +28,7 @@ public class LeftPanelWidget extends AbstractWidget {
 
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x, y,0,0,66,35);
 
-        if (PSClient.getInstance().get().getScreenManager().getSpacecraftScreen() instanceof  ISpacecraftControlStateDisplay spacecraftDataDisplay) {
+        if (PSClient.get().getScreenManager().getSpacecraftScreen() instanceof ISpacecraftControlStateDisplay spacecraftDataDisplay) {
            if (spacecraftDataDisplay.isDockingMode()) {
                drawDockingMode(spacecraftDataDisplay, pGuiGraphics, x, y);
            } else {

@@ -57,7 +57,7 @@ public class LodTexRenderer {
     }
 
     private static void createQuad(BufferBuilder builder, double xPos, double yPos, float u, float v, CelestialBody celestialBody) {
-        Vector3d normalizedPlanetPos = PlanetCalc.planetDimPosToNormalizedVector(xPos, 0d, yPos, celestialBody, true);
+        Vector3d normalizedPlanetPos = PlanetCalc.getPlanetRelativePosition(xPos, 0d, yPos, celestialBody, true);
         builder.vertex(identityPose, (float) normalizedPlanetPos.x, (float)normalizedPlanetPos.y, (float)normalizedPlanetPos.z)
                 .uv(u, v).endVertex();
     }

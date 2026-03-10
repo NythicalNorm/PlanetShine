@@ -13,11 +13,12 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.gui.widgets.TimeWarpWidget;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.lwjgl.glfw.GLFW;
 
@@ -31,26 +32,35 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     private final boolean isSpacecraftScreenOpen;
     private MapRenderer mapRenderer;
     protected double radiusZoomLevel = 0f;
+    private @Nullable Screen prevScreen;
 
     public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen) {
         super(Component.empty());
         PSClient.getInstance().ifPresent (psClient -> {
             this.screenManager = psClient.getScreenManager();
             this.mapRenderer = psClient.getMapRenderer();
-            psClient.getScreenManager().setMapScreenOpen(true);
         });
         this.isSpacecraftScreenOpen = PisSpacecraftScreenOpen;
     }
 
-    @Override
-    protected void init() {
-        populateFocusedBodiesList();
-        MapState mapState = screenManager.getMapState();
+    public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen, MapState mapState) {
+        this(PisSpacecraftScreenOpen);
+        this.populateFocusedBodiesList();
+
         if (mapState != null) {
             loadFromMapState(mapState);
         } else {
             setInitialCameraAngle();
         }
+    }
+
+    public MapSolarSystemScreen(boolean isSpacecraftScreenOpen, MapState mapState, @Nullable Screen currentScreen) {
+        this(isSpacecraftScreenOpen, mapState);
+        this.prevScreen = currentScreen;
+    }
+
+    @Override
+    protected void init() {
         mapRenderer.setScreen(this);
         this.addRenderableWidget(new TimeWarpWidget(0,0, width, height, Component.empty()));
         if (isSpacecraftScreenOpen) {
@@ -61,13 +71,10 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         super.init();
     }
 
-    private void loadFromMapState(MapState mapState) {
-        this.cameraYrot = mapState.cameraYrot;
-        this.cameraXrot = mapState.cameraXrot;
-        this.zoomLevel = mapState.zoomLevel;
-
+    protected void loadFromMapState(MapState mapState) {
+        super.loadRotState(mapState);
         for (int i = 0; i < FocusableBodies.length; i++) {
-            if (FocusableBodies[i].getOrbitId().equals(mapState.focusedBody)) {
+            if (FocusableBodies[i].getOrbitId().equals(mapState.getFocusedBody())) {
                 changeFocusBody(i);
             }
         }
@@ -109,6 +116,15 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     }
 
     @Override
+    public Screen getSpacecraftScreen() {
+        if (prevScreen == null) {
+            return super.getSpacecraftScreen();
+        } else {
+            return prevScreen;
+        }
+    }
+
+    @Override
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
         if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.matches(pKeyCode, pScanCode)) {
             this.onClose();
@@ -123,24 +139,14 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     }
 
     @Override
-    public boolean keyReleased(int pKeyCode, int pScanCode, int pModifiers) {
-        if (isSpacecraftScreenOpen) {
-            if (screenManager.getSpacecraftScreen().keyReleased(pKeyCode, pScanCode, pModifiers)) {
-                return true;
-            }
-        }
-        return super.keyReleased(pKeyCode, pScanCode, pModifiers);
-    }
-
-    @Override
     public void onClose() {
         super.onClose();
         if (isSpacecraftScreenOpen) {
-            Minecraft.getInstance().setScreen(screenManager.getSpacecraftScreen());
+            screenManager.openSpaceHUDScreen(PSClient.get());
         }
         OrbitalBody currentFocusedBody = FocusableBodies[currentFocusedBodyIndex];
         if (currentFocusedBody != null) {
-            screenManager.setMapState(new MapState(currentFocusedBody.getOrbitId(), this.cameraYrot, this.cameraXrot, this.zoomLevel));
+            screenManager.setMapState(new MapState(this.cameraYrot, this.cameraXrot, this.zoomLevel, currentFocusedBody.getOrbitId()));
         }
         screenManager.closeMapScreen();
     }
@@ -211,5 +217,16 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         changeFocusBody(0);
     }
 
-    public record MapState(OrbitId focusedBody, float cameraYrot, float cameraXrot, float zoomLevel) {}
+    public static class MapState extends MouseLookScreen.MouseLookScreenState {
+        private final OrbitId focusedBody;
+
+        public MapState(float cameraYrot, float cameraXrot, float zoomLevel, OrbitId focusedBody) {
+            super(cameraYrot, cameraXrot, zoomLevel);
+            this.focusedBody = focusedBody;
+        }
+
+        public OrbitId getFocusedBody() {
+            return focusedBody;
+        }
+    }
 }

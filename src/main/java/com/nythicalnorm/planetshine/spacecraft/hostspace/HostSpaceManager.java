@@ -14,7 +14,6 @@ import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.vs.ShipTeleporter;
 import com.nythicalnorm.planetshine.storage.IDataSavable;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
-import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -124,7 +123,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         loadedHostSpaces.forEach((vector2ic, orbitHostSpace) -> orbitHostSpace.OnGameTick());
 
         checkShipTeleportToSpace();
-        checkEntityTeleportToPlanet();
+        // checkEntityTeleportToPlanet();
     }
 
     public void onPhysTick() {
@@ -175,13 +174,12 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     }
 
     private void teleportShipToSpace(LoadedServerShip ship, CelestialBody celestialBody) {
-        Vector3d relativeOrbitPos = SpaceUtils.getRelativePositon(ship.getTransform().getPosition(), celestialBody);
-        Quaterniond planetRotAtShipPos = SpaceUtils.getSpaceRotationFromPlanetPos(relativeOrbitPos, celestialBody);
+        Vector3d relativeOrbitPos = PlanetCalc.getPlanetRelativePosition(ship.getTransform().getPosition(), celestialBody);
         Vector3d relativeOrbitVelocity = new Vector3d(ship.getVelocity());
 
-        Quaterniond shipNewRot = new Quaterniond();
-        ship.getTransform().getRotation().mul(planetRotAtShipPos.invert(), shipNewRot);
-        relativeOrbitVelocity.rotate(shipNewRot);
+        relativeOrbitVelocity.rotate(PlanetCalc.getPlanetToSpaceRotation(ship.getTransform().getPosition(), relativeOrbitPos, celestialBody));
+        Quaterniond shipNewRot = PlanetCalc.getShipPlanetToSpaceRotation(ship.getTransform(), relativeOrbitPos, celestialBody);
+
         // need to take into account the planets rotational velocity that is also transferred to the ship, earth moving at 1000 m/s at the equator etc...
         // though maybe I don't add this.
         OrbitalElements orbitalElements = new OrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());
@@ -195,7 +193,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
             if (entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.getAltitude() < TELEPORT_TO_GROUND_HEIGHT) {
                 ServerLevel planetLevel = ((ServerCelestialBody)entityOrbitBody.getParent()).getLevel();
                 if (planetLevel != null && entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.isBodyEntityLoaded()) {
-                    Vector2d pos = PlanetCalc.vectorToPlanetDimPos(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent().getRotation());
+                    Vector2d pos = PlanetCalc.getDimensionPosition(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent());
                     if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody) {
                         teleportEntity(playerOrbitBody.getPlayerEntity(), planetLevel, pos.x, TELEPORT_TO_GROUND_HEIGHT, pos.y);
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody);
@@ -215,12 +213,12 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
             BodyKinematics bodyKinematics = spaceshipBody.getShip().getKinematics();
             Vector3d planetPos = new Vector3d(pos.x, TELEPORT_TO_GROUND_HEIGHT, pos.y);
 
-            Quaterniond rotationDifference = SpaceUtils.getSpaceRotationFromPlanetPos(spaceshipBody.getRelativePos(), spaceshipBody.getParent());
-            Quaterniond shipNewRot = new Quaterniond();
-            bodyKinematics.getRotation().mul(rotationDifference, shipNewRot);
-            Vector3d velocity = new Vector3d(spaceshipBody.getRelativeVelocity()).rotate(rotationDifference);
+            Quaterniond shipToSpace = PlanetCalc.getShipSpaceToPlanetRotation(planetPos, spaceshipBody.getRelativePos(), spaceshipBody.getParent());
 
-            ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(planetPos, shipNewRot, new Vector3d(),
+            // don't apply this
+            // Vector3d velocity = new Vector3d(spaceshipBody.getRelativeVelocity()).rotate(shipNewRot);
+
+            ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(planetPos, shipToSpace, new Vector3d(),
                     bodyKinematics.getAngularVelocity(), VSGameUtilsKt.getDimensionId(planetLevel), null, null);
 
             this.getShipTeleporter().teleportShipsWithEntities((LoadedServerShip) spaceshipBody.getShip(),
