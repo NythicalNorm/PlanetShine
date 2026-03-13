@@ -5,13 +5,16 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -41,14 +44,15 @@ public class ForgeClientEvents {
         } else if (PSKeyBinds.DEC_TIME_WARP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent((psClient ->
                     psClient.TryChangeTimeWarp(false)));
-        } else if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.consumeClick()) {
+        }
+        if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent(psClient -> {
                 if (psClient.doRender()) {
                     psClient.getScreenManager().openMapScreen();
                 }
             });
         }
-        else if (PSKeyBinds.OPEN_SPACECRAFT_HUD_KEY.consumeClick()) {
+        if (PSKeyBinds.OPEN_SPACECRAFT_HUD_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent(psClient ->
                     psClient.getScreenManager().openSpaceHUDScreen(psClient));
         }

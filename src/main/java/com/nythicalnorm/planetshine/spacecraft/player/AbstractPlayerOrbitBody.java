@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.PlayerHostSpace;
+import com.nythicalnorm.planetshine.util.Calc;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -90,7 +91,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
         if (this.player != null) {
             LoadedShip ship = VSGameUtilsKt.getShipMountedTo(this.player);
             if (ship == null) {
-                return new Quaterniond().rotateY(this.player.getYRot()).rotateX(this.player.getXRot());
+                return Calc.mcRotationToQuaterniond(this.player.getYRot(), this.player.getXRot());
             } else {
                 return ship.getKinematics().getRotation();
             }

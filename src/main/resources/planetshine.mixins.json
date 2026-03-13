@@ -8,7 +8,6 @@
     "defaultRequire": 1
   },
   "mixins": [
-    "worldgen.ClimateMixin",
     "core.LevelMixin",
     "core.MinecraftServerMixin",
     "daynightcycle.DaylightDetectorBlockMixin",
@@ -26,6 +25,8 @@
     "daynightcycle.isDay.OfferFlowerGoalMixin",
     "daynightcycle.isDay.RestrictSunGoalMixin",
     "daynightcycle.isDay.StrollThroughVillageGoalMixin",
+    "player_rotation.EntityMixin",
+    "player_rotation.PlayerMixin",
     "spaceentites.AbstractArrowSpaceMixin",
     "spaceentites.BrushableBlockSpaceMixin",
     "spaceentites.EntitySpaceMixin",
@@ -34,14 +35,17 @@
     "spaceentites.LivingEntitySpaceMixin",
     "spaceentites.LocalPlayerSpaceMixin",
     "spaceentites.PlayerSpaceMixin",
-    "vs.PhysShipImplMixin"
+    "vs.PhysShipImplMixin",
+    "worldgen.ClimateMixin"
   ],
   "client": [
-    "ship_gui.CameraMixin",
     "core.LevelRendererMixin",
     "core.PlayerSocialManagerMixin",
     "daynightcycle.ClientLevelMixin",
     "daynightcycle.FogRendererMixin",
+    "player_rotation.GameRendererMixin",
+    "player_rotation.MouseHandlerMixin",
+    "ship_gui.CameraMixin",
     "ship_gui.DebugScreenOverlayMixin",
     "ship_gui.KeyboardHandlerMixin",
     "ship_gui.MinecraftMixin",

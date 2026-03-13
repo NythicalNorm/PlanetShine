@@ -11,6 +11,7 @@ public class PSKeyBinds {
     public static final String KEY_DECREASE_TIME_WARP = "key.planetshine.decrease_time_warp";
     public static final String KEY_OPEN_SOLAR_SYSTEM_MAP = "key.planetshine.open_solar_system_map";
     public static final String KEY_OPEN_SPACECRAFT_HUD = "key.planetshine.open_spacecraft_hud_key";
+    public static final String KEY_PLAYER_SPACE_ROTATE = "key.planetshine.player_space_rotate";
     public static final String KEY_CHANGE_SPACECRAFT_VIEW = "key.planetshine.change_spacecraft_view";
 
     public static final KeyMapping INC_TIME_WARP_KEY = new KeyMapping(KEY_INCREASE_TIME_WARP, KeyConflictContext.IN_GAME,
@@ -27,4 +28,7 @@ public class PSKeyBinds {
 
     public static final KeyMapping CHANGE_SPACECRAFT_VIEW_KEY = new KeyMapping(KEY_CHANGE_SPACECRAFT_VIEW, KeyConflictContext.IN_GAME,
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, KEY_CATEGORY_PLANETSHINE);
+
+    public static final KeyMapping PLAYER_SPACE_ROTATE_KEY = new KeyMapping(KEY_PLAYER_SPACE_ROTATE, KeyConflictContext.IN_GAME,
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, KEY_CATEGORY_PLANETSHINE);
 }
