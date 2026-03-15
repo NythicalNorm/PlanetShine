@@ -49,9 +49,10 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
 
     private void updatePlanetPos(Level level, Vec3 position, CelestialBody currentPlanetOn) {
         double seaLevel = level.getMinBuildHeight() + 127;
-        position = new Vec3(position.x, position.y - seaLevel, position.z);
 
-        this.relativeOrbitalPos.set(PlanetCalc.getPlanetRelativePosition(position, currentPlanetOn.getRadius(), currentPlanetOn.getRotation(), false));
+        this.relativeOrbitalPos.set(PlanetCalc.getPlanetRelativePosition(
+                position.x, position.y - seaLevel, position.z, currentPlanetOn, false)
+        );
         this.absoluteOrbitalPos.set(currentPlanetOn.getAbsolutePos()).add(relativeOrbitalPos);
     }
 

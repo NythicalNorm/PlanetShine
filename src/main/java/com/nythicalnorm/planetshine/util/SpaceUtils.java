@@ -7,7 +7,6 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.joml.*;
 
 import java.lang.Math;
@@ -30,9 +29,9 @@ public class SpaceUtils {
         return spaceLevelString.equals(chunkClaimDimension);
     }
 
-    public static Vector2dc getLatLongCoordinates(Vec3 pos, CelestialBody planet) {
+    public static Vector2dc getLatLongCoordinates(double xPos, double yPos, double zPos, CelestialBody planet) {
         if (planet != null) {
-            Vector3d planetNonRotPos = PlanetCalc.getPlanetRelativeNonRotatingPosition(pos,
+            Vector3d planetNonRotPos = PlanetCalc.getPlanetRelativeNonRotatingPosition(xPos, yPos, zPos,
                     planet.getRadius(), true);
             double latitude = Math.asin(planetNonRotPos.y);
             double longitude = Math.atan2(-planetNonRotPos.z, planetNonRotPos.x);

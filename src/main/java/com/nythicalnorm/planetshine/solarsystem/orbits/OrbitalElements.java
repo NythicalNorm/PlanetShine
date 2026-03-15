@@ -50,7 +50,6 @@ public class OrbitalElements implements OrbitalElementsc{
 
         this.Mu = orbitalElements.getMu();
         this.MeanAngularMotion = orbitalElements.getMeanAngularMotion();
-        this.EccentricAnomaly = orbitalElements.getEccentricityAnomaly();
 
         this.orbitRotation = new Quaterniond();
         setOrbitRotationFromElements(this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);

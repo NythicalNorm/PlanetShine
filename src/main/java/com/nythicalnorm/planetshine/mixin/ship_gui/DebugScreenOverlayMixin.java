@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.DebugScreenOverlay;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector2dc;
@@ -37,7 +38,8 @@ public abstract class DebugScreenOverlayMixin {
             OrbitalElementsc orbitalElements = css.getPlayerOrbit().getOrbitalElements();
 
             if (css.getCurrentPlanet().isPresent()) {
-                Vector2dc latLong = SpaceUtils.getLatLongCoordinates(minecraft.player.position(), css.getCurrentPlanet().get());
+                Vec3 playerPos = minecraft.player.position();
+                Vector2dc latLong = SpaceUtils.getLatLongCoordinates(playerPos.x(), playerPos.y(), playerPos.z(), css.getCurrentPlanet().get());
                 list.add(String.format(Locale.ROOT, "Lat: %.5f, Long: %.5f", latLong.x(), latLong.y()));
             } else if (orbitalElements != null && relativeVelocity != null) {
                 list.add(String.format(Locale.ROOT, "Relative Velocity XYZ: %.2f / %.2f / %.2f", relativeVelocity.x(), relativeVelocity.y(), relativeVelocity.z()));

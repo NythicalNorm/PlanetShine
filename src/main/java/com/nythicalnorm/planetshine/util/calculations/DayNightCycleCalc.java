@@ -4,15 +4,14 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 
 public class DayNightCycleCalc {
     private static final Vector3d upVector = new Vector3d(0d, 1d, 0d);
 
     public static float getSunAngle(int x, int z, CelestialBody planet) {
-        Vector3d blockPosOnPlanet = PlanetCalc.getPlanetRelativePosition(new Vec3(x, 0, z),
-                planet.getRadius(), planet.getRotation(), true);
+        Vector3d blockPosOnPlanet = PlanetCalc.getPlanetRelativePosition(x, 0, z,
+                planet, true);
         Vector3d planetAbsolutePos = new Vector3d(planet.getAbsolutePos()).add(blockPosOnPlanet);
 
         blockPosOnPlanet.normalize();

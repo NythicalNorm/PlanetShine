@@ -12,26 +12,30 @@ import java.lang.Math;
 public class PlanetCalc {
 
     public static Vector3d getPlanetRelativePosition(Vector3dc pos, CelestialBody celestialBody) {
-        Vec3 vec3Pos = new Vec3(pos.x(), pos.y(), pos.z());
-        return PlanetCalc.getPlanetRelativePosition(vec3Pos, celestialBody.getRadius(), celestialBody.getRotation(), false);
+        return PlanetCalc.getPlanetRotatedPosition(pos.x(), pos.y(), pos.z(), celestialBody.getRadius(), celestialBody.getRotation(), false);
     }
 
-    public static Vector3d getPlanetRelativePosition(Vec3 pos, double planetRadius, Quaternionfc planetRot, boolean isNormalized) {
-        Vector3d quadSpherePos = getPlanetRelativeNonRotatingPosition(pos, planetRadius, isNormalized);
+    public static Vector3d getPlanetRelativePosition(Vec3 pos, CelestialBody celestialBody, boolean isNormalized) {
+        return getPlanetRotatedPosition(pos.x, pos.y, pos.z, celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
+    }
+
+    public static Vector3d getPlanetRelativePosition(double posX, double posY, double posZ, CelestialBody celestialBody, boolean isNormalized) {
+        return getPlanetRotatedPosition(posX, posY, posZ, celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
+    }
+
+    public static Vector3d getPlanetRotatedPosition(double posX, double posY, double posZ, double planetRadius,
+                                                    Quaternionfc planetRot, boolean isNormalized) {
+        Vector3d quadSpherePos = getPlanetRelativeNonRotatingPosition(posX, posY, posZ, planetRadius, isNormalized);
         quadSpherePos.rotate(new Quaterniond().set(planetRot));
         return quadSpherePos;
     }
 
-    public static Vector3d getPlanetRelativePosition(double x, double y, double z, CelestialBody celestialBody, boolean isNormalized) {
-        return getPlanetRelativePosition(new Vec3(x, y, z), celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
-    }
-
-    public static Vector3d getPlanetRelativeNonRotatingPosition(Vec3 pos, double planetRadius, boolean isNormalized) {
+    public static Vector3d getPlanetRelativeNonRotatingPosition(double posX, double posY, double posZ, double planetRadius, boolean isNormalized) {
         double cellSize = getSquareCellSize(planetRadius);
         double halfCellSize = cellSize*0.5d;
 
-        int xCell = getCellIndex(cellSize, pos.x);
-        int zCell = getCellIndex(cellSize, pos.z);
+        int xCell = getCellIndex(cellSize, posX);
+        int zCell = getCellIndex(cellSize, posZ);
 
         xCell = Mth.clamp(xCell,-1, 2);
 
@@ -41,8 +45,8 @@ public class PlanetCalc {
         else {
             zCell = 0;
         }
-        double xWithinCell = pos.x - xCell*cellSize;
-        double zWithinCell = pos.z - zCell*cellSize;
+        double xWithinCell = posX - xCell*cellSize;
+        double zWithinCell = posZ - zCell*cellSize;
 
         xWithinCell = Mth.clamp(xWithinCell, -halfCellSize, halfCellSize);
         zWithinCell = Mth.clamp(zWithinCell, -halfCellSize, halfCellSize);
@@ -58,9 +62,34 @@ public class PlanetCalc {
         }
         double radius = 0.5d;
         if (!isNormalized) {
-            radius = planetRadius + pos.y; // + 10000000
+            radius = planetRadius + posY; // + 10000000
         }
         return getQuadPlanettoSquarePos(zWithinCell, xWithinCell, halfCellSize, QuadId, radius);
+    }
+
+    public int getQuadID(double cellSize, double posX, double posZ) {
+        int xCell = getCellIndex(cellSize, posX);
+        int zCell = getCellIndex(cellSize, posZ);
+
+        xCell = Mth.clamp(xCell,-1, 2);
+
+        if (xCell == 0) {
+            zCell = Mth.clamp(zCell,-1, 1);
+        }
+        else {
+            zCell = 0;
+        }
+
+        int quadId = xCell + 1;
+        if (xCell == 0) {
+            if (zCell == 1){
+                quadId = 4;
+            }
+            else if (zCell == -1) {
+                quadId = 5;
+            }
+        }
+        return quadId;
     }
 
     public static double getSquareCellSize(double planetRadius) {
