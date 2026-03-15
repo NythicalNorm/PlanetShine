@@ -14,6 +14,7 @@ public interface OrbitalElementsc {
     double getParentMass();
     double getMu();
     double getOrbitalPeriod();
+    double getEccentricityAnomaly();
     long getLastPeriapsisTime(long elapsedTime);
     boolean isHyperbolic();
     double getApoapsis();

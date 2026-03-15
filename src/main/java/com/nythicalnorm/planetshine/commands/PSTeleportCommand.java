@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -51,9 +52,8 @@ public class PSTeleportCommand {
                     double semiMajorAxis = (semiMajorAxisInput*1000d) + planet.getRadius();
                     if (semiMajorAxisInput < 0) {
                         semiMajorAxis = (semiMajorAxisInput*1000d) - planet.getRadius();
-                        //return 0;
                     }
-                    long startingAnomaly = psServer.getCurrentTime(); // + TimeCalc.timeDoubleToLong(12000f);
+                    long startingAnomaly = psServer.getCurrentTime() + TimeCalc.timeDoubleToLong(20000f);
                     OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingAnomaly, inclination, 0d, 0d, planet.getMass());
 
                     LoadedShip shipMountedTo = VSGameUtilsKt.getShipMountedTo(entity);

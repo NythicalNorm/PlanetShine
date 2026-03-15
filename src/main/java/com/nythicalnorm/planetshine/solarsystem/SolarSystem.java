@@ -88,6 +88,7 @@ public class SolarSystem {
     public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElementsc orbitalElementsNew) {
         //removing the old reference to the object
         spacecraftBody.removeParent();
+        spacecraftBody.resetIntercepts();
         // adding reference to new object
         newOrbitPlanet.addChildBody(spacecraftBody);
 

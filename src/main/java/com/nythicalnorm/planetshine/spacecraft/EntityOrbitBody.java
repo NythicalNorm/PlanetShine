@@ -205,6 +205,11 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             this.isInterceptsCalculated = true;
     }
 
+    public void resetIntercepts() {
+        this.isInterceptsCalculated = false;
+        this.nextOrbitIntercept = null;
+    }
+
     //client-side
     public void calculateEscapeOnly(long elapsedTime) {
         assert this.orbitalElements != null;
