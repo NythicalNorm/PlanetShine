@@ -13,6 +13,7 @@ public class ClientSpaceshipBody extends AbstractSpaceshipBody {
 
     @Override
     public void init() {
+        super.init();
         if (this.getShip() != null) {
             return;
         }

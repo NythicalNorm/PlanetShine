@@ -126,10 +126,6 @@ public class PSClient extends Stage {
 
     public void tick() {
         clientTimeHandler.tick();
-
-        if (minecraft.screen instanceof MapSolarSystemScreen) {
-            this.solarSystem.calculateOnlyEscapeIntercepts(this.getCurrentTime());
-        }
     }
 
     public void onClientLevelLoad(ClientLevel clientLevel) {

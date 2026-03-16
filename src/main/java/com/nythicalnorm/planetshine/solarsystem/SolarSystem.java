@@ -1,6 +1,5 @@
 package com.nythicalnorm.planetshine.solarsystem;
 
-import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundSetOrbitIntercept;
@@ -10,6 +9,8 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
+import com.nythicalnorm.planetshine.util.RunnableExecutor;
+import com.nythicalnorm.planetshine.util.Stage;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -24,12 +25,19 @@ public class SolarSystem {
     private final Map<OrbitId, CelestialBody> allPlanetaryBodies;
     private final ConcurrentMap<OrbitId, EntityOrbitBody> allSpacecraftBodies;
     private final StarBody rootStar;
+    private Stage universeStage;
 
-    public SolarSystem(Map<OrbitId, CelestialBody> pAllPlanetaryBodies, ConcurrentMap<OrbitId, EntityOrbitBody> pAllSpacecraftBodies, Map<ResourceKey<Level>, CelestialBody> pPlanetDimensions, StarBody rootStar) {
+    public SolarSystem(Map<OrbitId, CelestialBody> pAllPlanetaryBodies, ConcurrentMap<OrbitId,
+            EntityOrbitBody> pAllSpacecraftBodies, Map<ResourceKey<Level>, CelestialBody> pPlanetDimensions,
+                       StarBody rootStar) {
         this.allPlanetaryBodies = pAllPlanetaryBodies;
         this.allSpacecraftBodies = pAllSpacecraftBodies;
         this.planetDimensions = pPlanetDimensions;
         this.rootStar = rootStar;
+    }
+
+    public void setStage(Stage stage) {
+        this.universeStage = stage;
     }
 
     @PhysTickOnly
@@ -44,24 +52,26 @@ public class SolarSystem {
     }
 
     @PhysTickOnly // server side only
-    public void calculateSpacecraftIntercepts(long timeElapsed, PSServer psServer) {
+    public void calculateSpacecraftIntercepts(long timeElapsed, RunnableExecutor gameTickRunnable) {
         for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
             if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
                 OrbitalCalc.SOIIntercept intercept = entityBody.calculateIntercepts(timeElapsed);
-                PacketHandler.sendToAllClients(new ClientboundSetOrbitIntercept(entityBody.getOrbitId(), intercept));
+                gameTickRunnable.addRun(() ->
+                        PacketHandler.sendToAllClients(new ClientboundSetOrbitIntercept(entityBody.getOrbitId(), intercept))
+                );
             }
         }
     }
 
     // used client side for orbit rendering
-    @PhysTickOnly
-    public void calculateOnlyEscapeIntercepts(long timeElapsed) {
-        for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
-            if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
-                entityBody.calculateEscapeOnly(timeElapsed);
-            }
-        }
-    }
+//    @PhysTickOnly
+//    public void calculateOnlyEscapeIntercepts(long timeElapsed) {
+//        for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
+//            if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
+//                entityBody.calculateEscapeOnly(timeElapsed);
+//            }
+//        }
+//    }
 
     public Map<OrbitId, EntityOrbitBody> getAllSpacecraftBodies() {
         return allSpacecraftBodies;
@@ -93,11 +103,14 @@ public class SolarSystem {
     public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElementsc orbitalElementsNew) {
         //removing the old reference to the object
         spacecraftBody.removeParent();
-        spacecraftBody.resetIntercepts();
         // adding reference to new object
         newOrbitPlanet.addChildBody(spacecraftBody);
 
         spacecraftBody.setOrbitalElements(orbitalElementsNew);
+        // resetting the pre-calculated intercepts and also resetting the periapsisTime
+        if (!spacecraftBody.isClientSide()) {
+            spacecraftBody.resetIntercepts(this.universeStage.getCurrentTime());
+        }
     }
 
     public void entityJoinedOrbital(OrbitalBody OrbitalDataNew, OrbitId newParentID) {

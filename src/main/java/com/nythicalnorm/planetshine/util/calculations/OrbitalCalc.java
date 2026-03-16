@@ -159,20 +159,21 @@ public class OrbitalCalc {
                 Quaterniond combinedRelativeRotation = new Quaterniond(planet.getOrbitalElements().getOrbitRotation());
                 combinedRelativeRotation.mul(reverseRotation);
                 SimplePlanetOrbit planetSimpleElements = new SimplePlanetOrbit(planet.getOrbitalElements(), combinedRelativeRotation);
-                double soiSquare = (planet.getSphereOfInfluence() * planet.getSphereOfInfluence()) * 1.2d;
+                double soi = planet.getSphereOfInfluence(); // * planet.getSphereOfInfluence());
 
                 PlanetInterceptCandidate candidate = new PlanetInterceptCandidate(planet.getOrbitId(),
-                        planetSimpleElements, soiSquare, planet.getMinInterceptDistance(), planet.getMaxInterceptDistance());
+                        planetSimpleElements, soi, planet.getMinInterceptDistance(), planet.getMaxInterceptDistance());
                 planetInterceptCandidateList.add(candidate);
             }
         });
         SimpleOrbit entityOrbit = new SimpleOrbit(orbitBody.getOrbitalElements());
-        double startingAnomaly = getTrueAnomalyFromStateVectors(orbitBody.getRelativePos(), orbitBody.getRelativeVelocity(), orbitBody.getOrbitalElements().getMu());
-        return calculateFutureForNextOrbit(entityOrbit, startingAnomaly, planetInterceptCandidateList, timeElapsed);
+        double startingAnomaly = getTrueAnomalyFromEccentricAnomaly(orbitBody.getOrbitalElements().getEccentricityAnomaly(),
+                orbitBody.getOrbitalElements().getEccentricity());
+        return calculateFutureForNextOrbit(entityOrbit, startingAnomaly, orbitBody.getOrbitalElements(), planetInterceptCandidateList, timeElapsed);
     }
 
-    private static SOIIntercept calculateFutureForNextOrbit(SimpleOrbit entityOrbit, double startingAnomaly,
-                                                    List<PlanetInterceptCandidate> planetInterceptCandidates, long timeElapsed) {
+    private static SOIIntercept calculateFutureForNextOrbit(SimpleOrbit entityOrbit, double startingAnomaly, OrbitalElementsc originalOrbit,
+                                                            List<PlanetInterceptCandidate> planetInterceptCandidates, long timeElapsed) {
         boolean calculatedThisTime;
         double timeChange = 0.12083048667d;
         double maxAnomaly = startingAnomaly + (2 * Math.PI);
@@ -190,17 +191,28 @@ public class OrbitalCalc {
                     }
 
                     long time = getTimeStampFromTrueAnomaly(entityOrbit.MeanAngularMotion, trueAnomoly,
-                            entityOrbit.Eccentricity, entityOrbit.getLastPeriapsisTime(timeElapsed));
+                            entityOrbit.Eccentricity, originalOrbit.getLastPeriapsisTime(timeElapsed));
 
                     planetIntersect.orbitalElements().ToCartesianRot(time);
 
                     distanceCheckVector.set(entityOrbit.getRelativePosition());
                     double dist = distanceCheckVector.distanceSquared(planetIntersect.orbitalElements.getRelativePosition());
 
-                    if (dist < planetIntersect.SoiSquare()) {
+                    // very arbitrary calculation but should cover most cases i think
+                    // double planetInterceptRange = (entityOrbit.getMeanAngularMotion() * 2 * Math.PI * entityOrbit.SemiMajorAxis) * 52;
+
+                    if (dist < (planetIntersect.Soi() * planetIntersect.Soi() * 9)) {
                         tickTime = Util.getNanos() - tickTime;
-                        PlanetShine.log("Holy Shit, I am cooking; Time: " + time);
-                        return new SOIIntercept(trueAnomoly, time, planetIntersect.orbitId(), false);
+                        long prevIterTime = getTimeStampFromTrueAnomaly(entityOrbit.MeanAngularMotion, (trueAnomoly - (2 * timeChange)),
+                                entityOrbit.Eccentricity, originalOrbit.getLastPeriapsisTime(timeElapsed));
+
+                        long nextIterTime = time + (originalOrbit.getOrbitalPeriodLong() / 52);
+
+                        SOIIntercept intercept = convergeOnIntercept(entityOrbit, prevIterTime, nextIterTime, planetIntersect);
+                        if (intercept != null) {
+                            PlanetShine.log("Holy Shit, I am cooking; Time: " + time);
+                            return intercept;
+                        }
                     }
                 }
             }
@@ -210,9 +222,34 @@ public class OrbitalCalc {
         return null;
     }
 
+    private static SOIIntercept convergeOnIntercept(SimpleOrbit entityOrbit, long startingTime, long endTime,
+                                            PlanetInterceptCandidate interceptCandidate) {
+        long currentTestTime = startingTime;
+        SimplePlanetOrbit planetOrbit = interceptCandidate.orbitalElements;
+        long timeStep = TimeCalc.timeDoubleToLong(2048d);
+
+        while (currentTestTime < endTime) {
+            currentTestTime += timeStep;
+            entityOrbit.toEntityCartesian(currentTestTime);
+            planetOrbit.ToCartesianRot(currentTestTime);
+
+            double dist = entityOrbit.getRelativePosition().distance(planetOrbit.getRelativePosition()) - interceptCandidate.Soi;
+             if (dist <= 0) {
+                if (timeStep <= TimeCalc.timeDoubleToLong(1d)) {
+                    double trueAnomaly = getTrueAnomalyFromEccentricAnomaly(entityOrbit.getEccentricAnomaly(currentTestTime), entityOrbit.Eccentricity);
+
+                    return new SOIIntercept(trueAnomaly, currentTestTime, interceptCandidate.orbitId(), false);
+                }
+                currentTestTime = currentTestTime - (2 * timeStep);
+                timeStep = timeStep / 2;
+            }
+        }
+        return null;
+    }
+
     public record SOIIntercept(double trueAnomaly, long timeElapsed, OrbitId interceptingBody, boolean isEscape) {}
 
-    private record PlanetInterceptCandidate(OrbitId orbitId, SimplePlanetOrbit orbitalElements, double SoiSquare, double minIntersect, double maxIntersect) {}
+    private record PlanetInterceptCandidate(OrbitId orbitId, SimplePlanetOrbit orbitalElements, double Soi, double minIntersect, double maxIntersect) {}
 
     private static class SimpleOrbit {
         protected final double SemiMajorAxis;
@@ -237,12 +274,17 @@ public class OrbitalCalc {
             boolean isElliptical = Eccentricity < 1;
             double M = this.MeanAngularMotion * (OrbitalElements.getModulusCurrentTime(timeElapsed, periapsisTime, this.Eccentricity, MeanAngularMotion));
 
-            //Eccentric anomaly also this works for circular orbits I think
             double Anomaly = isElliptical ? ellipticalEccentricAnomaly(M, Eccentricity) : hyperbolicEccentricAnomaly(M, Eccentricity);
             double sinAnomaly =  (isElliptical) ? Math.sin(Anomaly) : Math.sinh(Anomaly);
             double cosAnomaly =  (isElliptical) ?  org.joml.Math.cosFromSin(sinAnomaly, Anomaly) : Math.cosh(Anomaly);
 
             this.relativePosition.set(this.SemiMajorAxis * (cosAnomaly - this.Eccentricity), 0d, -this.SemiMinorAxis * sinAnomaly);
+        }
+
+        public double getEccentricAnomaly(long timeElapsed) {
+            boolean isElliptical = Eccentricity < 1;
+            double M = this.MeanAngularMotion * (OrbitalElements.getModulusCurrentTime(timeElapsed, periapsisTime, this.Eccentricity, MeanAngularMotion));
+            return isElliptical ? ellipticalEccentricAnomaly(M, Eccentricity) : hyperbolicEccentricAnomaly(M, Eccentricity);
         }
 
         public double getRadius(double trueAnomaly) {
@@ -258,8 +300,8 @@ public class OrbitalCalc {
             this.relativePosition.set(radius * cosVal, 0d, radius * sinVal);
         }
 
-        public long getLastPeriapsisTime(long elapsedTime) {
-            return elapsedTime - (elapsedTime - this.periapsisTime);
+        public double getMeanAngularMotion() {
+            return MeanAngularMotion;
         }
 
         public Vector3d getRelativePosition() {

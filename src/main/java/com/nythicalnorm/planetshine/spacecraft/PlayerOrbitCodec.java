@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.spacecraft;
 
+import com.nythicalnorm.planetshine.network.NetworkEncoders;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitCodec;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
@@ -13,6 +14,13 @@ public class PlayerOrbitCodec extends OrbitCodec<AbstractPlayerOrbitBody, Abstra
     public void encodeBuffer(AbstractPlayerOrbitBody orbit, FriendlyByteBuf byteBuf) {
         super.encodeBuffer(orbit, byteBuf);
         byteBuf.writeOptional(orbit.getHostSpaceID(), OrbitId::encodeToBuffer);
+
+        if (orbit.getNextOrbitIntercept() != null) {
+            byteBuf.writeBoolean(true);
+            NetworkEncoders.writeOrbitIntercept(byteBuf, orbit.getNextOrbitIntercept());
+        } else {
+            byteBuf.writeBoolean(false);
+        }
     }
 
     @Override
@@ -20,6 +28,10 @@ public class PlayerOrbitCodec extends OrbitCodec<AbstractPlayerOrbitBody, Abstra
         super.decodeBuffer(playerSpacecraft, byteBuf);
         Optional<OrbitId> id = byteBuf.readOptional(OrbitId::new);
         id.ifPresent(playerSpacecraft::setHostSpace);
+
+        if (byteBuf.readBoolean()) {
+            playerSpacecraft.setSoiIntercept(NetworkEncoders.readOrbitIntercept(byteBuf));
+        }
         return playerSpacecraft;
     }
 

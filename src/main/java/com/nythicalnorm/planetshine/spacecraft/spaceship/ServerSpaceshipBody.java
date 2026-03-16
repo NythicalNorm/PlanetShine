@@ -15,6 +15,7 @@ public class ServerSpaceshipBody extends AbstractSpaceshipBody {
 
     @Override
     public void init() {
+        super.init();
         if (this.getShip() != null) {
             return;
         }

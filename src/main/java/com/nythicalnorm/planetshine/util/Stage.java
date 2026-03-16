@@ -17,6 +17,7 @@ public abstract class Stage {
 
     protected Stage(SolarSystem solarSystem) {
         this.solarSystem = solarSystem;
+        this.solarSystem.setStage(this);
         if (anySolarSystem == null) {
             anySolarSystem = solarSystem;
         }

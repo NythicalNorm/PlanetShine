@@ -32,26 +32,36 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected final boolean isClientSide;
     // basically whether the next planet intercept of escape or intersection is calculated yet.
     private @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
-    private boolean isInterceptsCalculated;
 
-    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID, boolean isClientSide) {
+    // server side only
+    private boolean isInterceptsCalculated;
+    private @Nullable Long nextPeriapsisTime = 0L;
+
+    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID, @Nullable OrbitalCalc.SOIIntercept soiIntercept, boolean isClientSide) {
         super(orbitalBuilder);
         this.hostSpaceID = new AtomicReference<>();
         this.orbitHostSpace = new AtomicReference<>();
         this.hostSpaceID.set(hostSpaceID);
         this.isClientSide = isClientSide;
         this.isInterceptsCalculated = false;
+        this.nextOrbitIntercept = soiIntercept;
     }
 
-
     @GameTickOnly
-    public void init() { }
+    public void init() {
+        if (!this.isClientSide) {
+            resetIntercepts(PSServer.get().getCurrentTime());
+        }
+    }
 
     @PhysTickOnly
     public void simulate(long TimeElapsed, boolean isTimeWarping) {
         if (this.orbitalElements == null || this.parent == null || this.hostSpaceID.get() == null) {
             // PlanetShine.logError("Entity Orbit of " + this.getDisplayName().getString() + "is Not in a state for Orbital Calculations");
             return;
+        }
+        if (!isClientSide && this.nextPeriapsisTime != null && TimeElapsed > this.nextPeriapsisTime) {
+            this.completedOneOrbit(TimeElapsed);
         }
         // checking if it's time for the predicted SOI change and doing it
         if (this.nextOrbitIntercept != null && this.nextOrbitIntercept.timeElapsed() <= TimeElapsed && this.isHostOfItsSpace() && !this.isClientSide) {
@@ -77,7 +87,8 @@ public abstract class EntityOrbitBody extends OrbitalBody {
                 this.simulateNonTimeWarp();
                 this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
                 this.sendOrbitUpdateToRelevantPlayers();
-                this.resetIntercepts();
+                this.resetIntercepts(TimeElapsed);
+                this.nextPeriapsisTime = this.orbitalElements.getNextPeriapsisTime(TimeElapsed);
             }
         }
 
@@ -165,6 +176,12 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.orbitHostSpace.set(null);
     }
 
+    // function called every time the body completes one revolution around its host body, if a body just started orbiting that orbit doesn't count.
+    protected void completedOneOrbit(long TimeElapsed) {
+        this.resetIntercepts(TimeElapsed);
+        this.calculateIntercepts(TimeElapsed);
+    }
+
     @PhysTickOnly
     private @Nullable CelestialBody calculateSOIChange(OrbitalCalc.SOIIntercept nextOrbitIntercept) {
         //this is basically making sure that the change happens in the right place
@@ -200,7 +217,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         }
         // first calculate intercept with planets with the same parent
         if (!this.parent.getPlanetChildren().isEmpty()) {
-            //this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
+            this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
         }
 
         // if that fails than start checking that escape Intercepts fail too:
@@ -211,9 +228,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         return this.nextOrbitIntercept;
     }
 
-    public void resetIntercepts() {
+    public void resetIntercepts(long currentTime) {
         this.isInterceptsCalculated = false;
         this.nextOrbitIntercept = null;
+        this.nextPeriapsisTime = this.orbitalElements.getNextPeriapsisTime(currentTime);
     }
 
     // client-side only
@@ -225,8 +243,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     public void calculateEscapeOnly(long elapsedTime) {
         assert this.orbitalElements != null;
         assert this.parent != null;
-        this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
-        this.isInterceptsCalculated = true;
+        if (this.nextOrbitIntercept == null) {
+            this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+            this.isInterceptsCalculated = true;
+        }
     }
 
     public boolean isOrbitInterceptsCalculated() {
@@ -240,6 +260,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         } else {
             return Optional.empty();
         }
+    }
+
+    public boolean isClientSide() {
+        return isClientSide;
     }
 
     public boolean isHostOfItsSpace() {

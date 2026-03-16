@@ -125,7 +125,7 @@ public class PSServer extends Stage {
         hostSpaceManager.onPhysTick();
 
         if (runningPhysTicks % 60 == 0) {
-            this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime(), this);
+            this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime(), this.gameTickRunnable);
         }
     }
 

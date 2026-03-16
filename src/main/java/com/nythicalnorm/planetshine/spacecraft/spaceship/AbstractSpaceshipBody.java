@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.ShipHostSpace;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     protected Ship ship;
 
     public AbstractSpaceshipBody(ShipOrbitBuilder shipOrbitBuilder, boolean isClientSide) {
-        super(shipOrbitBuilder, shipOrbitBuilder.currentHostSpace, isClientSide);
+        super(shipOrbitBuilder, shipOrbitBuilder.currentHostSpace, shipOrbitBuilder.soiIntercept, isClientSide);
         this.ship = shipOrbitBuilder.ship;
     }
 
@@ -76,6 +77,7 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
     public static class ShipOrbitBuilder extends Builder<AbstractSpaceshipBody> {
         Ship ship;
         OrbitId currentHostSpace;
+        OrbitalCalc.SOIIntercept soiIntercept;
 
         public ShipOrbitBuilder() {
         }
@@ -83,6 +85,14 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
         public void setShip(@NotNull Ship ship) {
             this.ship = ship;
             this.id = new OrbitId(ship);
+        }
+
+        public void setSoiIntercept(OrbitalCalc.SOIIntercept soiIntercept) {
+            this.soiIntercept = soiIntercept;
+        }
+
+        public void setHostSpace(OrbitId orbitId) {
+            this.currentHostSpace = orbitId;
         }
 
         @Override
@@ -94,10 +104,6 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody {
         @Override
         public AbstractSpaceshipBody buildClientSide() {
             return new ClientSpaceshipBody(this);
-        }
-
-        public void setHostSpace(OrbitId orbitId) {
-            this.currentHostSpace = orbitId;
         }
     }
 }

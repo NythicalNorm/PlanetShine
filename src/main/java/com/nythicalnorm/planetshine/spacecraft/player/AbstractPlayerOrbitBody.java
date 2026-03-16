@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.PlayerHostSpace;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,7 +25,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     protected Player player;
 
     public AbstractPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder, boolean isClientSide) {
-        super(playerSpacecraftBuilder, playerSpacecraftBuilder.currentHostSpace, isClientSide);
+        super(playerSpacecraftBuilder, playerSpacecraftBuilder.currentHostSpace, playerSpacecraftBuilder.soiIntercept, isClientSide);
         this.player = playerSpacecraftBuilder.player;
         if (this.player != null) {
             ((PlayerOrbitAccessor)player).setOrbitalBody(this);
@@ -117,6 +118,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
     public static class PlayerOrbitBuilder extends OrbitalBody.Builder<AbstractPlayerOrbitBody> {
         Player player = null;
         OrbitId currentHostSpace;
+        OrbitalCalc.SOIIntercept soiIntercept;
 
         public PlayerOrbitBuilder() {
         }
@@ -125,6 +127,14 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
             this.player = player;
             this.displayName = player.getDisplayName();
             this.id = new OrbitId(player);
+        }
+
+        public void setHostSpace(OrbitId orbitId) {
+            this.currentHostSpace = orbitId;
+        }
+
+        public void setSoiIntercept(OrbitalCalc.SOIIntercept soiIntercept) {
+            this.soiIntercept = soiIntercept;
         }
 
         @Override
@@ -136,10 +146,6 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody {
         @Override
         public AbstractPlayerOrbitBody buildClientSide() {
             return new ClientPlayerOrbitBody(this);
-        }
-
-        public void setHostSpace(OrbitId orbitId) {
-            this.currentHostSpace = orbitId;
         }
     }
 }

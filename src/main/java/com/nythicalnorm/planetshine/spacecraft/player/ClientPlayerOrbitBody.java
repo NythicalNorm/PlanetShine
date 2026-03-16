@@ -35,6 +35,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
 
     @Override
     public void init() {
+        super.init();
         this.playerInfo = Minecraft.getInstance().getConnection().getPlayerInfo(this.getOrbitId().getUUID());
     }
 

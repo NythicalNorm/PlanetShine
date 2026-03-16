@@ -10,7 +10,7 @@ import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
-public class OrbitalElements implements OrbitalElementsc{
+public class OrbitalElements implements OrbitalElementsc {
     public static final double UniversalGravitationalConstant = 6.6743E-11d;
 
     private double SemiMajorAxis;
@@ -281,13 +281,39 @@ public class OrbitalElements implements OrbitalElementsc{
     }
 
     @Override
+    public long getOrbitalPeriodLong() {
+        return TimeCalc.timeDoubleToLong(this.getOrbitalPeriod());
+    }
+
+    @Override
     public double getEccentricityAnomaly() {
         return EccentricAnomaly;
     }
 
     @Override
     public long getLastPeriapsisTime(long elapsedTime) {
-        return elapsedTime - (elapsedTime - this.periapsisTime);
+        if (this.isHyperbolic()) {
+            return elapsedTime - (elapsedTime - this.periapsisTime);
+        } else {
+            long orbitalPeriod = TimeCalc.timeDoubleToLong(this.getOrbitalPeriod());
+            long lastCalculatedPeriapsisTime = elapsedTime - this.periapsisTime;
+            return elapsedTime - (lastCalculatedPeriapsisTime % orbitalPeriod);
+        }
+    }
+
+    @Override
+    public Long getNextPeriapsisTime(long elapsedTime) {
+        if (this.isHyperbolic()) {
+            if (elapsedTime > this.periapsisTime) {
+                return null;
+            }
+            return elapsedTime - (elapsedTime - this.periapsisTime);
+        } else {
+            long orbitalPeriod = TimeCalc.timeDoubleToLong(this.getOrbitalPeriod());
+            long lastCalculatedPeriapsisTime = elapsedTime - this.periapsisTime;
+            long lastPeriapsisTime = elapsedTime - (lastCalculatedPeriapsisTime % orbitalPeriod);
+            return lastPeriapsisTime + orbitalPeriod;
+        }
     }
 
     @Override
