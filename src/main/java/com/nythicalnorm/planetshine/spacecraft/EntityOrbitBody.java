@@ -77,8 +77,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
                 this.simulateNonTimeWarp();
                 this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
                 this.sendOrbitUpdateToRelevantPlayers();
-                this.nextOrbitIntercept = null;
-                this.isInterceptsCalculated = false;
+                this.resetIntercepts();
             }
         }
 
@@ -106,6 +105,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         Vector3d relativeVel = new Vector3d(this.getMcVelocity());
         this.getMcPosition().sub(originPos, relativePos);
 
+        // need to change this so this isn't as janky.
         if (relativePos.lengthSquared() > 1 || relativeVel.lengthSquared() > 1) {
             this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
             this.relativeVelocity.set(relativeVel.add(this.getHostSpaceAccess().getHostBody().getRelativeVelocity()));
@@ -115,6 +115,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             this.relativeOrbitalPos.set(hostBody.getRelativePos());
             this.relativeVelocity.set(hostBody.getRelativeVelocity());
             this.orbitalElements.set(hostBody.getOrbitalElements());
+            this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
         }
     }
 
@@ -141,6 +142,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     public abstract @Nullable Vector3dc getMcPosition();
     public abstract @Nullable Vector3dc getMcVelocity();
     public abstract @Nullable Quaterniondc getMCRotation();
+
+    public @Nullable OrbitalCalc.SOIIntercept getNextOrbitIntercept() {
+        return nextOrbitIntercept;
+    }
 
     public void setHostOrbitSpace(OrbitHostSpace playerHostSpace) {
         if (playerHostSpace != null) {
@@ -188,26 +193,32 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     @PhysTickOnly
-    public void calculateIntercepts(long elapsedTime) {
+    public @Nullable OrbitalCalc.SOIIntercept calculateIntercepts(long elapsedTime) {
         if (this.orbitalElements == null || this.parent == null) {
             PlanetShine.logError("Invalid state for EntityOrbitBody : " + this.getDisplayName());
-            return;
+            return null;
         }
-            // first calculate intercept with planets with the same parent
-            if (!this.parent.getPlanetChildren().isEmpty()) {
-                //this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
-            }
+        // first calculate intercept with planets with the same parent
+        if (!this.parent.getPlanetChildren().isEmpty()) {
+            //this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
+        }
 
-            // if that fails than start checking that escape Intercepts fail too:
-            if (this.nextOrbitIntercept == null) {
-                this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
-            }
-            this.isInterceptsCalculated = true;
+        // if that fails than start checking that escape Intercepts fail too:
+        if (this.nextOrbitIntercept == null) {
+            this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+        }
+        this.isInterceptsCalculated = true;
+        return this.nextOrbitIntercept;
     }
 
     public void resetIntercepts() {
         this.isInterceptsCalculated = false;
         this.nextOrbitIntercept = null;
+    }
+
+    // client-side only
+    public void setIntercept(OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
+        this.nextOrbitIntercept = soiIntercept;
     }
 
     //client-side

@@ -8,10 +8,12 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -178,6 +180,22 @@ public class NetworkEncoders {
     public static String readASCII(FriendlyByteBuf friendlyByteBuf) {
         int stringSize = friendlyByteBuf.readVarInt();
         return friendlyByteBuf.readCharSequence(stringSize, StandardCharsets.US_ASCII).toString();
+    }
+
+    public static void writeOrbitIntercept(FriendlyByteBuf friendlyByteBuf, OrbitalCalc.SOIIntercept soiIntercept) {
+        friendlyByteBuf.writeDouble(soiIntercept.trueAnomaly());
+        friendlyByteBuf.writeLong(soiIntercept.timeElapsed());
+        soiIntercept.interceptingBody().encodeToBuffer(friendlyByteBuf);
+        friendlyByteBuf.writeBoolean(soiIntercept.isEscape());
+    }
+
+    public static OrbitalCalc.SOIIntercept readOrbitIntercept(FriendlyByteBuf friendlyByteBuf) {
+        return new OrbitalCalc.SOIIntercept(
+                friendlyByteBuf.readDouble(),
+                friendlyByteBuf.readLong(),
+                new OrbitId(friendlyByteBuf),
+                friendlyByteBuf.readBoolean()
+        );
     }
 
     private record TempPlanetaryHolder(CelestialBody planetaryBody, List<OrbitId> orbitIdList) {}

@@ -24,6 +24,7 @@ import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.Stage;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -198,6 +199,13 @@ public class PSClient extends Stage {
 
     public void entityJoinOrbital(EntityOrbitBody entityOrbitBody, OrbitId orbitParent) {
         this.solarSystem.entityJoinedOrbital(entityOrbitBody, orbitParent);
+    }
+
+    public void setOrbitIntercept(OrbitId spacecraftID, OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
+        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
+        if (entityOrbitBody != null) {
+            entityOrbitBody.setIntercept(soiIntercept);
+        }
     }
 
     public void orbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElementsc orbitalElements) {

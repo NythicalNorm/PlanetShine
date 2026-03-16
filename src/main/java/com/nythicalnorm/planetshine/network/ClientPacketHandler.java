@@ -11,11 +11,13 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
 import java.util.List;
@@ -128,6 +130,12 @@ public class ClientPacketHandler {
     public static void entityBodyJoinOrbital(EntityOrbitBody entityOrbitBody, OrbitId orbitParent) {
         if (PSClient.get() != null) {
             PSClient.get().entityJoinOrbital(entityOrbitBody, orbitParent);
+        }
+    }
+
+    public static void setOrbitIntercept(OrbitId spacecraftID, OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
+        if (PSClient.get() != null) {
+            PSClient.get().setOrbitIntercept(spacecraftID, soiIntercept);
         }
     }
 }

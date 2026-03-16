@@ -51,6 +51,13 @@ public class OrbitalElements implements OrbitalElementsc{
         this.Mu = orbitalElements.getMu();
         this.MeanAngularMotion = orbitalElements.getMeanAngularMotion();
 
+        // this is calculated every tick, but within that tick it should not be zero.
+        // so when it's set from server this makes sure that the eccentric anomaly isn't zero, cause the set orbit isn't
+        // simulated and eccentric anomaly calculated yet.
+        if (!Double.isNaN(orbitalElements.getEccentricityAnomaly())) {
+            this.EccentricAnomaly = orbitalElements.getEccentricityAnomaly();
+        }
+
         this.orbitRotation = new Quaterniond();
         setOrbitRotationFromElements(this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);
     }
@@ -72,6 +79,7 @@ public class OrbitalElements implements OrbitalElementsc{
         this.ArgumentOfPeriapsis = argumentOfperiapsis;
         this.LongitudeOfAscendingNode = longitudeOfAscendingNode;
         this.orbitRotation = new Quaterniond();
+        this.EccentricAnomaly = Double.NaN; // null value, its bit of a hack but hey better than boxing it kinda idk.
 
         setOrbitRotationFromElements(argumentOfperiapsis, inclination, longitudeOfAscendingNode);
     }

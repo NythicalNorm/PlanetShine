@@ -109,7 +109,14 @@ public class OrbitDrawer {
         a = a*scaleFactor;
         b = b*scaleFactor;
         float distanceFromCenterToFoci =  isElliptical ? (float) -Math.sqrt(a*a - b*b) : (float) Math.sqrt(a*a + b*b);
-        setCullingUniforms(orbitalElements, b / a);
+
+        if (orbitalBody instanceof EntityOrbitBody entityOrbitBody) {
+            setCullingUniforms(orbitalElements, entityOrbitBody.getNextOrbitIntercept(), b / a);
+        } else {
+            distanceToFoci.set(0.0f);
+            startTrueAnomaly.set((float) -Math.PI);
+            semiMinorAxisMultiplier.set(1.0f);
+        }
 
         poseStack.pushPose();
         poseStack.mulPose(new Quaternionf().set(orbitalElements.getOrbitRotation()));
@@ -129,22 +136,28 @@ public class OrbitDrawer {
         poseStack.popPose();
     }
 
-    private static void setCullingUniforms(OrbitalElementsc orbitalElements, double baRatio) {
-        if (orbitalElements.isHyperbolic()) {
-            double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(orbitalElements.getEccentricityAnomaly(),
-                    orbitalElements.getEccentricity());
-
-//            if (trueAnomaly < 0f) {
-//                trueAnomaly = trueAnomaly + (2 * Math.PI);
-//            }
-
-            startTrueAnomaly.set((float) trueAnomaly);
-            distanceToFoci.set((float) orbitalElements.getEccentricity());
-            semiMinorAxisMultiplier.set((float) baRatio);
-        } else {
+    private static void setCullingUniforms(OrbitalElementsc orbitalElements, OrbitalCalc.SOIIntercept intercept, double baRatio) {
+        if (intercept == null) {
             distanceToFoci.set(0.0f);
             startTrueAnomaly.set((float) -Math.PI);
             semiMinorAxisMultiplier.set(1.0f);
+            endTrueAnomaly.set((float) Math.PI);
+            return;
+        }
+
+        double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(orbitalElements.getEccentricityAnomaly(),
+                orbitalElements.getEccentricity());
+
+        if (orbitalElements.isHyperbolic()) {
+            startTrueAnomaly.set((float) trueAnomaly);
+            endTrueAnomaly.set((float) intercept.trueAnomaly());
+            distanceToFoci.set((float) orbitalElements.getEccentricity());
+            semiMinorAxisMultiplier.set((float) baRatio);
+        } else {
+            startTrueAnomaly.set((float) trueAnomaly);
+            endTrueAnomaly.set((float) intercept.trueAnomaly());
+            distanceToFoci.set((float) orbitalElements.getEccentricity());
+            semiMinorAxisMultiplier.set((float) -baRatio);
         }
     }
 }

@@ -15,8 +15,11 @@ out vec4 fragColor;
 #define h_PI 1.57079632679
 
 float adjustedTrueAnomaly(vec3 vertPos) {
-    float currentAnamoly = atan(vertPos.z * semiMinorAxisMultiplier , -(vertPos.x - distanceToFoci));
-    return currentAnamoly;
+    if (distanceToFoci > 1) {
+        return atan(vertPos.z * semiMinorAxisMultiplier , -(vertPos.x - distanceToFoci));
+    } else {
+        return atan(vertPos.z * semiMinorAxisMultiplier , (vertPos.x - distanceToFoci));
+    }
 }
 
 void main() {
@@ -29,6 +32,9 @@ void main() {
     float anomaly = adjustedTrueAnomaly(vertPos);
 
     if (startTrueAnomaly >= anomaly) {
+        isVisble = 0.0;
+    }
+    if (endTrueAnomaly <= anomaly) {
         isVisble = 0.0;
     }
 

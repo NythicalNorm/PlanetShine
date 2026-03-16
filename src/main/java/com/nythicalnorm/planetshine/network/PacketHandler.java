@@ -82,6 +82,12 @@ public class PacketHandler {
                 .consumerMainThread(ClientboundHostOrbitSet::handle)
                 .add();
 
+        INSTANCE.messageBuilder(ClientboundSetOrbitIntercept.class, id++)
+                .encoder(ClientboundSetOrbitIntercept::encode)
+                .decoder(ClientboundSetOrbitIntercept::new)
+                .consumerMainThread(ClientboundSetOrbitIntercept::handle)
+                .add();
+
         INSTANCE.messageBuilder(ClientboundTimeWarpUpdate.class, id++)
                 .encoder(ClientboundTimeWarpUpdate::encode)
                 .decoder(ClientboundTimeWarpUpdate::new)

@@ -1,12 +1,16 @@
 package com.nythicalnorm.planetshine.solarsystem;
 
+import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundSetOrbitIntercept;
 import com.nythicalnorm.planetshine.solarsystem.bodies.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +43,12 @@ public class SolarSystem {
                 entityOrbitBody.simulate(currentTime, isTimeWarping)));
     }
 
-    @PhysTickOnly
-    public void calculateSpacecraftIntercepts(long timeElapsed) {
+    @PhysTickOnly // server side only
+    public void calculateSpacecraftIntercepts(long timeElapsed, PSServer psServer) {
         for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
             if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
-                entityBody.calculateIntercepts(timeElapsed);
+                OrbitalCalc.SOIIntercept intercept = entityBody.calculateIntercepts(timeElapsed);
+                PacketHandler.sendToAllClients(new ClientboundSetOrbitIntercept(entityBody.getOrbitId(), intercept));
             }
         }
     }
