@@ -27,16 +27,31 @@ void main() {
     if (color.a == 0.0) {
         discard;
     }
-
-    float isVisble = 1.0;
     float anomaly = adjustedTrueAnomaly(vertPos);
 
-    if (startTrueAnomaly >= anomaly) {
-        isVisble = 0.0;
-    }
-    if (endTrueAnomaly <= anomaly) {
-        isVisble = 0.0;
-    }
+//    if (startTrueAnomaly < endTrueAnomaly) {
+//        if (startTrueAnomaly >= anomaly) {
+//            isVisble = 0.0;
+//        }
+//        if (endTrueAnomaly <= anomaly) {
+//            isVisble = 0.0;
+//        }
+//    } else {
+//        isVisble = 0.0;
+//        if (startTrueAnomaly <= anomaly) {
+//            isVisble = 1.0;
+//        }
+//        if (endTrueAnomaly >= anomaly) {
+//            isVisble = 1.0;
+//        }
+//    }
 
-    fragColor = vec4(color.r, color.g, color.b, isVisble);
+    float normalOrder = step(startTrueAnomaly, endTrueAnomaly);
+
+    float visNormal  = step(startTrueAnomaly, anomaly) * step(anomaly, endTrueAnomaly);
+    float visWrapped = max(step(startTrueAnomaly, anomaly), step(anomaly, endTrueAnomaly));
+
+    float isVisible = mix(visWrapped, visNormal, normalOrder);
+
+    fragColor = vec4(color.r, color.g, color.b, isVisible);
 }

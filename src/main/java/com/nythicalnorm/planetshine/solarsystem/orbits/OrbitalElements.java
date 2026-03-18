@@ -24,7 +24,6 @@ public class OrbitalElements implements OrbitalElementsc {
     private Quaterniond orbitRotation;
     private double Mu;
     private double MeanAngularMotion;
-    private double EccentricAnomaly;
 
     private static final double twoPI = 2 * Math.PI;
 
@@ -51,13 +50,6 @@ public class OrbitalElements implements OrbitalElementsc {
         this.Mu = orbitalElements.getMu();
         this.MeanAngularMotion = orbitalElements.getMeanAngularMotion();
 
-        // this is calculated every tick, but within that tick it should not be zero.
-        // so when it's set from server this makes sure that the eccentric anomaly isn't zero, cause the set orbit isn't
-        // simulated and eccentric anomaly calculated yet.
-        if (!Double.isNaN(orbitalElements.getEccentricityAnomaly())) {
-            this.EccentricAnomaly = orbitalElements.getEccentricityAnomaly();
-        }
-
         this.orbitRotation = new Quaterniond();
         setOrbitRotationFromElements(this.ArgumentOfPeriapsis, this.Inclination, this.LongitudeOfAscendingNode);
     }
@@ -79,26 +71,24 @@ public class OrbitalElements implements OrbitalElementsc {
         this.ArgumentOfPeriapsis = argumentOfperiapsis;
         this.LongitudeOfAscendingNode = longitudeOfAscendingNode;
         this.orbitRotation = new Quaterniond();
-        this.EccentricAnomaly = Double.NaN; // null value, its bit of a hack but hey better than boxing it kinda idk.
 
         setOrbitRotationFromElements(argumentOfperiapsis, inclination, longitudeOfAscendingNode);
     }
 
     // Reference: https://space.stackexchange.com/questions/8911/determining-orbital-position-at-a-future-point-in-time
-    public void ToCartesian(long timeElapsed, Vector3d outPos, Vector3d outVel) {
+    public double ToCartesian(long timeElapsed, Vector3d outPos, Vector3d outVel) {
         double a = this.SemiMajorAxis;
         double e = this.Eccentricity;
         boolean isElliptical = e < 1;
-
         double M = this.MeanAngularMotion * (getModulusCurrentTime(timeElapsed, periapsisTime, Eccentricity, MeanAngularMotion));
 
         //Eccentric anomaly also this works for circular orbits I think
-        this.EccentricAnomaly = isElliptical ? OrbitalCalc.ellipticalEccentricAnomaly(M, e) : OrbitalCalc.hyperbolicEccentricAnomaly(M, e);
+        double anomaly = isElliptical ? OrbitalCalc.ellipticalEccentricAnomaly(M, e) : OrbitalCalc.hyperbolicEccentricAnomaly(M, e);
 
         double semiMinorAxis = (isElliptical) ? a * Math.sqrt(1 - (e*e)) : -a * Math.sqrt((e*e) - 1);
 
-        double sinAnomaly =  (isElliptical) ? Math.sin(this.EccentricAnomaly) : Math.sinh(this.EccentricAnomaly);
-        double cosAnomaly =  (isElliptical) ?  org.joml.Math.cosFromSin(sinAnomaly, this.EccentricAnomaly) : Math.cosh(this.EccentricAnomaly);
+        double sinAnomaly =  (isElliptical) ? Math.sin(anomaly) : Math.sinh(anomaly);
+        double cosAnomaly =  (isElliptical) ?  org.joml.Math.cosFromSin(sinAnomaly, anomaly) : Math.cosh(anomaly);
 
         double P = a * (cosAnomaly - e);
         double Q = -semiMinorAxis * sinAnomaly;
@@ -119,6 +109,7 @@ public class OrbitalElements implements OrbitalElementsc {
         double vQ = -sqrtSgpOverSlr*(e+P/prearctanDivSquareRoot);
 
         this.perifocalToEquatorial(vP, vQ, outVel);
+        return anomaly;
     }
 
     public static double getModulusCurrentTime(long timeElapsed, long periapsisTime, double eccentricity, double meanAngularMotion) {
@@ -153,11 +144,11 @@ public class OrbitalElements implements OrbitalElementsc {
      * @see <a href="https://downloads.rene-schwarz.com/download/M002-Cartesian_State_Vectors_to_Keplerian_Orbit_Elements.pdf">Paper</a>
      * @see <a href="https://space.stackexchange.com/questions/65465/orbit-determination-from-position-and-velocityf">Space stack exchange</a>
      */
-    public void fromCartesian(Vector3dc position, Vector3dc velocity, long TimeElapsed) {
+    public double fromCartesian(Vector3dc position, Vector3dc velocity, long TimeElapsed) {
         double PosMagnitude = position.length();
         double VelMagnitude = velocity.length();
 
-        // incredibly jank to use velocity.negate but i don't know what the problem is...
+        // incredibly sus to use velocity.negate but i don't know what the problem is...
         Vector3d negatedVelocity = velocity.negate(new Vector3d());
         Vector3d momentumVectorH = new Vector3d(position).cross(negatedVelocity);
         Vector3d eccentricityVector = negatedVelocity.cross(momentumVectorH).div(Mu);
@@ -198,19 +189,24 @@ public class OrbitalElements implements OrbitalElementsc {
         this.SemiMajorAxis = 1 / ((2 / PosMagnitude) - (VelMagnitude * VelMagnitude) / Mu);
 
         if (Eccentricity < 1) {
-            this.EccentricAnomaly = 2 * Math.atan2(Math.tan(trueAnomoly * 0.5d), Math.sqrt((1 + Eccentricity) / (1 - Eccentricity)));
+            double anomaly = 2 * Math.atan2(Math.tan(trueAnomoly * 0.5d), Math.sqrt((1 + Eccentricity) / (1 - Eccentricity)));
 
             this.MeanAngularMotion = Math.sqrt(Mu / (SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
-            double timeDiffTerm = (EccentricAnomaly - Eccentricity * Math.sin(EccentricAnomaly)) / this.MeanAngularMotion;
+            double timeDiffTerm = (anomaly - Eccentricity * Math.sin(anomaly)) / this.MeanAngularMotion;
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
+            if (this.periapsisTime > TimeElapsed) {
+                this.periapsisTime = this.periapsisTime + getOrbitalPeriodLong();
+            }
+            return anomaly;
         } else {
             double cosTrueAnomoly = Math.cos(trueAnomoly);
-            this.EccentricAnomaly = OrbitalCalc.invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
-            EccentricAnomaly = (trueAnomoly > Math.PI) ? -EccentricAnomaly : EccentricAnomaly;
+            double anomaly = OrbitalCalc.invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
+            anomaly = (trueAnomoly > Math.PI) ? -anomaly : anomaly;
 
             this.MeanAngularMotion = Math.sqrt(Mu / -(SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
-            double timeDiffTerm = (Eccentricity * Math.sinh(EccentricAnomaly) - EccentricAnomaly) / this.MeanAngularMotion;
+            double timeDiffTerm = (Eccentricity * Math.sinh(anomaly) - anomaly) / this.MeanAngularMotion;
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
+            return anomaly;
         }
     }
 
@@ -286,12 +282,7 @@ public class OrbitalElements implements OrbitalElementsc {
     }
 
     @Override
-    public double getEccentricityAnomaly() {
-        return EccentricAnomaly;
-    }
-
-    @Override
-    public long getLastPeriapsisTime(long elapsedTime) {
+    public long getLastPeriapsisTime(long elapsedTime) { // doesn't work properly for elliptical orbits before periapsis
         if (this.isHyperbolic()) {
             return elapsedTime - (elapsedTime - this.periapsisTime);
         } else {
@@ -302,7 +293,7 @@ public class OrbitalElements implements OrbitalElementsc {
     }
 
     @Override
-    public Long getNextPeriapsisTime(long elapsedTime) {
+    public @Nullable Long getNextPeriapsisTime(long elapsedTime) {
         if (this.isHyperbolic()) {
             if (elapsedTime > this.periapsisTime) {
                 return null;
@@ -336,13 +327,16 @@ public class OrbitalElements implements OrbitalElementsc {
         return this.SemiMajorAxis * (1 - Eccentricity);
     }
 
+    @Override
     public @Nullable OrbitalCalc.SOIIntercept findOrbitEscapeIntercept(CelestialBody body, long elapsedTime) {
-        if (this.getApoapsis() < body.getSphereOfInfluence()) {
+        double soiWithBuffer = body.getSphereOfInfluence() * 1.01d; // bit of an extra buffer so that you don't immediately get sucked back in.
+
+        if (this.getApoapsis() < soiWithBuffer) {
             return null;
         }
 
         double semiLatusRectum = SemiMajorAxis * (1 - (Eccentricity * Eccentricity));
-        double value = (semiLatusRectum - body.getSphereOfInfluence()) / (Eccentricity * body.getSphereOfInfluence());
+        double value = (semiLatusRectum - soiWithBuffer) / (Eccentricity * soiWithBuffer);
         double trueAnomaly = Math.acos(value);
 
         if (Double.isNaN(trueAnomaly)) {
@@ -356,6 +350,7 @@ public class OrbitalElements implements OrbitalElementsc {
                 this.getLastPeriapsisTime(elapsedTime)
         );
 
-        return new OrbitalCalc.SOIIntercept(trueAnomaly, escapeTime, body.getParent().getOrbitId(), true);
+        return new OrbitalCalc.SOIIntercept(trueAnomaly, escapeTime, body.getParent().
+                getOrbitId(), true);
     }
 }

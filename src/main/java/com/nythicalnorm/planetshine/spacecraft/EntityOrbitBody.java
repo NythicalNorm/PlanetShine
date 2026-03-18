@@ -30,12 +30,12 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected final AtomicReference<OrbitHostSpace> orbitHostSpace;
     protected ConcurrentLinkedQueue<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
     protected final boolean isClientSide;
-    // basically whether the next planet intercept of escape or intersection is calculated yet.
-    private @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
+    protected @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
+    protected double lastCalculatedEccentricAnomaly;
 
     // server side only
-    private boolean isInterceptsCalculated;
-    private @Nullable Long nextPeriapsisTime = 0L;
+    protected boolean isInterceptsCalculated; // basically whether the next planet intercept of escape or intersection is calculated yet.
+    protected @Nullable Long nextPeriapsisTime = 0L;
 
     public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID, @Nullable OrbitalCalc.SOIIntercept soiIntercept, boolean isClientSide) {
         super(orbitalBuilder);
@@ -85,7 +85,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
                 this.simulateFromKeplerian(TimeElapsed);
             } else if (!isClientSide) { // if it is accelerating do the special calc for this tick
                 this.simulateNonTimeWarp();
-                this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
                 this.sendOrbitUpdateToRelevantPlayers();
                 this.resetIntercepts(TimeElapsed);
                 this.nextPeriapsisTime = this.orbitalElements.getNextPeriapsisTime(TimeElapsed);
@@ -96,7 +96,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     protected void simulateFromKeplerian(long timeElapsed) {
-        this.orbitalElements.ToCartesian(timeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
+        this.lastCalculatedEccentricAnomaly = this.orbitalElements.ToCartesian(timeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
     }
 
     private void simulateNonTimeWarp() {
@@ -112,21 +112,28 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     protected void setStateVectorsFromHostBody(Vector3dc originPos, EntityOrbitBody hostBody, long TimeElapsed) {
+        Vector3dc mcVelocity = this.getMcVelocity();
+        Vector3dc mcPosition = this.getMcPosition();
+
+        if (mcVelocity == null || mcPosition == null) {
+            return;
+        }
+
         Vector3d relativePos = new Vector3d();
-        Vector3d relativeVel = new Vector3d(this.getMcVelocity());
-        this.getMcPosition().sub(originPos, relativePos);
+        Vector3d relativeVel = new Vector3d(mcVelocity);
+        mcPosition.sub(originPos, relativePos);
+        this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
 
         // need to change this so this isn't as janky.
         if (relativePos.lengthSquared() > 1 || relativeVel.lengthSquared() > 1) {
             this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
             this.relativeVelocity.set(relativeVel.add(this.getHostSpaceAccess().getHostBody().getRelativeVelocity()));
-
-            this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+            this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
         } else {
             this.relativeOrbitalPos.set(hostBody.getRelativePos());
             this.relativeVelocity.set(hostBody.getRelativeVelocity());
             this.orbitalElements.set(hostBody.getOrbitalElements());
-            this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
+            this.lastCalculatedEccentricAnomaly = hostBody.getEccentricAnomaly();
         }
     }
 
@@ -189,9 +196,13 @@ public abstract class EntityOrbitBody extends OrbitalBody {
 
         if (nextOrbitIntercept.isEscape()) {
             CelestialBody newParent = this.getParent().getParent();
+            Vector3d newParentPos = new Vector3d();
+            Vector3d newParentVel = new Vector3d();
+            this.getParent().getOrbitalElements().ToCartesian(getNextOrbitIntercept().timeElapsed(), newParentPos, newParentVel);
+
             if (newParent != null) {
-                Vector3d escapeRelPos = new Vector3d(this.getParent().getRelativePos()).add(this.getRelativePos());
-                Vector3d escapeRelVel = new Vector3d(this.getParent().getRelativeVelocity()).add(this.getRelativeVelocity());
+                Vector3d escapeRelPos = new Vector3d(newParentPos).add(this.getRelativePos());
+                Vector3d escapeRelVel = new Vector3d(newParentVel).add(this.getRelativeVelocity());
                 this.orbitalElements = new OrbitalElements(escapeRelPos, escapeRelVel, this.nextOrbitIntercept.timeElapsed(), newParent.getMass());
                 return newParent;
             } else {
@@ -200,9 +211,13 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             }
         } else {
             CelestialBody newParent = this.getParent().getPlanetChild(nextOrbitIntercept.interceptingBody());
+            Vector3d newParentPos = new Vector3d();
+            Vector3d newParentVel = new Vector3d();
+
             if (newParent != null) {
-                Vector3d escapeRelPos = new Vector3d(this.getRelativePos()).sub(newParent.getRelativePos());
-                Vector3d escapeRelVel = new Vector3d(this.getRelativeVelocity()).sub(newParent.getRelativeVelocity());
+                newParent.getOrbitalElements().ToCartesian(getNextOrbitIntercept().timeElapsed(), newParentPos, newParentVel);
+                Vector3d escapeRelPos = new Vector3d(this.getRelativePos()).sub(newParentPos);
+                Vector3d escapeRelVel = new Vector3d(this.getRelativeVelocity()).sub(newParentVel);
                 this.orbitalElements = new OrbitalElements(escapeRelPos, escapeRelVel, this.nextOrbitIntercept.timeElapsed(), newParent.getMass());
             }
             return newParent;
@@ -251,6 +266,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
 
     public boolean isOrbitInterceptsCalculated() {
         return isInterceptsCalculated;
+    }
+
+    public double getEccentricAnomaly() {
+        return lastCalculatedEccentricAnomaly;
     }
 
     public Optional<OrbitId> getHostSpaceID() {

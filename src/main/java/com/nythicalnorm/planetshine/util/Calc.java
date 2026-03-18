@@ -16,4 +16,14 @@ public class Calc {
 
         return total;
     }
+
+    // wraps degrees from - pi to positive pi
+    public static double wrapDegrees(double angle) {
+        double pi = Math.PI;
+        while (angle > pi)
+            angle -= 2 * pi;
+        while (angle < -pi)
+            angle += 2 * pi;
+        return angle;
+    }
 }

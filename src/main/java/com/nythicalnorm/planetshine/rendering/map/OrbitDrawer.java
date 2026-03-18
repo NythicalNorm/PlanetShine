@@ -111,7 +111,7 @@ public class OrbitDrawer {
         float distanceFromCenterToFoci =  isElliptical ? (float) -Math.sqrt(a*a - b*b) : (float) Math.sqrt(a*a + b*b);
 
         if (orbitalBody instanceof EntityOrbitBody entityOrbitBody) {
-            setCullingUniforms(orbitalElements, entityOrbitBody.getNextOrbitIntercept(), b / a);
+            setCullingUniforms(orbitalElements, entityOrbitBody.getEccentricAnomaly(), entityOrbitBody.getNextOrbitIntercept(), b / a);
         } else {
             distanceToFoci.set(0.0f);
             startTrueAnomaly.set((float) -Math.PI);
@@ -136,7 +136,7 @@ public class OrbitDrawer {
         poseStack.popPose();
     }
 
-    private static void setCullingUniforms(OrbitalElementsc orbitalElements, OrbitalCalc.SOIIntercept intercept, double baRatio) {
+    private static void setCullingUniforms(OrbitalElementsc orbitalElements, double eccentricAnomaly, OrbitalCalc.SOIIntercept intercept, double baRatio) {
         if (intercept == null) {
             distanceToFoci.set(0.0f);
             startTrueAnomaly.set((float) -Math.PI);
@@ -145,7 +145,7 @@ public class OrbitDrawer {
             return;
         }
 
-        double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(orbitalElements.getEccentricityAnomaly(),
+        double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(eccentricAnomaly,
                 orbitalElements.getEccentricity());
 
         if (orbitalElements.isHyperbolic()) {
