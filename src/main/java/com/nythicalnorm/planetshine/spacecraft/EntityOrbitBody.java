@@ -230,15 +230,23 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             PlanetShine.logError("Invalid state for EntityOrbitBody : " + this.getDisplayName());
             return null;
         }
+
+        this.nextOrbitIntercept = null;
+        OrbitalCalc.SOIIntercept escapeIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+        OrbitalCalc.SOIIntercept planetIntercept = null;
+
         // first calculate intercept with planets with the same parent
         if (!this.parent.getPlanetChildren().isEmpty()) {
-            this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
+            planetIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, escapeIntercept, this.parent.getPlanetChildren());
+        }
+        if (escapeIntercept != null && planetIntercept == null) {
+            this.nextOrbitIntercept = escapeIntercept;
+        } else if (escapeIntercept == null && planetIntercept != null) {
+            this.nextOrbitIntercept = planetIntercept;
+        } else if (escapeIntercept != null && planetIntercept != null) {
+            this.nextOrbitIntercept = escapeIntercept.timeElapsed() <= planetIntercept.timeElapsed() ? escapeIntercept : planetIntercept;
         }
 
-        // if that fails than start checking that escape Intercepts fail too:
-        if (this.nextOrbitIntercept == null) {
-            this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
-        }
         this.isInterceptsCalculated = true;
         return this.nextOrbitIntercept;
     }

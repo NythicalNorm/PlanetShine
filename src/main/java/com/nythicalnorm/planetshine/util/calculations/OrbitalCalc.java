@@ -155,7 +155,7 @@ public class OrbitalCalc {
     }
 
     public static @Nullable SOIIntercept findAllRelativePlanetIntercepts(EntityOrbitBody orbitBody,
-                                                                         long timeElapsed, Collection<CelestialBody> planetChildren) {
+                                                                         long timeElapsed, SOIIntercept escapeIntercept, Collection<CelestialBody> planetChildren) {
         tickTime = Util.getNanos();
         double entityApoapsis = orbitBody.getOrbitalElements().getApoapsis();
         // hyperbolic orbits don't circle back, so the current pos can be taken as the minimum it will ever be
@@ -176,7 +176,6 @@ public class OrbitalCalc {
         SimpleOrbit entityOrbit = new SimpleOrbit(orbitBody.getOrbitalElements());
         double startingAnomaly = getTrueAnomalyFromEccentricAnomaly(orbitBody.getEccentricAnomaly(),
                 orbitBody.getOrbitalElements().getEccentricity());
-        SOIIntercept escapeIntercept = orbitBody.getOrbitalElements().findOrbitEscapeIntercept(orbitBody.getParent(), timeElapsed);
 
         SOIIntercept calculatedResult = calculateFutureForNextOrbit(entityOrbit, startingAnomaly, orbitBody.getOrbitalElements(),
                 escapeIntercept, planetInterceptCandidateList, timeElapsed);
@@ -241,7 +240,7 @@ public class OrbitalCalc {
 
                     double dist = entityOrbit.getRelativePosition().distanceSquared(planetIntersect.planetOrbit.getRelativePosition());
 
-                    if (dist < Math.max(orbitInterceptDetectionRange, (planetIntersect.Soi * planetIntersect.Soi) )) {
+                    if (dist < Math.max(orbitInterceptDetectionRange, (planetIntersect.Soi * planetIntersect.Soi * 4) )) {
                         long timeRange;
                         if (escapeIntercept != null) {
                             long totalTimeRange = Math.abs(escapeIntercept.timeElapsed - originalOrbit.getPeriapsisTime());
