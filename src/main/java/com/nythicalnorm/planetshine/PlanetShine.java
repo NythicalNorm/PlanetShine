@@ -5,7 +5,6 @@ import com.nythicalnorm.planetshine.Item.PSCreativeModeTab;
 import com.nythicalnorm.planetshine.Item.PSItems;
 import com.nythicalnorm.planetshine.block.PSBlocks;
 import com.nythicalnorm.planetshine.commands.PSArguments;
-import com.nythicalnorm.planetshine.event.VSClientEvents;
 import com.nythicalnorm.planetshine.event.VSServerEvents;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.sound.PSSounds;
@@ -43,7 +42,7 @@ public class PlanetShine
         PSCreativeModeTab.register(modEventBus);
 
         VSServerEvents.addListeners();
-        VSClientEvents.addListeners();
+
         //modEventBus.addListener(this::addCreative);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us

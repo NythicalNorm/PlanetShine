@@ -1,13 +1,10 @@
 package com.nythicalnorm.planetshine.event;
 
-import com.nythicalnorm.planetshine.Item.PSItems;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -16,23 +13,10 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = PlanetShine.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ForgeClientEvents {
-    @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event)
-    {
-        ItemProperties.register(PSItems.HANDHELD_THRUSTER.get(), ResourceLocation.fromNamespaceAndPath(PlanetShine.MODID, "inuse"),
-                (pStack, pLevel, pEntity, pSeed) -> {
-            if (pEntity != null && pEntity.getUseItem().getItem() == PSItems.HANDHELD_THRUSTER.get() && pEntity.isUsingItem()) {
-                return 1f;
-            }
-            return 0f;
-        });
-    }
-
     @SubscribeEvent
     public static void OnKeyInput (InputEvent.Key event) {
         if (PSKeyBinds.INC_TIME_WARP_KEY.consumeClick()) {
