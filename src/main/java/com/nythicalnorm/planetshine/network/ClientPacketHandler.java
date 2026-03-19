@@ -94,8 +94,8 @@ public class ClientPacketHandler {
     }
 
     public static void incomingPlanetTexture(OrbitId planetID, byte[] planetTexture) {
-        PSClient.getInstance().ifPresent(ps ->
-                ps.getPlanetTexManager().incomingPlanetTexture(ps.getClientPlanet(planetID), planetTexture));
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.getPlanetTexManager().incomingPlanetTexture(psClient.getSolarSystem().getPlanet(planetID), planetTexture));
     }
 
     public static void UpdateTimeState(long currenttime) {

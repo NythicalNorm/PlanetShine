@@ -6,7 +6,6 @@ import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ServerCelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
@@ -193,7 +192,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
             if (entityOrbitBody.isHostOfItsSpace() &&  entityOrbitBody.getOrbitalElements() != null &&
                     entityOrbitBody.getOrbitalElements().getPeriapsis() <= entityOrbitBody.getParent().getRadius() &&
                     entityOrbitBody.getAltitude() < TELEPORT_TO_GROUND_HEIGHT) {
-                ServerLevel planetLevel = ((ServerCelestialBody)entityOrbitBody.getParent()).getLevel();
+                ServerLevel planetLevel = entityOrbitBody.getParent().getCelestialServerData().getServerLevel();
                 if (planetLevel != null && entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.isBodyEntityLoaded()) {
                     Vector2d pos = PlanetCalc.getDimensionPosition(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent());
                     if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody) {

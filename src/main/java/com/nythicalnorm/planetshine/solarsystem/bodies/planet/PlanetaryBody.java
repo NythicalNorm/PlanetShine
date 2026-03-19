@@ -14,12 +14,13 @@ import org.joml.*;
 
 import java.lang.Math;
 
-public abstract class PlanetaryBody extends CelestialBody {
+public class PlanetaryBody extends CelestialBody {
     protected final AxisAngle4f NorthPoleDir;
     protected final long RotationPeriod;
 
-    public PlanetaryBody(PlanetBuilder planetBuilder) {
-        super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,  planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder);
+    public PlanetaryBody(PlanetBuilder planetBuilder, boolean isClientSide) {
+        super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,
+                planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder, isClientSide);
         this.NorthPoleDir = planetBuilder.NorthPoleDir;
         this.RotationPeriod = planetBuilder.RotationPeriod;
     }
@@ -107,13 +108,13 @@ public abstract class PlanetaryBody extends CelestialBody {
 
         @Override
         public PlanetaryBody build() {
-            return new ServerPlanetaryBody(this);
+            return new PlanetaryBody(this, false);
         }
 
         @OnlyIn(Dist.CLIENT)
         @Override
         public PlanetaryBody buildClientSide() {
-            return new ClientPlanetaryBody(this);
+            return new PlanetaryBody(this, true);
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ServerCelestialBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.joml.Vector2i;
 
@@ -23,7 +22,7 @@ public class DaylightData {
         DaylightRegion region = daylightRegions.computeIfAbsent(pos, k -> new DaylightRegion());
 
         if (!region.isCalculatedThisTick()) {
-            region.calculate(pos.x, pos.y, this.celestialBody, ((ServerCelestialBody)celestialBody).getLevel());
+            region.calculate(pos.x, pos.y, this.celestialBody, celestialBody.getCelestialServerData().getServerLevel());
         }
 
         return region;

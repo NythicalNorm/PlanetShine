@@ -29,7 +29,6 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected final AtomicReference<OrbitId> hostSpaceID;
     protected final AtomicReference<OrbitHostSpace> orbitHostSpace;
     protected ConcurrentLinkedQueue<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
-    protected final boolean isClientSide;
     protected @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
     protected double lastCalculatedEccentricAnomaly;
 
@@ -37,12 +36,12 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     protected boolean isInterceptsCalculated; // basically whether the next planet intercept of escape or intersection is calculated yet.
     protected @Nullable Long nextPeriapsisTime = 0L;
 
-    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID, @Nullable OrbitalCalc.SOIIntercept soiIntercept, boolean isClientSide) {
-        super(orbitalBuilder);
+    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID,
+                           @Nullable OrbitalCalc.SOIIntercept soiIntercept, boolean isClientSide) {
+        super(orbitalBuilder, isClientSide);
         this.hostSpaceID = new AtomicReference<>();
         this.orbitHostSpace = new AtomicReference<>();
         this.hostSpaceID.set(hostSpaceID);
-        this.isClientSide = isClientSide;
         this.isInterceptsCalculated = false;
         this.nextOrbitIntercept = soiIntercept;
     }

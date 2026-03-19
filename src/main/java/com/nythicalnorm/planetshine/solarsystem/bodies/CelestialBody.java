@@ -9,7 +9,10 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
@@ -31,13 +34,21 @@ public abstract class CelestialBody extends OrbitalBody {
     protected final ConcurrentMap<OrbitId, EntityOrbitBody> childEntityBodies;
     protected SolarSystem solarSystem;
 
+    //ClientSide
+    @OnlyIn(Dist.CLIENT)
+    protected @Nullable ResourceLocation mainTexture;
+
+    //ServerSide
+    protected ServerCelestialData serverCelestialData;
+
     //calculated on load i.e not serialized or networked
     protected double SOI;
     protected double minInterceptDistance; // basically the minimum distance from the parent body that someone has to be in this body's SOI;
     protected double maxInterceptDistance; // same for the maximum distance
 
-    public CelestialBody(String name, double radius, double mass, Quaternionf rotation, PlanetAtmosphere atmosphericEffects, @Nullable ResourceKey<Level> dimension, Builder<?> bodyBuilder) {
-        super(bodyBuilder);
+    public CelestialBody(String name, double radius, double mass, Quaternionf rotation, PlanetAtmosphere atmosphericEffects,
+                         @Nullable ResourceKey<Level> dimension, Builder<?> bodyBuilder, boolean isClientSide) {
+        super(bodyBuilder, isClientSide);
         this.name = name;
         this.displayName = Component.translatable(String.format("planetshine.planets.%s", name));
         this.radius = radius;
@@ -47,6 +58,10 @@ public abstract class CelestialBody extends OrbitalBody {
         this.dimension = dimension;
         this.childEntityBodies = new ConcurrentHashMap<>();
         this.childCelestialBodies = new Object2ObjectOpenHashMap<>();
+
+        if (!isClientSide) {
+            serverCelestialData = new ServerCelestialData();
+        }
     }
 
     public String getName() {
@@ -59,6 +74,21 @@ public abstract class CelestialBody extends OrbitalBody {
 
     public Quaternionf getRotation() {
         return rotation;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public @Nullable ResourceLocation getMainTexture() {
+        return mainTexture;
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public void setMainTexture(@Nullable ResourceLocation mainTexture) {
+        this.mainTexture = mainTexture;
+    }
+
+    //Server side Only
+    public ServerCelestialData getCelestialServerData() {
+        return serverCelestialData;
     }
 
     public void setRotation(Quaternionfc rotation) {
@@ -89,7 +119,7 @@ public abstract class CelestialBody extends OrbitalBody {
         childCelestialBodies.put(celestialBody.getOrbitId(), celestialBody);
     }
 
-    public CelestialBody getPlanetChild(OrbitId orbitId) {
+    public @Nullable CelestialBody getPlanetChild(OrbitId orbitId) {
         return this.childCelestialBodies.get(orbitId);
     }
 
@@ -179,10 +209,6 @@ public abstract class CelestialBody extends OrbitalBody {
                 orbitBody.maxInterceptDistance = orbitBody.getOrbitalElements().getApoapsis() + orbitBody.SOI;
 
                 orbitBody.initCalcs(solarSystem);
-
-                if (orbitBody instanceof ServerCelestialBody serverCelestialBody) {
-                    serverCelestialBody.initServerPlanet();
-                }
             }
         }
     }

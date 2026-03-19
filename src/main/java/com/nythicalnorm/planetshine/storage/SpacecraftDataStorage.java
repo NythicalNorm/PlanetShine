@@ -5,7 +5,6 @@ import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ServerCelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -35,7 +34,7 @@ public class SpacecraftDataStorage {
         for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
             String fileName = celestialBody.getName().concat(".dat");
             File dataFile = new File(this.modSaveFolder.resolve(fileName).toUri());
-            ((ServerCelestialBody) celestialBody).setPlanetDataFile(dataFile);
+            celestialBody.getCelestialServerData().setPlanetDataFile(dataFile);
         }
     }
 
@@ -45,7 +44,7 @@ public class SpacecraftDataStorage {
 
     public void readSpacecraftData(SolarSystem solarSystem) {
         for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
-            File planetFileLoc = ((ServerCelestialBody) celestialBody).getPlanetDataFile();
+            File planetFileLoc = celestialBody.getCelestialServerData().getPlanetDataFile();
             if (planetFileLoc.exists()) {
                 ListTag spacecraftList = readList(planetFileLoc);
                 if (spacecraftList == null) {
@@ -85,7 +84,7 @@ public class SpacecraftDataStorage {
 
     public void saveSpacecraft(SolarSystem solarSystem) {
         for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
-            File planetFileLoc = ((ServerCelestialBody) celestialBody).getPlanetDataFile();
+            File planetFileLoc = celestialBody.getCelestialServerData().getPlanetDataFile();
             ListTag spacecraftTags = new ListTag();
 
             for (EntityOrbitBody orbitalBody : celestialBody.getEntityChildren()) {

@@ -17,9 +17,10 @@ public abstract class OrbitalBody {
 
     protected @Nullable OrbitalElements orbitalElements;
     protected @Nullable CelestialBody parent; // Nullable only in the case of the sun
+    protected final boolean isClientSide;
     protected boolean isStableOrbit;
 
-    public OrbitalBody(OrbitalBody.Builder<?> builder) {
+    public OrbitalBody(OrbitalBody.Builder<?> builder, boolean isClientSide) {
         this.id = builder.id;
         this.displayName = builder.displayName;
         this.relativeOrbitalPos = builder.relativeOrbitalPos;
@@ -27,6 +28,7 @@ public abstract class OrbitalBody {
         this.relativeVelocity = builder.relativeVelocity;
         this.orbitalElements = builder.orbitalElements;
         this.isStableOrbit = builder.isStableOrbit;
+        this.isClientSide = isClientSide;
     }
 
     public Component getDisplayName() {

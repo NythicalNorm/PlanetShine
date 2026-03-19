@@ -87,6 +87,18 @@ public class PSServer extends Stage {
         this.initPlanets();
         this.hostSpaceManager.serverStarted();
         server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
+
+        for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
+            ResourceKey<Level> dimension = celestialBody.getDimension();
+            if (dimension != null) {
+                ServerLevel level = server.getLevel(dimension);
+                if (level != null) {
+                    celestialBody.getCelestialServerData().setServerLevel(level);
+                } else {
+                    PlanetShine.logError("ServerLevel for dimension: " + dimension + " doesn't exist at startup, not linking it to a planet");
+                }
+            }
+        }
     }
 
     public static PSServer get() {

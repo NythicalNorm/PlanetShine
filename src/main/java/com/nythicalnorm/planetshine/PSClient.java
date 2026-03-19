@@ -9,7 +9,6 @@ import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.rendering.renderTypes.SpaceRenderable;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ClientCelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
@@ -94,10 +93,6 @@ public class PSClient extends Stage {
 
     public MapRenderer getMapRenderer() {
         return mapRenderer;
-    }
-
-    public ClientCelestialBody getClientPlanet(OrbitId planetID) {
-       return (ClientCelestialBody) this.solarSystem.getPlanet(planetID);
     }
 
     public void setHostOrbit(OrbitId orbitId, Vector3d originPos) {

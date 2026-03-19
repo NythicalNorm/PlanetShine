@@ -12,10 +12,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
-public abstract class StarBody extends CelestialBody {
-
-    public StarBody(StarBuilder starBuilder) {
-        super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.rotation, starBuilder.atmosphericEffects, null, starBuilder);
+public class StarBody extends CelestialBody {
+    public StarBody(StarBuilder starBuilder, boolean isClientSide) {
+        super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.rotation,
+                starBuilder.atmosphericEffects, null, starBuilder, isClientSide);
     }
 
     @Override
@@ -68,13 +68,13 @@ public abstract class StarBody extends CelestialBody {
 
         @Override
         public StarBody build() {
-            return new ServerStarBody(this);
+            return new StarBody(this, false);
         }
 
         @OnlyIn(Dist.CLIENT)
         @Override
         public StarBody buildClientSide() {
-            return new ClientStarBody(this);
+            return new StarBody(this, true);
         }
     }
 }
