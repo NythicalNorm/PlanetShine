@@ -18,10 +18,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class OrbitalCalc {
-    public static final int MAX_ITERATIONS_ELLIPTICAL = 256;
-    // Hyperbolic orbits take more iterations than elliptical orbits, increase this value if your state vectors are increasing to infinity.
-    public static final int MAX_ITERATIONS_HYPERBOLIC = 500;
-    public static final double TOLERANCE = 1.11e-15d;
     public static final double ACCELERATION_DUE_TO_GRAVITY_EARTH = 9.80665d;
     public static long tickTime = 0L;
 
@@ -36,77 +32,77 @@ public class OrbitalCalc {
         return angleVector.mul(F);
     }
 
-    /**
-     * @see <a href="https://ntrs.nasa.gov/api/citations/19720016564/downloads/19720016564.pdf">NTRS paper, page 18</a>
-     * @see <a href="https://en.wikipedia.org/wiki/Kepler%27s_equation#Inverse_Kepler_equation">Inverse Kepler's Equation - Wikipedia</a>
-     * @param meanAnomaly Mean Anomaly.
-     * @param eccentricity Eccentricity.
-     * @return Estimation of a solution to Kepler's equation.
-     */
-    public static double ellipticalEccentricAnomaly(double meanAnomaly, double eccentricity) {
-        double eccentricAnomaly;
-        double e0;
-
-        if (meanAnomaly == 0.0) {
-            return meanAnomaly;
-        }
-
-
-        if (eccentricity > 0.95d) {
-            e0 = Math.PI;// meanAnomaly < Math.PI ? meanAnomaly + eccentricity : meanAnomaly - eccentricity;
-        } else {
-            e0 = meanAnomaly + eccentricity * Math.sin(meanAnomaly);
-        }
-
-        int i = 1;
-
-        while (true) {
-            double f = e0 - eccentricity * Math.sin(e0) - meanAnomaly;
-            double d = 1.0f - eccentricity * Math.cos(e0);
-            eccentricAnomaly = e0 - f / d;
-            if ((Math.abs(e0 - eccentricAnomaly) - TOLERANCE) <= 0.0f) {
-                break;
-            }
-            if (++i > MAX_ITERATIONS_ELLIPTICAL) {
-                return OrbitalCalc.ellipticalEccentricAnomaly(meanAnomaly, eccentricity * 1.03d);
-            }
-            e0 = eccentricAnomaly;
-        }
-
-        return eccentricAnomaly % (2 * Math.PI);
-    }
-
-    /**
-     * <p>Note: requires much more iterations than elliptical orbits</p>
-     * @see <a href="https://control.asu.edu/Classes/MAE462/462Lecture05.pdf">reference (page 12)</a>
-     * @param meanAnomaly Mean Anomaly.
-     * @param eccentricity Eccentricity.
-     * @return Estimation of a solution to Kepler's hyperbolic equation.
-     */
-    public static double hyperbolicEccentricAnomaly(double meanAnomaly, double eccentricity) {
-        double eccentricAnomaly;
-
-        if (meanAnomaly == 0.0) {
-            return meanAnomaly;
-        }
-
-        // I don't get this equation, but it cuts the no. of iterations from over 700 to 4 in a few cases.
-        // Reference: https://arxiv.org/html/2411.15374v1#S4.F2
-        double e0 = Math.log((2.0 * Math.abs(meanAnomaly)) / (eccentricity + 1.8));
-
-        int i = 1;
-
-        while (true) {
-            double f = (eccentricity * Math.sinh(e0)) - e0 - meanAnomaly;
-            double d = (eccentricity * Math.cosh(e0)) - 1.0d;
-            eccentricAnomaly = e0 - f/d;
-            if ((Math.abs(e0-eccentricAnomaly) - TOLERANCE) <= 0.0f) break;
-            if (++i > MAX_ITERATIONS_HYPERBOLIC) break;
-            e0 = eccentricAnomaly;
-        }
-
-        return eccentricAnomaly;
-    }
+//    /**
+//     * @see <a href="https://ntrs.nasa.gov/api/citations/19720016564/downloads/19720016564.pdf">NTRS paper, page 18</a>
+//     * @see <a href="https://en.wikipedia.org/wiki/Kepler%27s_equation#Inverse_Kepler_equation">Inverse Kepler's Equation - Wikipedia</a>
+//     * @param meanAnomaly Mean Anomaly.
+//     * @param eccentricity Eccentricity.
+//     * @return Estimation of a solution to Kepler's equation.
+//     */
+//    public static double ellipticalEccentricAnomaly(double meanAnomaly, double eccentricity) {
+//        double eccentricAnomaly;
+//        double e0;
+//
+//        if (meanAnomaly == 0.0) {
+//            return meanAnomaly;
+//        }
+//
+//
+//        if (eccentricity > 0.95d) {
+//            e0 = Math.PI;// meanAnomaly < Math.PI ? meanAnomaly + eccentricity : meanAnomaly - eccentricity;
+//        } else {
+//            e0 = meanAnomaly + eccentricity * Math.sin(meanAnomaly);
+//        }
+//
+//        int i = 1;
+//
+//        while (true) {
+//            double f = e0 - eccentricity * Math.sin(e0) - meanAnomaly;
+//            double d = 1.0f - eccentricity * Math.cos(e0);
+//            eccentricAnomaly = e0 - f / d;
+//            if ((Math.abs(e0 - eccentricAnomaly) - TOLERANCE) <= 0.0f) {
+//                break;
+//            }
+//            if (++i > MAX_ITERATIONS_ELLIPTICAL) {
+//                return OrbitalCalc.ellipticalEccentricAnomaly(meanAnomaly, eccentricity * 1.03d);
+//            }
+//            e0 = eccentricAnomaly;
+//        }
+//
+//        return eccentricAnomaly % (2 * Math.PI);
+//    }
+//
+//    /**
+//     * <p>Note: requires much more iterations than elliptical orbits</p>
+//     * @see <a href="https://control.asu.edu/Classes/MAE462/462Lecture05.pdf">reference (page 12)</a>
+//     * @param meanAnomaly Mean Anomaly.
+//     * @param eccentricity Eccentricity.
+//     * @return Estimation of a solution to Kepler's hyperbolic equation.
+//     */
+//    public static double hyperbolicEccentricAnomaly(double meanAnomaly, double eccentricity) {
+//        double eccentricAnomaly;
+//
+//        if (meanAnomaly == 0.0) {
+//            return meanAnomaly;
+//        }
+//
+//        // I don't get this equation, but it cuts the no. of iterations from over 700 to 4 in a few cases.
+//        // Reference: https://arxiv.org/html/2411.15374v1#S4.F2
+//        double e0 = Math.log((2.0 * Math.abs(meanAnomaly)) / (eccentricity + 1.8));
+//
+//        int i = 1;
+//
+//        while (true) {
+//            double f = (eccentricity * Math.sinh(e0)) - e0 - meanAnomaly;
+//            double d = (eccentricity * Math.cosh(e0)) - 1.0d;
+//            eccentricAnomaly = e0 - f/d;
+//            if ((Math.abs(e0-eccentricAnomaly) - TOLERANCE) <= 0.0f) break;
+//            if (++i > MAX_ITERATIONS_HYPERBOLIC) break;
+//            e0 = eccentricAnomaly;
+//        }
+//
+//        return eccentricAnomaly;
+//    }
 
     // copy of a method in Orbital Elements, this is more suited for SOI calcs.
     public static long getTimeStampFromTrueAnomaly(double meanAngularMotion, double trueAnomaly, double eccentricity,
@@ -324,7 +320,7 @@ public class OrbitalCalc {
             boolean isElliptical = Eccentricity < 1;
             double M = this.MeanAngularMotion * (OrbitalElements.getModulusCurrentTime(timeElapsed, periapsisTime, this.Eccentricity, MeanAngularMotion));
 
-            double Anomaly = isElliptical ? ellipticalEccentricAnomaly(M, Eccentricity) : hyperbolicEccentricAnomaly(M, Eccentricity);
+            double Anomaly = isElliptical ? KeplerEquationSolver.ellipticalEccentricAnomaly(M, Eccentricity) : KeplerEquationSolver.hyperbolicEccentricAnomaly(M, Eccentricity);
             double sinAnomaly =  (isElliptical) ? Math.sin(Anomaly) : Math.sinh(Anomaly);
             double cosAnomaly =  (isElliptical) ?  org.joml.Math.cosFromSin(sinAnomaly, Anomaly) : Math.cosh(Anomaly);
 
@@ -335,7 +331,7 @@ public class OrbitalCalc {
         public double getEccentricAnomaly(long timeElapsed) {
             boolean isElliptical = Eccentricity < 1;
             double M = this.MeanAngularMotion * (OrbitalElements.getModulusCurrentTime(timeElapsed, periapsisTime, this.Eccentricity, MeanAngularMotion));
-            return isElliptical ? ellipticalEccentricAnomaly(M, Eccentricity) : hyperbolicEccentricAnomaly(M, Eccentricity);
+            return isElliptical ? KeplerEquationSolver.ellipticalEccentricAnomaly(M, Eccentricity) : KeplerEquationSolver.hyperbolicEccentricAnomaly(M, Eccentricity);
         }
 
         public double getRadius(double trueAnomaly) {
@@ -368,7 +364,7 @@ public class OrbitalCalc {
             double M = this.MeanAngularMotion * OrbitalElements.getModulusCurrentTime(timeElapsed, periapsisTime, Eccentricity, MeanAngularMotion);
 
             //Eccentric anomaly also this works for circular orbits I think
-            double Anomaly = ellipticalEccentricAnomaly(M, this.Eccentricity);
+            double Anomaly = KeplerEquationSolver.ellipticalEccentricAnomaly(M, this.Eccentricity);
             double sinAnomaly = floatCalc ? Mth.sin((float) Anomaly) : Math.sin(Anomaly);
             double cosAnomaly = floatCalc ? Mth.cos((float) Anomaly) : org.joml.Math.cosFromSin(sinAnomaly, Anomaly);
 

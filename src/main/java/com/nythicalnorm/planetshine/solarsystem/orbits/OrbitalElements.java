@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.solarsystem.orbits;
 
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.util.calculations.OrbitSolver;
+import com.nythicalnorm.planetshine.util.calculations.KeplerEquationSolver;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.util.Mth;
@@ -84,7 +84,7 @@ public class OrbitalElements implements OrbitalElementsc {
         double M = this.MeanAngularMotion * (getModulusCurrentTime(timeElapsed, periapsisTime, Eccentricity, MeanAngularMotion));
 
         //Eccentric anomaly also this works for circular orbits I think
-        double anomaly = isElliptical ? OrbitSolver.ellipticalEccentricAnomaly(M, e) : OrbitSolver.hyperbolicEccentricAnomaly(M, e);
+        double anomaly = isElliptical ? KeplerEquationSolver.ellipticalEccentricAnomaly(M, e) : KeplerEquationSolver.hyperbolicEccentricAnomaly(M, e);
 
         double semiMinorAxis = (isElliptical) ? a * Math.sqrt(1 - (e*e)) : -a * Math.sqrt((e*e) - 1);
 
