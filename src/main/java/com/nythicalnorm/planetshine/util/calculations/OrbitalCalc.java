@@ -21,7 +21,7 @@ public class OrbitalCalc {
     public static final int MAX_ITERATIONS_ELLIPTICAL = 256;
     // Hyperbolic orbits take more iterations than elliptical orbits, increase this value if your state vectors are increasing to infinity.
     public static final int MAX_ITERATIONS_HYPERBOLIC = 500;
-    public static final double TOLERANCE = 1e-15d;
+    public static final double TOLERANCE = 1.11e-15d;
     public static final double ACCELERATION_DUE_TO_GRAVITY_EARTH = 9.80665d;
     public static long tickTime = 0L;
 
@@ -64,9 +64,10 @@ public class OrbitalCalc {
             double f = e0 - eccentricity * Math.sin(e0) - meanAnomaly;
             double d = 1.0f - eccentricity * Math.cos(e0);
             eccentricAnomaly = e0 - f / d;
-            if ((Math.abs(e0 - eccentricAnomaly) - TOLERANCE) <= 0.0f) break;
+            if ((Math.abs(e0 - eccentricAnomaly) - TOLERANCE) <= 0.0f) {
+                break;
+            }
             if (++i > MAX_ITERATIONS_ELLIPTICAL) {
-                // stack overflow my beloved.
                 return OrbitalCalc.ellipticalEccentricAnomaly(meanAnomaly, eccentricity * 1.03d);
             }
             e0 = eccentricAnomaly;
