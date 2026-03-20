@@ -32,6 +32,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.valkyrienskies.core.api.ships.Ship;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Optional;
 
@@ -204,6 +206,7 @@ public class PSClient extends Stage {
 
         if (entityOrbitBody != null) {
             solarSystem.entityChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
+            entityOrbitBody.simulateFromKeplerian(this.getCurrentTime());
         }
         if (minecraft.screen instanceof MapSolarSystemScreen mapScreen) {
             if (mapScreen.getFocusedOrbitalBody().getOrbitId().equals(spacecraftID)) {
@@ -244,12 +247,16 @@ public class PSClient extends Stage {
     }
 
     public @Nullable EntityOrbitBody getControllingBody() {
-        if (this.clientHostSpace != null && this.clientHostSpace.getHostBody() != null) {
-            return this.clientHostSpace.getHostBody();
-        } else {
-            return this.playerOrbit;
+        if (this.playerOrbit.getPlayerEntity() != null) {
+            Ship ship = VSGameUtilsKt.getShipMountedTo(this.playerOrbit.getPlayerEntity());
+            if (ship != null) {
+                EntityOrbitBody orbitBody = this.solarSystem.getShipFromVSId(ship.getId());
+                if (orbitBody != null) {
+                    return orbitBody;
+                }
+            }
         }
-        // return null;
+        return this.playerOrbit;
     }
 
     public boolean isOnPlanet()

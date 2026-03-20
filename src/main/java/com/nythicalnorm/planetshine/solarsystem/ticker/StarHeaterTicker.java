@@ -9,6 +9,7 @@ import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.util.calculations.HeatCalc;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -67,6 +68,7 @@ public class StarHeaterTicker implements CelestialBodyTicker {
     private List<BlockPos> getSunRayedBlocks(int rayCount, Vector3d sunPos, LoadedServerShip ship, SpaceServerLevel spaceServerLevel) {
         AABBic shipAABBic = ship.getShipAABB();
         List<BlockPos> blockPosHits = new ArrayList<>();
+        rayCount = Mth.clamp(rayCount, 0, 50);
 
         if (shipAABBic == null || rayCount <= 0) {
             return blockPosHits;

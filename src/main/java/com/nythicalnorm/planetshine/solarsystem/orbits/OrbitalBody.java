@@ -8,6 +8,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
+import java.util.Objects;
+
 public abstract class OrbitalBody {
     protected final OrbitId id;
     protected Component displayName;
@@ -67,6 +69,18 @@ public abstract class OrbitalBody {
 
     public @Nullable CelestialBody getParent() {
         return parent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        OrbitalBody that = (OrbitalBody) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 
     public void setStableOrbit(boolean stableOrbit) {

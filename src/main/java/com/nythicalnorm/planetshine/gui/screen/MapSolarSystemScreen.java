@@ -21,6 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
 
 import java.lang.Math;
 
@@ -83,14 +84,15 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         RenderSystem.depthMask(false);
+
         PoseStack mapPosestack = new PoseStack();
-        Matrix4f projectionMatrix = new Matrix4f().setPerspective(70, (float) graphics.guiWidth()/graphics.guiHeight(), 0.0000001f, 100.0f);
+        Matrix4f projectionMatrix = new Matrix4f().setPerspective(70, (float) graphics.guiWidth()/graphics.guiHeight(), 0.00001f, 10.0f);
 
         Quaternionf dragCameraRot = new Quaternionf().rotateYXZ(cameraYrot, cameraXrot, 0f); //.mul(yRotQuaternion);
         Vector3d relativeCameraPos = new Vector3d(0d, 0d, zoomLevel * radiusZoomLevel);
         relativeCameraPos.rotate(new Quaterniond(dragCameraRot.x, dragCameraRot.y,dragCameraRot.z,dragCameraRot.w));
-        //Vector3d absoluteCameraPos = currentFocusedBody.getAbsolutePos().add(relativeCameraPos);
 
+        GL11.glEnable(0x864F);
         mapPosestack.pushPose();
         mapPosestack.mulPose(dragCameraRot.conjugate());
 
@@ -102,6 +104,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
         mapPosestack.popPose();
+        GL11.glDisable(0x864F);
 
         if (!mapPosestack.clear()) {
             throw new IllegalStateException("popped poses are not closed properly.");

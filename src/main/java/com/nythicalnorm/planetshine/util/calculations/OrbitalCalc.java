@@ -5,7 +5,6 @@ import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
-import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.Calc;
 import net.minecraft.Util;
 import net.minecraft.util.Mth;
@@ -147,6 +146,16 @@ public class OrbitalCalc {
         }
     }
 
+    public static double getTrueAnomalyAtTime(OrbitalElementsc newOrbit, long timeElapsed) {
+        double M = newOrbit.getMeanAngularMotion() * (OrbitalElements.getModulusCurrentTime(timeElapsed, newOrbit.getPeriapsisTime(),
+                newOrbit.getEccentricity(), newOrbit.getMeanAngularMotion()));
+
+        double eccentricAnomaly = !newOrbit.isHyperbolic() ? KeplerEquationSolver.ellipticalEccentricAnomaly(M, newOrbit.getEccentricity())
+                : KeplerEquationSolver.hyperbolicEccentricAnomaly(M, newOrbit.getEccentricity());
+
+        return getTrueAnomalyFromEccentricAnomaly(eccentricAnomaly, newOrbit.getEccentricity());
+    }
+
     public static double invCosh(double x) {
         if (x < 1.0) {
             return Double.NaN;
@@ -154,12 +163,76 @@ public class OrbitalCalc {
         return Math.log(x + Math.sqrt(x*x - 1));
     }
 
-    public static @Nullable SOIIntercept findAllRelativePlanetIntercepts(EntityOrbitBody orbitBody,
+    public static @Nullable CelestialBody calculateSOIChange(OrbitalCalc.SOIIntercept nextOrbitIntercept, CelestialBody parentBody,
+                                                             OrbitalElementsc currentElements, OrbitalElements outElements) {
+        //this is basically making sure that the change happens in the right place
+        Vector3d posAtIntercept = new Vector3d();
+        Vector3d velAtIntercept = new Vector3d();
+
+        currentElements.ToCartesian(nextOrbitIntercept.timeElapsed(), posAtIntercept, velAtIntercept);
+
+        if (nextOrbitIntercept.isEscape()) {
+            CelestialBody newParent = parentBody.getParent();
+            Vector3d newParentPos = new Vector3d();
+            Vector3d newParentVel = new Vector3d();
+
+            if (newParent != null) {
+                if (parentBody.getOrbitalElements() != null) {
+                    parentBody.getOrbitalElements().ToCartesian(nextOrbitIntercept.timeElapsed(), newParentPos, newParentVel);
+                }
+                Vector3d escapeRelPos = new Vector3d(newParentPos).add(posAtIntercept);
+                Vector3d escapeRelVel = new Vector3d(newParentVel).add(velAtIntercept);
+                outElements.set(new OrbitalElements(escapeRelPos, escapeRelVel, nextOrbitIntercept.timeElapsed(), newParent.getMass()));
+                return newParent;
+            } else {
+                // you are going to the end dimension my friend.
+                return null;
+            }
+        } else {
+            CelestialBody newParent = parentBody.getPlanetChild(nextOrbitIntercept.interceptingBody());
+            Vector3d newParentPos = new Vector3d();
+            Vector3d newParentVel = new Vector3d();
+
+            if (newParent != null) {
+                newParent.getOrbitalElements().ToCartesian(nextOrbitIntercept.timeElapsed(), newParentPos, newParentVel);
+                Vector3d escapeRelPos = new Vector3d(posAtIntercept).sub(newParentPos);
+                Vector3d escapeRelVel = new Vector3d(velAtIntercept).sub(newParentVel);
+                outElements.set(new OrbitalElements(escapeRelPos, escapeRelVel, nextOrbitIntercept.timeElapsed(), newParent.getMass()));
+            }
+            return newParent;
+        }
+    }
+
+    public static @Nullable OrbitalCalc.SOIIntercept calculateIntercepts(OrbitalElementsc orbitalElements, double trueAnomaly, CelestialBody parent, long elapsedTime) {
+        if (orbitalElements == null || parent == null) {
+            PlanetShine.logError("Invalid state for calculating Intercepts for EntityOrbitBody");
+            return null;
+        }
+
+        SOIIntercept soiIntercept = null;
+        OrbitalCalc.SOIIntercept escapeIntercept = orbitalElements.findOrbitEscapeIntercept(parent, elapsedTime);
+        OrbitalCalc.SOIIntercept planetIntercept = null;
+
+        // first calculate intercept with planets with the same parent
+        if (!parent.getPlanetChildren().isEmpty()) {
+            planetIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(trueAnomaly, orbitalElements, elapsedTime, escapeIntercept, parent.getPlanetChildren());
+        }
+        if (escapeIntercept != null && planetIntercept == null) {
+            soiIntercept = escapeIntercept;
+        } else if (escapeIntercept == null && planetIntercept != null) {
+            soiIntercept = planetIntercept;
+        } else if (escapeIntercept != null && planetIntercept != null) {
+            soiIntercept = escapeIntercept.timeElapsed() <= planetIntercept.timeElapsed() ? escapeIntercept : planetIntercept;
+        }
+
+        return soiIntercept;
+    }
+
+    public static @Nullable SOIIntercept findAllRelativePlanetIntercepts(double trueAnomaly, OrbitalElementsc orbitalElements,
                                                                          long timeElapsed, SOIIntercept escapeIntercept, Collection<CelestialBody> planetChildren) {
         tickTime = Util.getNanos();
-        double entityApoapsis = orbitBody.getOrbitalElements().getApoapsis();
-        // hyperbolic orbits don't circle back, so the current pos can be taken as the minimum it will ever be
-        double entityPeriapsis = orbitBody.getOrbitalElements().isHyperbolic() ? orbitBody.getRelativePos().length() : orbitBody.getOrbitalElements().getPeriapsis();
+        double entityApoapsis = orbitalElements.getApoapsis();
+        double entityPeriapsis = orbitalElements.getPeriapsis();
 
         List<PlanetInterceptCandidate> planetInterceptCandidateList = new ArrayList<>();
 
@@ -173,11 +246,9 @@ public class OrbitalCalc {
                 planetInterceptCandidateList.add(candidate);
             }
         });
-        SimpleOrbit entityOrbit = new SimpleOrbit(orbitBody.getOrbitalElements());
-        double startingAnomaly = getTrueAnomalyFromEccentricAnomaly(orbitBody.getEccentricAnomaly(),
-                orbitBody.getOrbitalElements().getEccentricity());
+        SimpleOrbit entityOrbit = new SimpleOrbit(orbitalElements);
 
-        SOIIntercept calculatedResult = calculateFutureForNextOrbit(entityOrbit, startingAnomaly, orbitBody.getOrbitalElements(),
+        SOIIntercept calculatedResult = calculateFutureForNextOrbit(entityOrbit, trueAnomaly, orbitalElements,
                 escapeIntercept, planetInterceptCandidateList, timeElapsed);
 
         if (calculatedResult != null && calculatedResult.timeElapsed() > timeElapsed) {

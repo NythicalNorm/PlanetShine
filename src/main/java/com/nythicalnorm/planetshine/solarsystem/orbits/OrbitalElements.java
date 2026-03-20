@@ -28,7 +28,7 @@ public class OrbitalElements implements OrbitalElementsc {
 
     private static final double twoPI = 2 * Math.PI;
 
-    public OrbitalElements(double semimajoraxis, double eccentricity,  long periapsisTime,
+    public OrbitalElements(double semimajoraxis, double eccentricity, long periapsisTime,
                            double inclination, double argumentOfperiapsis, double longitudeOfAscendingNode, double parentBodyMass) {
         this(semimajoraxis, eccentricity, periapsisTime, inclination, argumentOfperiapsis, longitudeOfAscendingNode);
         setOrbitalPeriod(parentBodyMass);

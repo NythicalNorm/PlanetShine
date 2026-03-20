@@ -26,4 +26,19 @@ public class Calc {
             angle += 2 * pi;
         return angle;
     }
+
+    public static float[] getRGBAFloats(int val, float alpha) {
+        float[] rgbaColor = new float[4];
+
+        int red = (val >> 16) & 0xFF;
+        int green = (val >> 8) & 0xFF;
+        int blue = (val >> 0) & 0xFF;
+
+        rgbaColor[0] = ((float)red)/255f;
+        rgbaColor[1] = ((float)green)/255f;
+        rgbaColor[2] = ((float)blue)/255f;
+        rgbaColor[3] = alpha;
+
+        return rgbaColor;
+    }
 }

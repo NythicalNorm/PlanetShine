@@ -12,7 +12,8 @@ public class HeatCalc {
         return tempOfShip;
     }
 
-    public static boolean isBlockAboveMeltingPoint(double temperature, BlockState blockState, float explosionResistance, int flammability, float destroyTime) {
+    public static boolean isBlockAboveMeltingPoint(double temperature, BlockState blockState,
+                                                   float explosionResistance, int flammability, float destroyTime) {
         double meltingPoint;
 
         if (explosionResistance > 1000d) {

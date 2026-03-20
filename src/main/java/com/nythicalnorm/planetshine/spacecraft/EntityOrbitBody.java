@@ -7,7 +7,6 @@ import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitChange;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
@@ -64,7 +63,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         }
         // checking if it's time for the predicted SOI change and doing it
         if (this.nextOrbitIntercept != null && this.nextOrbitIntercept.timeElapsed() <= TimeElapsed && this.isHostOfItsSpace() && !this.isClientSide) {
-            CelestialBody newParent = this.calculateSOIChange(this.nextOrbitIntercept);
+            CelestialBody newParent = OrbitalCalc.calculateSOIChange(this.nextOrbitIntercept, this.parent, this.orbitalElements, this.orbitalElements);
             this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
 
             OrbitHostSpace hostSpace = this.orbitHostSpace.get();
@@ -94,7 +93,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
     }
 
-    protected void simulateFromKeplerian(long timeElapsed) {
+    public void simulateFromKeplerian(long timeElapsed) {
         this.lastCalculatedEccentricAnomaly = this.orbitalElements.ToCartesian(timeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
     }
 
@@ -189,63 +188,9 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     }
 
     @PhysTickOnly
-    private @Nullable CelestialBody calculateSOIChange(OrbitalCalc.SOIIntercept nextOrbitIntercept) {
-        //this is basically making sure that the change happens in the right place
-        this.simulateFromKeplerian(this.nextOrbitIntercept.timeElapsed());
-
-        if (nextOrbitIntercept.isEscape()) {
-            CelestialBody newParent = this.getParent().getParent();
-            Vector3d newParentPos = new Vector3d();
-            Vector3d newParentVel = new Vector3d();
-            this.getParent().getOrbitalElements().ToCartesian(getNextOrbitIntercept().timeElapsed(), newParentPos, newParentVel);
-
-            if (newParent != null) {
-                Vector3d escapeRelPos = new Vector3d(newParentPos).add(this.getRelativePos());
-                Vector3d escapeRelVel = new Vector3d(newParentVel).add(this.getRelativeVelocity());
-                this.orbitalElements = new OrbitalElements(escapeRelPos, escapeRelVel, this.nextOrbitIntercept.timeElapsed(), newParent.getMass());
-                return newParent;
-            } else {
-                // you are going to the end dimension my friend.
-                return null;
-            }
-        } else {
-            CelestialBody newParent = this.getParent().getPlanetChild(nextOrbitIntercept.interceptingBody());
-            Vector3d newParentPos = new Vector3d();
-            Vector3d newParentVel = new Vector3d();
-
-            if (newParent != null) {
-                newParent.getOrbitalElements().ToCartesian(getNextOrbitIntercept().timeElapsed(), newParentPos, newParentVel);
-                Vector3d escapeRelPos = new Vector3d(this.getRelativePos()).sub(newParentPos);
-                Vector3d escapeRelVel = new Vector3d(this.getRelativeVelocity()).sub(newParentVel);
-                this.orbitalElements = new OrbitalElements(escapeRelPos, escapeRelVel, this.nextOrbitIntercept.timeElapsed(), newParent.getMass());
-            }
-            return newParent;
-        }
-    }
-
-    @PhysTickOnly
     public @Nullable OrbitalCalc.SOIIntercept calculateIntercepts(long elapsedTime) {
-        if (this.orbitalElements == null || this.parent == null) {
-            PlanetShine.logError("Invalid state for EntityOrbitBody : " + this.getDisplayName());
-            return null;
-        }
-
-        this.nextOrbitIntercept = null;
-        OrbitalCalc.SOIIntercept escapeIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
-        OrbitalCalc.SOIIntercept planetIntercept = null;
-
-        // first calculate intercept with planets with the same parent
-        if (!this.parent.getPlanetChildren().isEmpty()) {
-            planetIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, escapeIntercept, this.parent.getPlanetChildren());
-        }
-        if (escapeIntercept != null && planetIntercept == null) {
-            this.nextOrbitIntercept = escapeIntercept;
-        } else if (escapeIntercept == null && planetIntercept != null) {
-            this.nextOrbitIntercept = planetIntercept;
-        } else if (escapeIntercept != null && planetIntercept != null) {
-            this.nextOrbitIntercept = escapeIntercept.timeElapsed() <= planetIntercept.timeElapsed() ? escapeIntercept : planetIntercept;
-        }
-
+        double currentTrueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(this.getEccentricAnomaly(), orbitalElements.getEccentricity());
+        this.nextOrbitIntercept = OrbitalCalc.calculateIntercepts(this.orbitalElements, currentTrueAnomaly, this.parent, elapsedTime);
         this.isInterceptsCalculated = true;
         return this.nextOrbitIntercept;
     }
@@ -259,16 +204,6 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     // client-side only
     public void setIntercept(OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
         this.nextOrbitIntercept = soiIntercept;
-    }
-
-    //client-side
-    public void calculateEscapeOnly(long elapsedTime) {
-        assert this.orbitalElements != null;
-        assert this.parent != null;
-        if (this.nextOrbitIntercept == null) {
-            this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
-            this.isInterceptsCalculated = true;
-        }
     }
 
     public boolean isOrbitInterceptsCalculated() {
