@@ -139,12 +139,14 @@ public class PSServer extends Stage {
         if (runningPhysTicks % 60 == 0) {
             this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime(), this.gameTickRunnable);
         }
+        this.solarSystem.OnPhysTick();
     }
 
     public void OnGameTick() {
         this.gameTickRunnable.executeAll();
         PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
         hostSpaceManager.onGameTick();
+        this.solarSystem.onServerTick(this.getSpaceLevel());
     }
 
     public void saveSolarSys() {

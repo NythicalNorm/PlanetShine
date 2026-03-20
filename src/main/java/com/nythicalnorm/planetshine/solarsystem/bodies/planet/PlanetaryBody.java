@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
+import com.google.common.collect.ImmutableList;
 import com.nythicalnorm.planetshine.solarsystem.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
@@ -20,7 +21,7 @@ public class PlanetaryBody extends CelestialBody {
 
     public PlanetaryBody(PlanetBuilder planetBuilder, boolean isClientSide) {
         super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,
-                planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder, isClientSide);
+                planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder, ImmutableList.of(), isClientSide);
         this.NorthPoleDir = planetBuilder.NorthPoleDir;
         this.RotationPeriod = planetBuilder.RotationPeriod;
     }

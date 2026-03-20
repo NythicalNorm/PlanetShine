@@ -1,10 +1,13 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies;
 
+import com.google.common.collect.ImmutableList;
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.chat.Component;
@@ -17,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Quaternionfc;
 import org.joml.Vector3dc;
+import org.valkyrienskies.core.api.util.GameTickOnly;
+import org.valkyrienskies.core.api.util.PhysTickOnly;
 
 import java.util.Collection;
 import java.util.Map;
@@ -40,6 +45,7 @@ public abstract class CelestialBody extends OrbitalBody {
 
     //ServerSide
     protected ServerCelestialData serverCelestialData;
+    protected ImmutableList<CelestialBodyTicker> celestialBodyTickers;
 
     //calculated on load i.e not serialized or networked
     protected double SOI;
@@ -47,7 +53,8 @@ public abstract class CelestialBody extends OrbitalBody {
     protected double maxInterceptDistance; // same for the maximum distance
 
     public CelestialBody(String name, double radius, double mass, Quaternionf rotation, PlanetAtmosphere atmosphericEffects,
-                         @Nullable ResourceKey<Level> dimension, Builder<?> bodyBuilder, boolean isClientSide) {
+                         @Nullable ResourceKey<Level> dimension, Builder<?> bodyBuilder, @Nullable ImmutableList<CelestialBodyTicker> celestialBodyTickers,
+                         boolean isClientSide) {
         super(bodyBuilder, isClientSide);
         this.name = name;
         this.displayName = Component.translatable(String.format("planetshine.planets.%s", name));
@@ -60,7 +67,8 @@ public abstract class CelestialBody extends OrbitalBody {
         this.childCelestialBodies = new Object2ObjectOpenHashMap<>();
 
         if (!isClientSide) {
-            serverCelestialData = new ServerCelestialData();
+            this.serverCelestialData = new ServerCelestialData();
+            this.celestialBodyTickers = celestialBodyTickers;
         }
     }
 
@@ -211,5 +219,15 @@ public abstract class CelestialBody extends OrbitalBody {
                 orbitBody.initCalcs(solarSystem);
             }
         }
+    }
+
+    @GameTickOnly
+    public void serverTick(SolarSystem solarSystem, SpaceServerLevel spaceLevel) {
+        this.celestialBodyTickers.forEach(ticker -> ticker.onServerTick(this, solarSystem, spaceLevel));
+    }
+
+    @PhysTickOnly
+    public void physTick(SolarSystem solarSystem) {
+        this.celestialBodyTickers.forEach(ticker -> ticker.onPhysTick(this, solarSystem));
     }
 }

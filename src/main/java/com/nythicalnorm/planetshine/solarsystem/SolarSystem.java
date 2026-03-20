@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.solarsystem;
 
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundSetOrbitIntercept;
 import com.nythicalnorm.planetshine.solarsystem.bodies.*;
@@ -15,6 +16,7 @@ import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 
 import java.util.*;
@@ -40,6 +42,10 @@ public class SolarSystem {
         this.universeStage = stage;
     }
 
+    public Stage getUniverseStage() {
+        return universeStage;
+    }
+
     @PhysTickOnly
     public void UpdatePlanets(long currentTime, boolean isTimeWarping) {
         rootStar.simulatePlanets(currentTime, isTimeWarping);
@@ -62,16 +68,6 @@ public class SolarSystem {
             }
         }
     }
-
-    // used client side for orbit rendering
-//    @PhysTickOnly
-//    public void calculateOnlyEscapeIntercepts(long timeElapsed) {
-//        for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
-//            if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
-//                entityBody.calculateEscapeOnly(timeElapsed);
-//            }
-//        }
-//    }
 
     public Map<OrbitId, EntityOrbitBody> getAllSpacecraftBodies() {
         return allSpacecraftBodies;
@@ -178,5 +174,19 @@ public class SolarSystem {
             return serverSpaceshipBody;
         }
         return null;
+    }
+
+    @PhysTickOnly
+    public void OnPhysTick() {
+        for (CelestialBody celestialBody : this.getAllPlanetaryBodies().values()) {
+            celestialBody.physTick(this);
+        }
+    }
+
+    @GameTickOnly
+    public void onServerTick(SpaceServerLevel spaceLevel) {
+        for (CelestialBody celestialBody : this.getAllPlanetaryBodies().values()) {
+            celestialBody.serverTick(this, spaceLevel);
+        }
     }
 }

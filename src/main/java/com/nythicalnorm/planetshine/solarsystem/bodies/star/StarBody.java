@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.star;
 
+import com.google.common.collect.ImmutableList;
 import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
@@ -7,6 +8,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
+import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
@@ -15,7 +17,9 @@ import org.joml.Vector3d;
 public class StarBody extends CelestialBody {
     public StarBody(StarBuilder starBuilder, boolean isClientSide) {
         super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.rotation,
-                starBuilder.atmosphericEffects, null, starBuilder, isClientSide);
+                starBuilder.atmosphericEffects, null, starBuilder,
+                ImmutableList.of(new StarHeaterTicker(1e12d, 3.828e26)),
+                isClientSide);
     }
 
     @Override
