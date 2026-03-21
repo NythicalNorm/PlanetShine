@@ -6,14 +6,17 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.RandomSequences;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import net.minecraft.world.level.storage.ServerLevelData;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
@@ -35,7 +38,46 @@ public class SpaceServerLevel extends ServerLevel {
     }
 
     @Override
-    public boolean setBlock(BlockPos pPos, BlockState pState, int pFlags, int pRecursionLeft) {
+    public boolean addFreshEntity(@NotNull Entity pEntity) {
+        if (super.addFreshEntity(pEntity)) {
+            hostSpaceManager.spaceEntitySpawn(pEntity);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void addDuringCommandTeleport(@NotNull ServerPlayer pPlayer) {
+        super.addDuringCommandTeleport(pPlayer);
+        this.hostSpaceManager.playerAddedToSpace(pPlayer);
+    }
+
+    @Override
+    public void addDuringPortalTeleport(@NotNull ServerPlayer pPlayer) {
+        super.addDuringPortalTeleport(pPlayer);
+        this.hostSpaceManager.playerAddedToSpace(pPlayer);
+    }
+
+    @Override
+    public void addNewPlayer(@NotNull ServerPlayer pPlayer) {
+        super.addNewPlayer(pPlayer);
+        this.hostSpaceManager.playerAddedToSpace(pPlayer);
+    }
+
+    @Override
+    public void addRespawnedPlayer(@NotNull ServerPlayer pPlayer) {
+        super.addRespawnedPlayer(pPlayer);
+        this.hostSpaceManager.playerAddedToSpace(pPlayer);
+    }
+
+    @Override
+    public void removePlayerImmediately(@NotNull ServerPlayer pPlayer, Entity.@NotNull RemovalReason pReason) {
+        super.removePlayerImmediately(pPlayer, pReason);
+        this.hostSpaceManager.playerLeftSpace(pPlayer, pReason);
+    }
+
+    @Override
+    public boolean setBlock(@NotNull BlockPos pPos, @NotNull BlockState pState, int pFlags, int pRecursionLeft) {
         if (VSGameUtilsKt.isBlockInShipyard(this, pPos)) {
             return super.setBlock(pPos, pState, pFlags, pRecursionLeft);
         } else {
@@ -61,7 +103,7 @@ public class SpaceServerLevel extends ServerLevel {
 
     @Override
     public void close() throws IOException {
-        this.hostSpaceManager = null;
         super.close();
+        this.hostSpaceManager = null;
     }
 }

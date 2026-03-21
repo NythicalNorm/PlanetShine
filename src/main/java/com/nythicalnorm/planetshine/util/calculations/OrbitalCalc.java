@@ -6,7 +6,6 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.util.Calc;
-import net.minecraft.Util;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
@@ -103,7 +102,7 @@ public class OrbitalCalc {
 //        return eccentricAnomaly;
 //    }
 
-    // copy of a method in Orbital Elements, this is more suited for SOI calcs.
+    // copy of part of a method in Orbital Elements, this is more suited for SOI calcs.
     public static long getTimeStampFromTrueAnomaly(double meanAngularMotion, double trueAnomaly, double eccentricity,
                                                     long lastPeriapsisTime) {
         trueAnomaly = Calc.wrapDegrees(trueAnomaly);
@@ -230,7 +229,7 @@ public class OrbitalCalc {
 
     public static @Nullable SOIIntercept findAllRelativePlanetIntercepts(double trueAnomaly, OrbitalElementsc orbitalElements,
                                                                          long timeElapsed, SOIIntercept escapeIntercept, Collection<CelestialBody> planetChildren) {
-        tickTime = Util.getNanos();
+        //tickTime = Util.getNanos();
         double entityApoapsis = orbitalElements.getApoapsis();
         double entityPeriapsis = orbitalElements.getPeriapsis();
 
@@ -252,9 +251,9 @@ public class OrbitalCalc {
                 escapeIntercept, planetInterceptCandidateList, timeElapsed);
 
         if (calculatedResult != null && calculatedResult.timeElapsed() > timeElapsed) {
-            tickTime = Util.getNanos() - tickTime;
-            double milliSec = (double) tickTime / 1_000_000;
-            PlanetShine.log("found a planet intercept took: " + milliSec);
+//            tickTime = Util.getNanos() - tickTime;
+//            double milliSec = (double) tickTime / 1_000_000;
+//            PlanetShine.log("found a planet intercept took: " + milliSec);
             return calculatedResult;
         }
         return null;

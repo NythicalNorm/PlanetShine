@@ -149,6 +149,10 @@ public class PSServer extends Stage {
         this.solarSystem.onServerTick(this.getSpaceLevel());
     }
 
+    public void addGameTickRunnable(Runnable runnable) {
+        this.gameTickRunnable.addRun(runnable);
+    }
+
     public void saveSolarSys() {
         spacecraftDataStorage.saveSpacecraft(this.solarSystem);
         spacecraftDataStorage.saveHostSpaces(this.hostSpaceManager);
@@ -259,20 +263,17 @@ public class PSServer extends Stage {
         }
     }
 
-    private void sendPacketsPlayerJoinOrbital(ServerPlayer player, AbstractPlayerOrbitBody playerOrbitBody) {
+    public void sendPacketsPlayerJoinOrbital(ServerPlayer player, AbstractPlayerOrbitBody playerOrbitBody) {
         PacketHandler.sendToPlayer(new ClientboundLocalPlayerJoinOrbital(playerOrbitBody.getParent().getOrbitId(),
                 playerOrbitBody.getOrbitalElements()), player);
         PacketHandler.sendToAllPlayersExcept(new ClientboundEntityBodyJoinOrbital(playerOrbitBody), player,
                 this.getMCServer().getPlayerList().getPlayers());
     }
 
-    public void playerCloned(ServerPlayer playerNew, ServerPlayer playerOld,  ResourceKey<Level> newDimension, ResourceKey<Level> oldDimension) {
+    public void playerCloned(ServerPlayer playerNew) {
         EntityOrbitBody spacecraftBody = solarSystem.getSpacecraftOrbit(new OrbitId(playerNew));
         if (spacecraftBody instanceof ServerPlayerOrbitBody serverPlayerSpacecraftBody) {
             serverPlayerSpacecraftBody.setPlayer(playerNew);
-        }
-        if (!newDimension.equals(oldDimension)) {
-            this.playerDimChanged(playerNew, newDimension, oldDimension);
         }
     }
 
@@ -296,22 +297,6 @@ public class PSServer extends Stage {
         }
     }
 
-    public void playerDimChanged(Player player, ResourceKey<Level> toDimension, ResourceKey<Level> fromDimension) {
-        if (!toDimension.equals(SpaceDimension.SPACE_LEVEL_KEY)) {
-            EntityOrbitBody entitySpacecraftBody = solarSystem.getSpacecraftOrbit(new OrbitId(player));
-
-            if (entitySpacecraftBody instanceof ServerPlayerOrbitBody serverPlayerSpacecraftBody) {
-                solarSystem.entityRemoveOrbital(serverPlayerSpacecraftBody);
-
-                // For some reason this don't get received on the client, so putting it on the next tick for now
-                gameTickRunnable.addRun(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(entitySpacecraftBody.getOrbitId())));
-                gameTickRunnable.addRun(() -> PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), (ServerPlayer) player));
-            }
-        } else {
-            this.playerUpdatedInSpace((ServerPlayer) player);
-        }
-    }
-
     public SpaceServerLevel getSpaceLevel() {
         return (SpaceServerLevel) server.getLevel(SpaceDimension.SPACE_LEVEL_KEY);
     }
@@ -322,40 +307,5 @@ public class PSServer extends Stage {
 
     public String getSpaceLevelString() {
         return ValkyrienSkies.api().getDimensionId(this.getSpaceLevel());
-    }
-
-    // called when a new player spawns in (before playerJoined function), also called when the player teleports in or to the space dimension
-    // Note - make sure to test that we don't have a stale reference to a server player if the player disconnects during login
-    public void playerUpdatedInSpace(ServerPlayer player) {
-        ServerPlayerOrbitBody entityOrbitBody = (ServerPlayerOrbitBody) this.solarSystem.getSpacecraftOrbit(new OrbitId(player));
-        if (entityOrbitBody != null) {
-            entityOrbitBody.setPlayer(player);
-            Optional<OrbitId> hostSpaceID = entityOrbitBody.getHostSpaceID();
-            if (hostSpaceID.isPresent()) {
-                OrbitHostSpace entityHostSpace = this.hostSpaceManager.getOrCreateHostSpace(this.solarSystem.getSpacecraftOrbit(hostSpaceID.get()));
-                entityHostSpace.addPlayerToHostSpace(entityOrbitBody);
-            } else {
-                PlanetShine.logError(player.getName() + " entity is in space without a host space.");
-            }
-        } else {
-            OrbitHostSpace hostSpace = this.hostSpaceManager.getHostSpaceAt(player.position());
-            if (hostSpace == null) {
-                PlanetShine.logError("entity: " + player.getName() + "shouldn't be here");
-                return;
-            }
-
-            if (!hostSpace.getOrbitIdOfHost().equals(new OrbitId(player))) {
-                AbstractPlayerOrbitBody.PlayerOrbitBuilder builder = new AbstractPlayerOrbitBody.PlayerOrbitBuilder();
-                builder.setPlayer(player);
-                builder.setStableOrbit(false);
-                builder.setOrbitalElements(hostSpace.getHostBody().getOrbitalElements());
-                AbstractPlayerOrbitBody playerOrbitBody = builder.build();
-
-                hostSpace.addPlayerToHostSpace((ServerPlayerOrbitBody) playerOrbitBody);
-
-                this.solarSystem.entityJoinedOrbital(hostSpace.getHostBody().getParent(), playerOrbitBody);
-                this.sendPacketsPlayerJoinOrbital(player, playerOrbitBody);
-            }
-        }
     }
 }

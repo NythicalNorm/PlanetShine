@@ -1,13 +1,16 @@
 package com.nythicalnorm.planetshine.spacecraft.hostspace;
 
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.vs.ShipTeleporter;
@@ -18,21 +21,25 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
+import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
+import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 import java.lang.Math;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -82,9 +89,23 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         return shipTeleporter;
     }
 
-    public OrbitHostSpace getHostSpaceAt(Vec3 spaceDimPos) {
-        int x = (int) (Math.round(spaceDimPos.x / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
-        int z = (int) (Math.round(spaceDimPos.z / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+    public @Nullable OrbitHostSpace getHostSpaceAt(Vec3 spaceDimPos) {
+        double xPos = spaceDimPos.x;
+        double zPos = spaceDimPos.z;
+
+        if (VSGameUtilsKt.isBlockInShipyard(spaceLevel, spaceDimPos)) {
+            Ship ship = VSGameUtilsKt.getShipManagingPos(spaceLevel, spaceDimPos);
+            if (ship != null) {
+                Vector3d worldPos = ship.getTransform().getShipToWorld().transformPosition(VectorConversionsMCKt.toJOML(spaceDimPos));
+                xPos = worldPos.x();
+                zPos = worldPos.z();
+            } else {
+                return null;
+            }
+        }
+
+        int x = (int) (Math.round(xPos / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+        int z = (int) (Math.round(zPos / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         Vector2ic pos = new Vector2i(x,z);
         return loadedHostSpaces.get(pos);
     }
@@ -131,17 +152,14 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public void spaceEntitySpawn(Entity entity) {
         OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
-
-        if (entity instanceof ServerPlayer player) {
-            psServer.playerUpdatedInSpace(player);
-        } else if (entityHostSpace != null) {
+        if (entityHostSpace != null && !(entity instanceof Player)) {
             entityHostSpace.addEntityToHostSpace(entity);
         }
     }
 
     public void spaceEntityLeave(Entity entity) {
         OrbitHostSpace entityHostSpace = getHostSpaceAt(entity.position());
-        if (entityHostSpace != null) {
+        if (entityHostSpace != null && !(entity instanceof Player)) {
             entityHostSpace.removeEntityFromHostSpace(entity);
         }
     }
@@ -229,6 +247,55 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public void teleportEntity(Entity entity, ServerLevel level, double x, double y, double z) {
         entity.teleportTo(level, x, y, z, EnumSet.noneOf(RelativeMovement.class), -85f, 0f);
+    }
+
+    // called when a new player spawns in (before playerJoined function), also called when the player teleports in or to the space dimension
+    // Note - make sure to test that we don't have a stale reference to a server player if the player disconnects during login
+    public void playerAddedToSpace(ServerPlayer player) {
+        ServerPlayerOrbitBody entityOrbitBody = (ServerPlayerOrbitBody) psServer.getSolarSystem().getSpacecraftOrbit(new OrbitId(player));
+        if (entityOrbitBody != null) {
+            entityOrbitBody.setPlayer(player);
+            Optional<OrbitId> hostSpaceID = entityOrbitBody.getHostSpaceID();
+            if (hostSpaceID.isPresent()) {
+                OrbitHostSpace entityHostSpace = this.getOrCreateHostSpace(psServer.getSolarSystem().getSpacecraftOrbit(hostSpaceID.get()));
+                entityHostSpace.addPlayerToHostSpace(entityOrbitBody);
+            } else {
+                PlanetShine.logError(player.getName() + " entity is in space without a host space.");
+            }
+        } else {
+            OrbitHostSpace hostSpace = this.getHostSpaceAt(player.position());
+            if (hostSpace == null) {
+                PlanetShine.logError("entity: " + player.getName() + "shouldn't be here");
+                return;
+            }
+
+            if (!hostSpace.getOrbitIdOfHost().equals(new OrbitId(player))) {
+                AbstractPlayerOrbitBody.PlayerOrbitBuilder builder = new AbstractPlayerOrbitBody.PlayerOrbitBuilder();
+                builder.setPlayer(player);
+                builder.setStableOrbit(false);
+                builder.setOrbitalElements(hostSpace.getHostBody().getOrbitalElements());
+                AbstractPlayerOrbitBody playerOrbitBody = builder.build();
+
+                hostSpace.addPlayerToHostSpace((ServerPlayerOrbitBody) playerOrbitBody);
+
+                psServer.getSolarSystem().entityJoinedOrbital(hostSpace.getHostBody().getParent(), playerOrbitBody);
+                psServer.sendPacketsPlayerJoinOrbital(player, playerOrbitBody);
+            }
+        }
+    }
+
+    public void playerLeftSpace(ServerPlayer player, Entity.RemovalReason removalReason) {
+        if (removalReason.equals(Entity.RemovalReason.CHANGED_DIMENSION) || removalReason.equals(Entity.RemovalReason.DISCARDED)) {
+            EntityOrbitBody entitySpacecraftBody = psServer.getSolarSystem().getSpacecraftOrbit(new OrbitId(player));
+
+            if (entitySpacecraftBody instanceof ServerPlayerOrbitBody serverPlayerSpacecraftBody) {
+                psServer.getSolarSystem().entityRemoveOrbital(serverPlayerSpacecraftBody);
+
+                // For some reason this don't get received on the client during this phase, so putting it on the next tick for now
+                psServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(entitySpacecraftBody.getOrbitId())));
+                psServer.addGameTickRunnable(() -> PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), player));
+            }
+        }
     }
 
     @Override

@@ -77,13 +77,8 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void onPlayerCloned(PlayerEvent.Clone event) {
         if(event.isWasDeath() && event.getEntity() instanceof ServerPlayer playerNew) {
-            PSServer.getInstance().ifPresent(psServer -> psServer.playerCloned(playerNew, (ServerPlayer) event.getOriginal(), playerNew.level().dimension(), event.getOriginal().level().dimension()));
+            PSServer.getInstance().ifPresent(psServer -> psServer.playerCloned(playerNew));
         }
-    }
-
-    @SubscribeEvent
-    public static void onDimensionChanged(PlayerEvent.PlayerChangedDimensionEvent event) {
-        PSServer.getInstance().ifPresent(psServer -> psServer.playerDimChanged(event.getEntity(), event.getTo(), event.getFrom()));
     }
 
     @SubscribeEvent
