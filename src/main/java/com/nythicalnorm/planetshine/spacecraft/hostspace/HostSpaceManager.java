@@ -177,9 +177,9 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         }
     }
 
-    public void handleHostPlayerMove(@Nullable ServerPlayer sender, OrbitId playerBodyID, Vector3d addedVel) {
+    public void handleHostPlayerMove(ServerPlayer sender, OrbitId playerBodyID, Vector3d addedVel) {
         EntityOrbitBody<?> entityOrbitBody = psServer.getSolarSystem().getSpacecraftOrbit(playerBodyID);
-        if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody && playerOrbitBody.getBody().equals(sender)) {
+        if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody && sender.equals(playerOrbitBody.getBody())) {
             if (!psServer.isTimeWarping()) {
                 playerOrbitBody.addVelocityForUpdate(addedVel);
             }
@@ -197,6 +197,9 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         if (orbitBody != null) {
             OrbitHostSpace newHost = getOrCreateHostSpace(orbitBody);
             orbitHostSpace.handleHostSpaceHandover(orbitBody, newHost);
+        } else {
+            // if not then destroy the entities still in host space,
+            orbitHostSpace.cleanUpEntities();
         }
     }
 

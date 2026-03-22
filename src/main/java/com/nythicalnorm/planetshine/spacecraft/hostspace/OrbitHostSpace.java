@@ -155,7 +155,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     }
 
     protected static Vector3d getHostPosDifference(OrbitHostSpace oldSpace, OrbitHostSpace newSpace, EntityOrbitBody<?> entityOrbitBody) {
-        Vector3d originOffset = new Vector3d(oldSpace.getOriginPos()).sub(newSpace.getOriginPos());
+        Vector3d originOffset = new Vector3d(newSpace.getOriginPos()).sub(oldSpace.getOriginPos());
         Vector3d entityBodyOffset = new Vector3d(oldSpace.getOriginPos()).sub(entityOrbitBody.getMcPosition());
 
         return originOffset.add(entityBodyOffset);
@@ -182,6 +182,14 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                         player.position().z() + originDifference.z());
             }
             newHost.addPlayerToHostSpace(playerOrbitBody);
+        });
+    }
+
+    public void cleanUpEntities() {
+        this.nonHostEntities.forEach(entity -> {
+            if (!(entity instanceof Player)) {
+                entity.remove(Entity.RemovalReason.DISCARDED);
+            }
         });
     }
 }

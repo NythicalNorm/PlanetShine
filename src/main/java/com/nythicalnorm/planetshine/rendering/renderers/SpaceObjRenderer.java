@@ -58,7 +58,7 @@ public class SpaceObjRenderer {
             currentPlanetIn = planetOn.get();
 
             if (planetOn.get().getAtmosphere().hasAtmosphere()) {
-                currentAlbedo = css.getSunAngleOpacity();
+                currentAlbedo = PSRenderer.getSunAngleOpacity();
                 atmosphere = Optional.of(planetOn.get().getAtmosphere());
             }
         } else {

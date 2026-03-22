@@ -220,7 +220,7 @@ public class ShipTeleporter {
         ShipTeleportDataImpl teleportData;
 
         if (isHost) {
-            teleportData = new ShipTeleportDataImpl(newPos, ship.getTransform().getRotation(), new Vector3d(), new Vector3d(),
+            teleportData = new ShipTeleportDataImpl(newPos, ship.getTransform().getRotation(), new Vector3d(), ship.getAngularVelocity(),
                     SpaceUtils.getSpaceLevelString(), null, null);
         } else {
             teleportData = new ShipTeleportDataImpl(newPos, ship.getTransform().getRotation(), ship.getVelocity(), ship.getAngularVelocity(),

@@ -36,7 +36,7 @@ public abstract class CelestialBody extends OrbitalBody {
     protected final PlanetAtmosphere atmosphericEffects;
     protected final @Nullable ResourceKey<Level> dimension;
     protected final Map<OrbitId, CelestialBody> childCelestialBodies;
-    protected final ConcurrentMap<OrbitId, EntityOrbitBody> childEntityBodies;
+    protected final ConcurrentMap<OrbitId, EntityOrbitBody<?>> childEntityBodies;
     protected SolarSystem solarSystem;
 
     //ClientSide
@@ -131,13 +131,13 @@ public abstract class CelestialBody extends OrbitalBody {
         return this.childCelestialBodies.get(orbitId);
     }
 
-    public void addChildBody(EntityOrbitBody entityOrbitBody) {
+    public void addChildBody(EntityOrbitBody<?> entityOrbitBody) {
         entityOrbitBody.setParent(this);
         this.childEntityBodies.put(entityOrbitBody.getOrbitId(), entityOrbitBody);
     }
 
     public boolean hasChild(OrbitalBody body) {
-        if (body instanceof EntityOrbitBody entityOrbitBody) {
+        if (body instanceof EntityOrbitBody<?> entityOrbitBody) {
             return childEntityBodies.containsValue(entityOrbitBody);
         } else if (body instanceof CelestialBody celestialBody){
             return childCelestialBodies.containsValue(celestialBody);
@@ -157,7 +157,7 @@ public abstract class CelestialBody extends OrbitalBody {
         return null;
     }
 
-    public Collection<EntityOrbitBody> getEntityChildren() {
+    public Collection<EntityOrbitBody<?>> getEntityChildren() {
         if (childEntityBodies != null) {
             return childEntityBodies.values();
         }
@@ -202,6 +202,10 @@ public abstract class CelestialBody extends OrbitalBody {
 
     public double getMaxInterceptDistance() {
         return maxInterceptDistance;
+    }
+
+    public SolarSystem getSolarSystem() { // this is kinda cursed.
+        return solarSystem;
     }
 
     protected void initCalcs(SolarSystem solarSystem) {

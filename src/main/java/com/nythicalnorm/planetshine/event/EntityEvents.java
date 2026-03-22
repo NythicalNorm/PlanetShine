@@ -56,6 +56,10 @@ public class EntityEvents {
             return;
         }
 
+        if (SpaceUtils.isSpaceLevel((ServerLevel) event.getEntity().level()) && PSServer.get() != null) {
+            PSServer.get().getHostSpaceManager().spaceEntitySpawn(event.getEntity());
+        }
+
         if (event.getEntity() instanceof LivingEntity livingEntity) {
             AttributeMap entityAttributes = livingEntity.getAttributes();
             CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) event.getLevel();

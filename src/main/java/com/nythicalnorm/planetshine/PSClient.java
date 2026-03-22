@@ -106,12 +106,6 @@ public class PSClient extends Stage {
         }
     }
 
-    public float getSunAngleOpacity() {
-        float angle = this.daylightRegion.getSunAngle();
-        angle = angle < 0.5f ? angle * 2f : (1.0f - angle) * 2f;
-        return angle;
-    }
-
     public static void close() {
         if (instance != null) {
             instance.getPlanetTexManager().close();

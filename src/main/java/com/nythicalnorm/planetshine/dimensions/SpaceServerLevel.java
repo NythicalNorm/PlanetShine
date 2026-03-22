@@ -1,6 +1,8 @@
 package com.nythicalnorm.planetshine.dimensions;
 
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -24,7 +26,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-public class SpaceServerLevel extends ServerLevel {
+public class SpaceServerLevel extends ServerLevel implements PlanetTimeAccessor {
     private HostSpaceManager hostSpaceManager;
 
     public SpaceServerLevel (MinecraftServer pServer, Executor pDispatcher, LevelStorageSource.LevelStorageAccess pLevelStorageAccess, ServerLevelData pServerLevelData, ResourceKey<Level> pDimension, LevelStem pLevelStem, ChunkProgressListener pProgressListener, boolean pIsDebug, long pBiomeZoomSeed, List<CustomSpawner> pCustomSpawners, boolean pTickTime, @Nullable RandomSequences pRandomSequences) {
@@ -35,15 +37,6 @@ public class SpaceServerLevel extends ServerLevel {
 
     public HostSpaceManager getHostSpaceManager() {
         return hostSpaceManager;
-    }
-
-    @Override
-    public boolean addFreshEntity(@NotNull Entity pEntity) {
-        if (super.addFreshEntity(pEntity)) {
-            hostSpaceManager.spaceEntitySpawn(pEntity);
-            return true;
-        }
-        return false;
     }
 
     @Override
@@ -105,5 +98,30 @@ public class SpaceServerLevel extends ServerLevel {
     public void close() throws IOException {
         super.close();
         this.hostSpaceManager = null;
+    }
+
+    @Override
+    public boolean ps$DaylightDataExists() {
+        return false;
+    }
+
+    @Override
+    public void ps$setDaylightData(DaylightData daylightData) {
+
+    }
+
+    @Override
+    public float ps$getSunAngle(double x, double z) {
+        return 0;
+    }
+
+    @Override
+    public int ps$getDarknessAmount(double x, double z) {
+        return 0;
+    }
+
+    @Override
+    public boolean ps$isDay(double x, double z) {
+        return false;
     }
 }
