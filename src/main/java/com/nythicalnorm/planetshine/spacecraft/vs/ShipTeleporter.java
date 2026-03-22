@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.spacecraft.vs;
 
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
@@ -9,6 +10,7 @@ import org.joml.primitives.AABBd;
 import org.joml.primitives.AABBdc;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
+import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
@@ -182,6 +184,9 @@ public class ShipTeleporter {
 
             if (passenger.teleportTo(levelNew, parentEntity.position().x, parentEntity.position().y, parentEntity.position().z, EnumSet.noneOf(RelativeMovement.class), 0f, 0f)) {
                 Entity postTeleportPassenger = levelNew.getEntity(passenger.getUUID());
+                if (postTeleportPassenger == null) {
+                    continue;
+                }
 
                 postTeleportPassenger.startRiding(parentEntity, true);
                 this.teleportPassengers(postTeleportPassenger, subPassengerList, levelNew);
@@ -209,6 +214,20 @@ public class ShipTeleporter {
 
     public void resetTeleports() {
         alreadyTeleported.clear();
+    }
+
+    public void teleportShipInSpaceDim(Ship ship, Vector3d newPos, boolean isHost) {
+        ShipTeleportDataImpl teleportData;
+
+        if (isHost) {
+            teleportData = new ShipTeleportDataImpl(newPos, ship.getTransform().getRotation(), new Vector3d(), new Vector3d(),
+                    SpaceUtils.getSpaceLevelString(), null, null);
+        } else {
+            teleportData = new ShipTeleportDataImpl(newPos, ship.getTransform().getRotation(), ship.getVelocity(), ship.getAngularVelocity(),
+                    SpaceUtils.getSpaceLevelString(), null, null);
+        }
+
+        serverShipWorld.teleportShip((ServerShip) ship, teleportData);
     }
 
     private record ShipToTeleport(LoadedServerShip serverShip, ShipTeleportData data) {}

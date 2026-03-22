@@ -26,9 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class ClientPacketHandler {
-    public static void StartClientPacket(long currentTime, long timeWarp, EntityOrbitBody playerData, OrbitId playerParentOrbit,List<CelestialBody> planetaryBodyList) {
+    public static void StartClientPacket(long currentTime, long timeWarp, EntityOrbitBody<?> playerData, OrbitId playerParentOrbit,List<CelestialBody> planetaryBodyList) {
         Map<OrbitId, CelestialBody> AllPlanetaryBodies = new Object2ObjectOpenHashMap<>();
-        ConcurrentMap<OrbitId, EntityOrbitBody> AllSpacecraftBodies = new ConcurrentHashMap<>();
+        ConcurrentMap<OrbitId, EntityOrbitBody<?>> AllSpacecraftBodies = new ConcurrentHashMap<>();
         Map<ResourceKey<Level>, CelestialBody> PlanetDimensions = new Object2ObjectOpenHashMap<>();
         StarBody rootStar = null;
 
@@ -54,7 +54,7 @@ public class ClientPacketHandler {
         if (playerData instanceof ClientPlayerOrbitBody plrSpacecraftBody) {
             if (playerParentOrbit != null) {
                 solarSystem.entityJoinedOrbital(playerData, playerParentOrbit);
-                plrSpacecraftBody.setPlayer(localPlayer);
+                plrSpacecraftBody.setBody(localPlayer);
             }
             clientPlayerSpacecraftBody = plrSpacecraftBody;
         } else {
@@ -127,7 +127,7 @@ public class ClientPacketHandler {
         }
     }
 
-    public static void entityBodyJoinOrbital(EntityOrbitBody entityOrbitBody, OrbitId orbitParent) {
+    public static void entityBodyJoinOrbital(EntityOrbitBody<?> entityOrbitBody, OrbitId orbitParent) {
         if (PSClient.get() != null) {
             PSClient.get().entityJoinOrbital(entityOrbitBody, orbitParent);
         }

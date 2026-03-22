@@ -127,10 +127,14 @@ public class PSClient extends Stage {
 
     public void onClientLevelLoad(ClientLevel clientLevel) {
         CelestialBody celestialBody = solarSystem.getDimensionOfPlanet(clientLevel.dimension());
+
+        if (!SpaceUtils.isSpaceLevel(clientLevel)) {
+            this.solarSystem.entityRemoveOrbital(this.playerOrbit, true);
+        }
+
         if (celestialBody != null) {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);
             this.currentPlanetOn = celestialBody;
-            this.solarSystem.entityRemoveOrbital(this.playerOrbit);
             this.currentPlanetOn.addChildBody(this.playerOrbit); // I don't know how i feel about this, should client players be a child of a planet when they are on the planet itself?
         } else {
             this.playerOrbit.clearRotation();
@@ -151,10 +155,10 @@ public class PSClient extends Stage {
             this.playerOrbit.getParent().simulateSpacecraft(this.getCurrentTime(), this.isTimeWarping());
         }
 
-        if (currentPlanetOn != null && playerOrbit.getPlayerEntity() != null) {
+        if (currentPlanetOn != null && playerOrbit.getBody() != null) {
             this.playerOrbit.updatePlayerPosRot(currentPlanetOn);
-            BlockPos playerPos = playerOrbit.getPlayerEntity().blockPosition();
-            this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getPlayerEntity().level());
+            BlockPos playerPos = playerOrbit.getBody().blockPosition();
+            this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getBody().level());
         }
     }
 
@@ -190,19 +194,19 @@ public class PSClient extends Stage {
         solarSystem.entityJoinedOrbital(this.playerOrbit, newParentID);
     }
 
-    public void entityJoinOrbital(EntityOrbitBody entityOrbitBody, OrbitId orbitParent) {
+    public void entityJoinOrbital(EntityOrbitBody<?> entityOrbitBody, OrbitId orbitParent) {
         this.solarSystem.entityJoinedOrbital(entityOrbitBody, orbitParent);
     }
 
     public void setOrbitIntercept(OrbitId spacecraftID, OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
-        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
+        EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             entityOrbitBody.setIntercept(soiIntercept);
         }
     }
 
     public void orbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElementsc orbitalElements) {
-        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
+        EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
 
         if (entityOrbitBody != null) {
             solarSystem.entityChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
@@ -216,16 +220,16 @@ public class PSClient extends Stage {
     }
 
     public void orbitChange(OrbitId spacecraftID, OrbitalElements orbitalElements) {
-        EntityOrbitBody entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
+        EntityOrbitBody<?> entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             entityOrbitBody.setOrbitalElements(orbitalElements);
         }
     }
 
     public void orbitRemove(OrbitId spacecraftID) {
-        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
+        EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
-            solarSystem.entityRemoveOrbital(entityOrbitBody);
+            solarSystem.entityRemoveOrbital(entityOrbitBody, false);
         }
     }
 
@@ -246,11 +250,11 @@ public class PSClient extends Stage {
         }
     }
 
-    public @Nullable EntityOrbitBody getControllingBody() {
-        if (this.playerOrbit.getPlayerEntity() != null) {
-            Ship ship = VSGameUtilsKt.getShipMountedTo(this.playerOrbit.getPlayerEntity());
+    public @Nullable EntityOrbitBody<?> getControllingBody() {
+        if (this.playerOrbit.getBody() != null) {
+            Ship ship = VSGameUtilsKt.getShipMountedTo(this.playerOrbit.getBody());
             if (ship != null) {
-                EntityOrbitBody orbitBody = this.solarSystem.getShipFromVSId(ship.getId());
+                EntityOrbitBody<?> orbitBody = this.solarSystem.getSpaceshipFromVSId(ship.getId());
                 if (orbitBody != null) {
                     return orbitBody;
                 }

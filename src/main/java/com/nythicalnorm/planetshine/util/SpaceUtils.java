@@ -42,15 +42,19 @@ public class SpaceUtils {
 
     private static final double distanceToSearch = 2000;
 
+    public static String getSpaceLevelString() {
+        return spaceLevelString;
+    }
+
     //don't call this while time warping
-    private HashSet<ShipIntercept> getEntityBodyIntersections(Collection<EntityOrbitBody> childEntityBodies) {
+    private HashSet<ShipIntercept> getEntityBodyIntersections(Collection<EntityOrbitBody<?>> childEntityBodies) {
         double dist = distanceToSearch * distanceToSearch;
         HashSet<ShipIntercept> shipIntercepts = new HashSet<>();
         
         return shipIntercepts;
     }
 
-    public record ShipIntercept(EntityOrbitBody bodyA, EntityOrbitBody bodyB) {
+    public record ShipIntercept(EntityOrbitBody<?> bodyA, EntityOrbitBody<?> bodyB) {
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;

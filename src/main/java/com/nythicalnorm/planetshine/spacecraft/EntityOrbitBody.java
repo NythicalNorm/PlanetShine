@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitChange;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
@@ -23,13 +24,14 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class EntityOrbitBody extends OrbitalBody {
+public abstract class EntityOrbitBody<T> extends OrbitalBody {
     protected static final float tolerance = 1E-6f;
     protected final AtomicReference<OrbitId> hostSpaceID;
     protected final AtomicReference<OrbitHostSpace> orbitHostSpace;
     protected ConcurrentLinkedQueue<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
-    protected @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
+    protected @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept;
     protected double lastCalculatedEccentricAnomaly;
+    protected T body;
 
     // server side only
     protected boolean isInterceptsCalculated; // basically whether the next planet intercept of escape or intersection is calculated yet.
@@ -109,7 +111,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.relativeOrbitalPos.add(velocityPerTick);
     }
 
-    protected void setStateVectorsFromHostBody(Vector3dc originPos, EntityOrbitBody hostBody, long TimeElapsed) {
+    protected void setStateVectorsFromHostBody(Vector3dc originPos, EntityOrbitBody<?> hostBody, long TimeElapsed) {
         Vector3dc mcVelocity = this.getMcVelocity();
         Vector3dc mcPosition = this.getMcPosition();
 
@@ -154,7 +156,18 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.hostSpaceID.set(hostSpace);
     }
 
-    public abstract boolean isBodyEntityLoaded();
+    public void setBody(@Nullable T body) {
+        this.body = body;
+    }
+
+    public @Nullable T getBody() {
+        return body;
+    }
+
+    public boolean isBodyEntityLoaded() {
+        return this.body != null;
+    }
+
     public abstract @Nullable Vector3dc getMcPosition();
     public abstract @Nullable Vector3dc getMcVelocity();
     public abstract @Nullable Quaterniondc getMCRotation();
@@ -163,19 +176,19 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         return nextOrbitIntercept;
     }
 
-    public void setHostOrbitSpace(OrbitHostSpace playerHostSpace) {
-        if (playerHostSpace != null) {
-            this.hostSpaceID.set(playerHostSpace.getOrbitIdOfHost());
-            this.orbitHostSpace.set(playerHostSpace);
+    public void setHostOrbitSpace(OrbitHostSpace hostSpace) {
+        if (hostSpace != null) {
+            this.hostSpaceID.set(hostSpace.getOrbitIdOfHost());
+            this.orbitHostSpace.set(hostSpace);
         } else {
             this.hostSpaceID.set(null);
             this.orbitHostSpace.set(null);
         }
     }
 
-    public void removeHostSpaces() {
+    public void removeHostSpace(boolean isTeleporting) {
         if (!this.isClientSide && this.orbitHostSpace.get() != null) {
-            this.orbitHostSpace.get().removeOrbitBody(this);
+            this.orbitHostSpace.get().removeOrbitBody(this, isTeleporting);
         }
         this.hostSpaceID.set(null);
         this.orbitHostSpace.set(null);
@@ -260,4 +273,6 @@ public abstract class EntityOrbitBody extends OrbitalBody {
     public void OnRemove() {
 
     }
+
+    public abstract void entityLoadedInSpace(T entity, HostSpaceManager hostSpaceManager);
 }

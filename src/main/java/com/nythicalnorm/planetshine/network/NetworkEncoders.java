@@ -13,7 +13,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionfc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -86,10 +85,10 @@ public class NetworkEncoders {
         return bodyList;
     }
 
-    public static void writeEntityBodyList(FriendlyByteBuf friendlyByteBuf, List<EntityOrbitBody> bodyList) {
+    public static void writeEntityBodyList(FriendlyByteBuf friendlyByteBuf, List<EntityOrbitBody<?>> bodyList) {
         friendlyByteBuf.writeVarInt(bodyList.size());
 
-        for (EntityOrbitBody orbitBody : bodyList) {
+        for (EntityOrbitBody<?> orbitBody : bodyList) {
             if (orbitBody.getParent() != null) {
                 NetworkEncoders.writeOrbitalBody(friendlyByteBuf, orbitBody);
                 orbitBody.getParent().getOrbitId().encodeToBuffer(friendlyByteBuf);
@@ -102,7 +101,7 @@ public class NetworkEncoders {
         List<TempEntityOrbitHolder> tempEntityOrbitHolder = new ArrayList<>();
 
         for (int i = 0; i < bodyNo; i++) {
-            if (NetworkEncoders.readOrbitalBodyClient(friendlyByteBuf) instanceof EntityOrbitBody entityOrbitBody) {
+            if (NetworkEncoders.readOrbitalBodyClient(friendlyByteBuf) instanceof EntityOrbitBody<?> entityOrbitBody) {
                 OrbitId parentID = new OrbitId(friendlyByteBuf);
                 tempEntityOrbitHolder.add(new TempEntityOrbitHolder(entityOrbitBody, parentID));
             }
@@ -200,5 +199,5 @@ public class NetworkEncoders {
 
     private record TempPlanetaryHolder(CelestialBody planetaryBody, List<OrbitId> orbitIdList) {}
 
-    public record TempEntityOrbitHolder(EntityOrbitBody orbitBody, OrbitId parentID) {}
+    public record TempEntityOrbitHolder(EntityOrbitBody<?> orbitBody, OrbitId parentID) {}
 }

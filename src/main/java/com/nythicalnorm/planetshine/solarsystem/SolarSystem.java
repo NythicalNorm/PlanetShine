@@ -20,22 +20,37 @@ import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class SolarSystem {
     private final Map<ResourceKey<Level>, CelestialBody> planetDimensions;
     private final Map<OrbitId, CelestialBody> allPlanetaryBodies;
-    private final ConcurrentMap<OrbitId, EntityOrbitBody> allSpacecraftBodies;
+    private final ConcurrentMap<OrbitId, EntityOrbitBody<?>> allSpacecraftBodies;
+    private final ConcurrentMap<Long, AbstractSpaceshipBody> allVSships;
     private final StarBody rootStar;
     private Stage universeStage;
 
-    public SolarSystem(Map<OrbitId, CelestialBody> pAllPlanetaryBodies, ConcurrentMap<OrbitId,
-            EntityOrbitBody> pAllSpacecraftBodies, Map<ResourceKey<Level>, CelestialBody> pPlanetDimensions,
+    public SolarSystem(Map<OrbitId, CelestialBody> pAllPlanetaryBodies,
+                       ConcurrentMap<OrbitId, EntityOrbitBody<?>> pAllSpacecraftBodies,
+                       Map<ResourceKey<Level>, CelestialBody> pPlanetDimensions,
                        StarBody rootStar) {
         this.allPlanetaryBodies = pAllPlanetaryBodies;
         this.allSpacecraftBodies = pAllSpacecraftBodies;
         this.planetDimensions = pPlanetDimensions;
         this.rootStar = rootStar;
+        this.allVSships = this.populateVSListFromSpacecrafts(this.allSpacecraftBodies);
+    }
+
+    private ConcurrentMap<Long, AbstractSpaceshipBody> populateVSListFromSpacecrafts(ConcurrentMap<OrbitId, EntityOrbitBody<?>> allSpacecraftBodies) {
+        ConcurrentMap<Long, AbstractSpaceshipBody> vsShips = new ConcurrentHashMap<>();
+
+        allSpacecraftBodies.values().forEach(entityOrbitBody -> {
+            if (entityOrbitBody instanceof AbstractSpaceshipBody spaceshipBody) {
+                vsShips.put(spaceshipBody.getOrbitId().getShipID(), spaceshipBody);
+            }
+        });
+        return vsShips;
     }
 
     public void setStage(Stage stage) {
@@ -59,7 +74,7 @@ public class SolarSystem {
 
     @PhysTickOnly // server side only
     public void calculateSpacecraftIntercepts(long timeElapsed, RunnableExecutor gameTickRunnable) {
-        for (EntityOrbitBody entityBody : this.allSpacecraftBodies.values()) {
+        for (EntityOrbitBody<?> entityBody : this.allSpacecraftBodies.values()) {
             if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
                 OrbitalCalc.SOIIntercept intercept = entityBody.calculateIntercepts(timeElapsed);
                 gameTickRunnable.addRun(() ->
@@ -69,7 +84,7 @@ public class SolarSystem {
         }
     }
 
-    public Map<OrbitId, EntityOrbitBody> getAllSpacecraftBodies() {
+    public Map<OrbitId, EntityOrbitBody<?>> getAllSpacecraftBodies() {
         return allSpacecraftBodies;
     }
 
@@ -86,17 +101,17 @@ public class SolarSystem {
         return allPlanetaryBodies.get(planetID);
     }
 
-    public EntityOrbitBody getSpacecraftOrbit(OrbitId spacecraftBodyAddress) {
+    public EntityOrbitBody<?> getSpacecraftOrbit(OrbitId spacecraftBodyAddress) {
         return allSpacecraftBodies.get(spacecraftBodyAddress);
     }
 
     @PhysTickOnly
-    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, OrbitId newParentID, OrbitalElementsc orbitalElementsNew) {
+    public void entityChangeOrbitalSOIs(EntityOrbitBody<?> spacecraftBody, OrbitId newParentID, OrbitalElementsc orbitalElementsNew) {
         entityChangeOrbitalSOIs(spacecraftBody, getPlanet(newParentID), orbitalElementsNew);
     }
 
     @PhysTickOnly
-    public void entityChangeOrbitalSOIs(EntityOrbitBody spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElementsc orbitalElementsNew) {
+    public void entityChangeOrbitalSOIs(EntityOrbitBody<?> spacecraftBody, CelestialBody newOrbitPlanet, OrbitalElementsc orbitalElementsNew) {
         //removing the old reference to the object
         spacecraftBody.removeParent();
         // adding reference to new object
@@ -115,11 +130,14 @@ public class SolarSystem {
 
     public void entityJoinedOrbital(CelestialBody newOrbitPlanet, OrbitalBody orbitalDataNew) {
         if (newOrbitPlanet != null) {
-            if (orbitalDataNew instanceof EntityOrbitBody entitySpacecraftBody) {
+            if (orbitalDataNew instanceof EntityOrbitBody<?> entitySpacecraftBody) {
                 this.getAllSpacecraftBodies().computeIfAbsent(entitySpacecraftBody.getOrbitId(), id -> {
                     entitySpacecraftBody.removeParent();
                     newOrbitPlanet.addChildBody(entitySpacecraftBody);
                     entitySpacecraftBody.init();
+                    if (entitySpacecraftBody instanceof AbstractSpaceshipBody spaceshipBody) {
+                        this.allVSships.put(entitySpacecraftBody.getOrbitId().getShipID(), spaceshipBody);
+                    }
                     return entitySpacecraftBody;
                 });
             }
@@ -128,13 +146,16 @@ public class SolarSystem {
         }
     }
 
-    @PhysTickOnly // not sure if this is true but better safe than sorry
-    public void entityRemoveOrbital(EntityOrbitBody entityOrbitBody) {
+    @GameTickOnly
+    public void entityRemoveOrbital(EntityOrbitBody<?> entityOrbitBody, boolean isTeleporting) {
         entityOrbitBody.OnRemove();
         entityOrbitBody.removeParent();
-        entityOrbitBody.removeHostSpaces();
+        entityOrbitBody.removeHostSpace(isTeleporting);
         entityOrbitBody.setOrbitalElements(null);
         this.allSpacecraftBodies.remove(entityOrbitBody.getOrbitId());
+        if (entityOrbitBody instanceof AbstractSpaceshipBody) {
+            this.allVSships.remove(entityOrbitBody.getOrbitId().getShipID());
+        }
     }
 
     public List<String> getAllPlanetNames() {
@@ -148,12 +169,15 @@ public class SolarSystem {
     public Map<OrbitId, CelestialBody> getAllPlanetaryBodies() {
         return allPlanetaryBodies;
     }
+    public ConcurrentMap<Long, AbstractSpaceshipBody> getAllVSships() {
+        return this.allVSships;
+    }
 
     public List<CelestialBody> getAllPlanetOrbitsList() {
         return allPlanetaryBodies.values().stream().toList();
     }
 
-    public List<EntityOrbitBody> getAllEntitiesOrbitsList() {
+    public List<EntityOrbitBody<?>> getAllEntitiesOrbitsList() {
         return allSpacecraftBodies.values().stream().toList();
     }
 
@@ -169,11 +193,8 @@ public class SolarSystem {
         return planetDimensions.get(dim);
     }
 
-    public AbstractSpaceshipBody getShipFromVSId(long id) { // very sus to store ship id has part of the 128 bit uuid, need to change it
-        if (this.allSpacecraftBodies.get(new OrbitId(id)) instanceof AbstractSpaceshipBody serverSpaceshipBody) {
-            return serverSpaceshipBody;
-        }
-        return null;
+    public @Nullable AbstractSpaceshipBody getSpaceshipFromVSId(long id) {
+        return this.allVSships.get(id);
     }
 
     @PhysTickOnly

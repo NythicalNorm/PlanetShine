@@ -41,7 +41,7 @@ public class StarHeaterTicker implements CelestialBodyTicker {
                 if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody) {
 
                 } else if (entityOrbitBody instanceof AbstractSpaceshipBody spaceshipBody) {
-                    affectHeatOnShip((LoadedServerShip) spaceshipBody.getShip(), entityOrbitBody, Math.sqrt(distSquared), spaceLevel, solarSystem);
+                    affectHeatOnShip((LoadedServerShip) spaceshipBody.getBody(), entityOrbitBody, Math.sqrt(distSquared), spaceLevel, solarSystem);
                 }
             }
         });

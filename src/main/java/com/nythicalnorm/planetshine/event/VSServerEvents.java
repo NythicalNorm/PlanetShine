@@ -27,7 +27,7 @@ public class VSServerEvents {
 
     private static void onShipLoadEvent(ShipLoadEvent shipLoadEvent) {
         if (PSServer.get() != null) {
-            PSServer.get().onShipLoad(shipLoadEvent.getShip());
+            PSServer.get().getHostSpaceManager().shipAddedToSpace(shipLoadEvent.getShip());
         }
     }
 }

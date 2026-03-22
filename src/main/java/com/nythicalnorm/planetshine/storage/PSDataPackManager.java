@@ -32,7 +32,7 @@ public class PSDataPackManager {
     public static void loadServerDataAndStartSolarSystem(MinecraftServer pServer) {
         Map<OrbitId, CelestialBody> AllPlanetaryBodies = new Object2ObjectOpenHashMap<>();
         Map<ResourceKey<Level>, CelestialBody> PlanetDimensions = new Object2ObjectOpenHashMap<>();
-        ConcurrentMap<OrbitId, EntityOrbitBody> AllSpacecraftBodies = new ConcurrentHashMap<>();
+        ConcurrentMap<OrbitId, EntityOrbitBody<?>> AllSpacecraftBodies = new ConcurrentHashMap<>();
 
         StarBody rootStar;
 

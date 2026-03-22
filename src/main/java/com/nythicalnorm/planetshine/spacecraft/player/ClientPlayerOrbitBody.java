@@ -23,13 +23,13 @@ import org.joml.*;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
-    private final Vector3d clientDeltavelLast;
+    private final Vector3d clientDeltaVelLast;
     private final Quaterniond playerOnPlanetRotation;
     private PlayerInfo playerInfo;
 
     public ClientPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
         super(playerSpacecraftBuilder, true);
-        this.clientDeltavelLast = new Vector3d();
+        this.clientDeltaVelLast = new Vector3d();
         this.playerOnPlanetRotation = new Quaterniond();
     }
 
@@ -40,7 +40,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     public void updatePlayerPosRot(CelestialBody currentPlanetOn) {
-        updatePlanetPos(getPlayerEntity().level(), getPlayerEntity().position(), currentPlanetOn);
+        updatePlanetPos(getBody().level(), getBody().position(), currentPlanetOn);
         updatePlanetRot(currentPlanetOn);
     }
 
@@ -71,7 +71,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     public void processHostMove(Vec3 deltaMovement) {
-        clientDeltavelLast.add(deltaMovement.x, deltaMovement.y, deltaMovement.z);
+        clientDeltaVelLast.add(deltaMovement.x, deltaMovement.y, deltaMovement.z);
     }
 
     public void sendMovementPacket() {
@@ -79,21 +79,21 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
             return;
         }
 
-        if (clientDeltavelLast.length() > tolerance) {
-            PacketHandler.sendToServer(new ServerboundPlayerHostVelUpdate(this.id, clientDeltavelLast));
-            clientDeltavelLast.zero();
+        if (clientDeltaVelLast.length() > tolerance) {
+            PacketHandler.sendToServer(new ServerboundPlayerHostVelUpdate(this.id, clientDeltaVelLast));
+            clientDeltaVelLast.zero();
         }
     }
 
     @Override
-    public void setPlayer(@NotNull Player player) {
-        super.setPlayer(player);
+    public void setBody(@NotNull Player player) {
+        super.setBody(player);
         this.playerInfo = Minecraft.getInstance().getConnection().getPlayerInfo(player.getUUID());
     }
 
     @Override
     public boolean isPlayerLoggedIn() {
-        return this.playerInfo != null || this.player != null;
+        return this.playerInfo != null || this.body != null;
     }
 
     public void playerJoined(PlayerInfo pPlayerInfo) {
@@ -109,8 +109,8 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     private ResourceLocation getSkinTexture() {
         if (this.playerInfo != null) {
             return playerInfo.getSkinLocation();
-        } else if (this.player != null) {
-            return ((AbstractClientPlayer)this.player).getSkinTextureLocation();
+        } else if (this.body != null) {
+            return ((AbstractClientPlayer)this.body).getSkinTextureLocation();
         } else {
             return MissingTextureAtlasSprite.getLocation();
         }

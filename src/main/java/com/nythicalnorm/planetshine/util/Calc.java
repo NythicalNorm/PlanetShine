@@ -2,6 +2,8 @@ package com.nythicalnorm.planetshine.util;
 
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
+import org.joml.primitives.AABBic;
+import org.valkyrienskies.core.api.ships.Ship;
 
 import java.util.Queue;
 
@@ -25,6 +27,16 @@ public class Calc {
         while (angle < -pi)
             angle += 2 * pi;
         return angle;
+    }
+
+
+    public static int getShipVolume(Ship ship) {
+        AABBic aabb = ship.getShipAABB();
+        if (aabb == null) {
+            return 0;
+        }
+
+        return (aabb.maxX() - aabb.minX()) * (aabb.maxY() - aabb.minY()) * (aabb.maxZ() - aabb.minZ());
     }
 
     public static float[] getRGBAFloats(int val, float alpha) {

@@ -46,7 +46,7 @@ public abstract class PhysShipImplMixin {
     @Inject(method = "applyQueuedForces", at = @At(value = "HEAD"), remap = false)
     public void applyForces(CallbackInfo ci) {
         if (PSServer.get() != null) {
-            ServerSpaceshipBody serverSpaceshipBody = (ServerSpaceshipBody) PSServer.get().getSolarSystem().getShipFromVSId(getId());
+            ServerSpaceshipBody serverSpaceshipBody = (ServerSpaceshipBody) PSServer.get().getSolarSystem().getSpaceshipFromVSId(getId());
 
             if (serverSpaceshipBody != null && serverSpaceshipBody.isHostOfItsSpace()) {
                 double forceThreshold = 0.1 * getMass();
