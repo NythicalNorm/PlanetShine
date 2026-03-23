@@ -8,7 +8,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.planetshine.util.RenderingCommon;
+import com.nythicalnorm.planetshine.util.ProjectionUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -56,13 +56,13 @@ public class MapRenderablePlanet extends MapRenderable {
         RenderSystem.disableBlend();
     }
 
-    public boolean renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+    public boolean renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody<?> entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
         Vector3f pos = MapRenderer.toMapCoordinate(entityOrbitBody.getRelativePos());
         Matrix4f poseMatrix = new Matrix4f(poseStack.last().pose());
         RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
 
         Screen screen = Minecraft.getInstance().screen;
-        Vector2i screenPos = RenderingCommon.worldToScreenCoordinate(pos, poseMatrix, projectionMatrix, screen.width, screen.height);
+        Vector2i screenPos = ProjectionUtils.worldToScreenCoordinate(pos, poseMatrix, projectionMatrix, screen.width, screen.height);
         if (screenPos != null) {
             return entityOrbitBody.drawIcon(graphics, screenPos, 8);
         }

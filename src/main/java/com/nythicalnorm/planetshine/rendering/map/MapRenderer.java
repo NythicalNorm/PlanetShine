@@ -22,7 +22,7 @@ import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
 public class MapRenderer {
-    public static final float SCALE_FACTOR = 1/1000000000f;
+    public static final float SCALE_FACTOR = 1; //1000000000f;
     private MapRenderable renderTree;
     private MapSolarSystemScreen currentOpenScreen;
     private final Map<OrbitId, MapRenderable> mapRenderables = new Object2ObjectOpenHashMap<>(); // probably need change the renderTree to use this instead.
@@ -32,13 +32,11 @@ public class MapRenderer {
         PSRenderer.drawStarBuffer(mapPosestack, projectionMatrix, 1.0f);
     }
 
-    public void renderMapObjects(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, Vector3d cameraPos, OrbitalBody currentFocus) {
+    public void renderMapObjects(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocus) {
         if (renderTree == null || currentFocus == null) {
             return;
         }
 
-        Vector3f mapCameraPos = toMapCoordinate(cameraPos);
-        poseStack.translate(-mapCameraPos.x, -mapCameraPos.y, -mapCameraPos.z);
         renderTree.propagateRender(graphics, poseStack, projectionMatrix, null, currentFocus);
         ManeuverRenderer.renderFromBody(PSClient.get().getControllingBody(), this.mapRenderables, poseStack, projectionMatrix);
 
@@ -92,6 +90,10 @@ public class MapRenderer {
 
     public static Vector3f toMapCoordinate(Vector3dc position) {
         return new Vector3f((float) position.x() * SCALE_FACTOR, (float) position.y() * SCALE_FACTOR, (float) position.z() * SCALE_FACTOR);
+    }
+
+    public static Vector3f toMapCoordinate(Vector3fc position) {
+        return new Vector3f(position.x() * SCALE_FACTOR, position.y() * SCALE_FACTOR, position.z() * SCALE_FACTOR);
     }
 
     public static Vector3f getPos(MapRelativeState state, OrbitalBody bodyToPlace, OrbitalBody currentFocusedBody) {
