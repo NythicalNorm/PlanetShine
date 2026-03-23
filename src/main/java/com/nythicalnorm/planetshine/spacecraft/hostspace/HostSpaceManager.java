@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
+import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.world.ShipWorld;
@@ -124,9 +125,21 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         if (spaceDimPos == null) {
             return null;
         }
+        return this.getHostSpaceAt(spaceDimPos.x(), spaceDimPos.z());
+    }
 
-        int x = (int) (Math.round(spaceDimPos.x() / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
-        int z = (int) (Math.round(spaceDimPos.z() / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+    public OrbitHostSpace getHostSpaceAt(double xPos, double zPos) {
+        if (VSGameUtilsKt.isBlockInShipyard(spaceLevel, xPos, 0d, zPos)) {
+            ServerShip ship = VSGameUtilsKt.getShipManagingPos(this.spaceLevel,  xPos, 0d, zPos);
+            if (ship != null) {
+                Vector3d newPos = ship.getShipToWorld().transformPosition(new Vector3d(xPos, 0d, zPos));
+                xPos = newPos.x();
+                zPos = newPos.z();
+            }
+        }
+
+        int x = (int) (Math.round(xPos / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+        int z = (int) (Math.round(zPos / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         Vector2ic pos = new Vector2i(x,z);
         return activeHostSpaces.get(pos);
     }

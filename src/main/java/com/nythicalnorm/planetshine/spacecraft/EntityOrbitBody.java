@@ -21,6 +21,7 @@ import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,7 +36,7 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
 
     // server side only
     protected boolean isInterceptsCalculated; // basically whether the next planet intercept of escape or intersection is calculated yet.
-    protected @Nullable Long nextPeriapsisTime = 0L;
+    protected OptionalLong nextPeriapsisTime = OptionalLong.empty();
 
     public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID,
                            @Nullable OrbitalCalc.SOIIntercept soiIntercept, boolean isClientSide) {
@@ -60,7 +61,7 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
             // PlanetShine.logError("Entity Orbit of " + this.getDisplayName().getString() + "is Not in a state for Orbital Calculations");
             return;
         }
-        if (!isClientSide && this.nextPeriapsisTime != null && TimeElapsed > this.nextPeriapsisTime) {
+        if (!isClientSide && this.nextPeriapsisTime.isPresent() && TimeElapsed > this.nextPeriapsisTime.getAsLong()) {
             this.completedOneOrbit(TimeElapsed);
         }
         // checking if it's time for the predicted SOI change and doing it

@@ -11,6 +11,8 @@ import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
+import java.util.OptionalLong;
+
 public class OrbitalElements implements OrbitalElementsc {
     public static final double UniversalGravitationalConstant = 6.6743E-11d;
 
@@ -294,17 +296,17 @@ public class OrbitalElements implements OrbitalElementsc {
     }
 
     @Override
-    public @Nullable Long getNextPeriapsisTime(long elapsedTime) {
+    public OptionalLong getNextPeriapsisTime(long elapsedTime) {
         if (this.isHyperbolic()) {
             if (elapsedTime > this.periapsisTime) {
-                return null;
+                return OptionalLong.empty();
             }
-            return elapsedTime - (elapsedTime - this.periapsisTime);
+            return OptionalLong.of(elapsedTime - (elapsedTime - this.periapsisTime));
         } else {
             long orbitalPeriod = TimeCalc.timeDoubleToLong(this.getOrbitalPeriod());
             long lastCalculatedPeriapsisTime = elapsedTime - this.periapsisTime;
             long lastPeriapsisTime = elapsedTime - (lastCalculatedPeriapsisTime % orbitalPeriod);
-            return lastPeriapsisTime + orbitalPeriod;
+            return OptionalLong.of(lastPeriapsisTime + orbitalPeriod);
         }
     }
 

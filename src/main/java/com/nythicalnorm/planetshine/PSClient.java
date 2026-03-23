@@ -149,10 +149,12 @@ public class PSClient extends Stage {
             this.playerOrbit.getParent().simulateSpacecraft(this.getCurrentTime(), this.isTimeWarping());
         }
 
-        if (currentPlanetOn != null && playerOrbit.getBody() != null) {
+        if (currentPlanetOn != null) {
             this.playerOrbit.updatePlayerPosRot(currentPlanetOn);
             BlockPos playerPos = playerOrbit.getBody().blockPosition();
             this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getBody().level());
+        } else if (weInSpaceDim()) {
+            this.daylightRegion.calculateForSpacecraft(this.playerOrbit);
         }
     }
 

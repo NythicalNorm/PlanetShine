@@ -1,9 +1,10 @@
 package com.nythicalnorm.planetshine.dimensions;
 
 import com.nythicalnorm.planetshine.PSServer;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
+import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -102,26 +103,37 @@ public class SpaceServerLevel extends ServerLevel implements PlanetTimeAccessor 
 
     @Override
     public boolean ps$DaylightDataExists() {
-        return false;
-    }
-
-    @Override
-    public void ps$setDaylightData(DaylightData daylightData) {
-
+        return true;
     }
 
     @Override
     public float ps$getSunAngle(double x, double z) {
-        return 0;
+        if (this.hostSpaceManager == null) {
+            return 0.0f;
+        }
+
+        OrbitHostSpace hostSpace = this.hostSpaceManager.getHostSpaceAt(x, z);
+        if (hostSpace != null) {
+            return DayNightCycleCalc.getSunAngleFromSunOcclusion(hostSpace.getSunOcclusion());
+        }
+
+        return 0.0f;
     }
 
     @Override
     public int ps$getDarknessAmount(double x, double z) {
+        if (this.hostSpaceManager == null) {
+            return 0;
+        }
+        OrbitHostSpace hostSpace = this.hostSpaceManager.getHostSpaceAt(x, z);
+        if (hostSpace != null) {
+            return DayNightCycleCalc.getDarknessLightLevelFromSunOcclusion(hostSpace.getSunOcclusion());
+        }
         return 0;
     }
 
     @Override
     public boolean ps$isDay(double x, double z) {
-        return false;
+        return this.ps$getDarknessAmount(x, z) < 4;
     }
 }

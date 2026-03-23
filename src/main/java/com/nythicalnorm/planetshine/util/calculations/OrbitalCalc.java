@@ -14,6 +14,7 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.OptionalLong;
 
 public class OrbitalCalc {
     public static final double ACCELERATION_DUE_TO_GRAVITY_EARTH = 9.80665d;
@@ -298,13 +299,13 @@ public class OrbitalCalc {
                         entityOrbit.calculateCurrentPos(radius, trueAnomoly, true);
                         calculatedThisTime = true;
                     }
-                    @Nullable Long periapsisTime = trueAnomoly > (Math.PI) ? originalOrbit.getNextPeriapsisTime(timeElapsed) : Long.valueOf(originalOrbit.getLastPeriapsisTime(timeElapsed));
-                    if (periapsisTime == null) {
+                    OptionalLong periapsisTime = trueAnomoly > (Math.PI) ? originalOrbit.getNextPeriapsisTime(timeElapsed) : OptionalLong.of(originalOrbit.getLastPeriapsisTime(timeElapsed));
+                    if (periapsisTime.isEmpty()) {
                         continue;
                     }
 
                     long time = getTimeStampFromTrueAnomaly(entityOrbit.MeanAngularMotion, trueAnomoly,
-                            entityOrbit.Eccentricity, periapsisTime);
+                            entityOrbit.Eccentricity, periapsisTime.getAsLong());
 
                     planetIntersect.planetOrbit().ToCartesianRot(time, true);
 

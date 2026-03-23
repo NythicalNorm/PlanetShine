@@ -11,6 +11,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -34,6 +35,8 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     protected final ConcurrentLinkedQueue<ServerPlayerOrbitBody> playerOrbitBodies;
 
     protected final ConcurrentLinkedQueue<Vector3dc> velocityForLastGameTick;
+
+    protected float sunOcclusion;
 
     public OrbitHostSpace(OrbitId orbitIdOfHost, Vector2ic originPos, EntityOrbitBody<?> entityOrbitBody) {
         this.orbitIdOfHost = orbitIdOfHost;
@@ -59,7 +62,12 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         return orbitIdOfHost;
     }
 
+    public float getSunOcclusion() {
+        return sunOcclusion;
+    }
+
     public void OnGameTick() {
+        this.sunOcclusion = DayNightCycleCalc.getSunOcclusionForSpacecraft(this.hostBody);
         Vector3d velocity = Calc.pollVectorQueue(velocityForLastGameTick);
 
         if (velocity.x() == 0.0d && velocity.y() == 0.0d && velocity.z() == 0.0d) {

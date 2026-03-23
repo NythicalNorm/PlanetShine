@@ -18,10 +18,10 @@ public class FogRendererMixin {
     @Redirect(method = "setupColor", at = @At(value = "INVOKE", target = "Lorg/joml/Vector3f;dot(Lorg/joml/Vector3fc;)F"))
     private static float setupColor(Vector3f instance, Vector3fc v) {
         Vector3d sunPos = PSRenderer.getSunPosOverworld();
-        if (PSClient.get().getDaylightRegion().isOngoingEclipse()) {
-            return -1.0f;
-        }
         if (sunPos != null) {
+            if (PSClient.get().getDaylightRegion().isOngoingEclipse()) {
+                return -1.0f;
+            }
             return -instance.dot((float) sunPos.x, (float) sunPos.y, (float) sunPos.z);
         }
         return instance.dot(v);

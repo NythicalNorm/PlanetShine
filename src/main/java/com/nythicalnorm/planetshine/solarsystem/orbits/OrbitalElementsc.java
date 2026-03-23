@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 
+import java.util.OptionalLong;
+
 // an interface for immutable reference for OrbitalElements.
 public interface OrbitalElementsc {
     double ToCartesian(long timeElapsed, Vector3d outPos, Vector3d outVel);
@@ -22,7 +24,7 @@ public interface OrbitalElementsc {
     long getOrbitalPeriodLong();
 
     long getLastPeriapsisTime(long elapsedTime);
-    @Nullable Long getNextPeriapsisTime(long elapsedTime);
+    OptionalLong getNextPeriapsisTime(long elapsedTime);
     boolean isHyperbolic();
     double getApoapsis();
     double getPeriapsis();

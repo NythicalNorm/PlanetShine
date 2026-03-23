@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.event;
 
 import com.nythicalnorm.planetshine.Item.PSItems;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.dimensions.SpaceDimensionalSpecialEffects;
 import com.nythicalnorm.planetshine.rendering.generators.QuadSphereModelGenerator;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
@@ -11,6 +12,7 @@ import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -43,6 +45,11 @@ public class ModClientEvents {
         QuadSphereModelGenerator.setupModels();
         PSRenderer.setupBuffers();
         PlanetShine.log("Setup Complete Took : " + (Util.getMillis()-beforeTimes) + " milliseconds");
+    }
+
+    @SubscribeEvent
+    public static void OnDimensionalSpecialEffectsRegister(RegisterDimensionSpecialEffectsEvent event) {
+        event.register(PlanetShine.rl("ps_space_dimension_effects"), new SpaceDimensionalSpecialEffects());
     }
 
     @SubscribeEvent

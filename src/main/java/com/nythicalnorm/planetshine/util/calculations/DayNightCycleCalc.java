@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.util.calculations;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
+import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import org.joml.Vector3d;
@@ -63,6 +64,42 @@ public class DayNightCycleCalc {
         }
 
         return percentCovered;
+    }
+
+    public static float getSunOcclusionForSpacecraft(EntityOrbitBody<?> hostBody) {
+        if (hostBody.getParent() == null) {
+            return 1.0f;
+        }
+        CelestialBody parentBody = hostBody.getParent();
+        StarBody starBody = hostBody.getParent().getSolarSystem().getRootStar();
+        float percentCovered = 0.0f;
+
+        if (! (parentBody.equals(starBody)) ) {
+            percentCovered = getPlanetPerspectiveOverlap(starBody, parentBody, hostBody.getAbsolutePos());
+        } else {
+            for (CelestialBody body: parentBody.getPlanetChildren()) {
+                float bodyCovered = getPlanetPerspectiveOverlap(starBody, body, hostBody.getAbsolutePos());
+                if (bodyCovered > percentCovered) {
+                    percentCovered = bodyCovered;
+                }
+            }
+        }
+        return percentCovered;
+    }
+
+    public static float getSunAngleFromSunOcclusion(float sunOcclusion) {
+        if (sunOcclusion <= 0.0f) {
+            return 0f;
+        } else if (sunOcclusion >= 1.0f) {
+            return 0.5f;
+        } else {
+            return 0.175f + (sunOcclusion * 0.15f);
+        }
+    }
+
+    public static int getDarknessLightLevelFromSunOcclusion(float sunOcclusion) {
+        int darknessAmount = (int) Math.floor(sunOcclusion * 16.0d);
+        return Mth.clamp(darknessAmount, 0, 15);
     }
 
     public static float getPlanetPerspectiveOverlap (CelestialBody bodyA, CelestialBody bodyB, Vector3dc perspectivePos) {

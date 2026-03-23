@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.world.level.Level;
@@ -32,6 +33,14 @@ public class DaylightRegion {
         this.sunOcclusion = DayNightCycleCalc.getSunOcclusionForPlanet(celestialBody, planetAbsolutePos);
         this.sunAngle = DayNightCycleCalc.getSunAngle(blockPosOnPlanet, planetAbsolutePos, this.sunOcclusion);
         this.DarknessAmount = DayNightCycleCalc.getDarknessLightLevel(this.sunAngle, level);
+        this.isDay = this.DarknessAmount < 4;
+        this.calculatedThisTick = true;
+    }
+
+    public void calculateForSpacecraft(EntityOrbitBody<?> entityOrbitBody) {
+        this.sunOcclusion = DayNightCycleCalc.getSunOcclusionForSpacecraft(entityOrbitBody);
+        this.sunAngle = DayNightCycleCalc.getSunAngleFromSunOcclusion(this.sunOcclusion);
+        this.DarknessAmount = DayNightCycleCalc.getDarknessLightLevelFromSunOcclusion(this.sunOcclusion);
         this.isDay = this.DarknessAmount < 4;
         this.calculatedThisTick = true;
     }
