@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.nythicalnorm.planetshine.network.NetworkEncoders;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitCodec;
+import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import com.nythicalnorm.planetshine.storage.PlanetDataResolver;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -57,6 +58,13 @@ public class StarBodyCodec extends OrbitCodec<StarBody, StarBody.StarBuilder> {
         if (childPlanets != null) {
             JsonArray planetNameArray = childPlanets.getAsJsonArray();
             planetNameArray.forEach(jsonElement -> childPlanetNames.add(jsonElement.getAsString()));
+        }
+
+        JsonElement heatAffectingRadius = jsonObj.get("heat_affecting_radius");
+        JsonElement starLuminosity = jsonObj.get("star_luminosity");
+
+        if (heatAffectingRadius != null && starLuminosity != null) {
+            body.addCelestialBodyTicker(new StarHeaterTicker(heatAffectingRadius.getAsDouble(), starLuminosity.getAsDouble()));
         }
 
         tempChildPlanetsMap.put(name, childPlanetNames.toArray(new String[0]));

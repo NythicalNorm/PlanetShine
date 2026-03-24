@@ -22,7 +22,7 @@ import com.nythicalnorm.planetshine.spacecraft.hostspace.ClientHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
-import com.nythicalnorm.planetshine.util.Stage;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -38,7 +38,7 @@ import org.valkyrienskies.mod.common.VSGameUtilsKt;
 import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
-public class PSClient extends Stage {
+public class PSClient extends UniverseStage {
     private static PSClient instance;
     private final Minecraft minecraft;
 
@@ -110,7 +110,7 @@ public class PSClient extends Stage {
         if (instance != null) {
             instance.getPlanetTexManager().close();
             PSRenderer.close();
-            Stage.close();
+            UniverseStage.close();
             instance = null;
         }
     }

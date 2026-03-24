@@ -9,6 +9,7 @@ import com.nythicalnorm.planetshine.event.VSServerEvents;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.sound.PSSounds;
 import com.nythicalnorm.planetshine.storage.PSDataPackManager;
+import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
@@ -17,6 +18,7 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
@@ -43,10 +45,7 @@ public class PlanetShine
 
         VSServerEvents.addListeners();
 
-        //modEventBus.addListener(this::addCreative);
-
-        // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
-        //context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        context.registerConfig(ModConfig.Type.SERVER, PlanetShineConfig.CONFIG_SPEC);
     }
 
     public static Logger getLogger() {

@@ -8,17 +8,21 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
+import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
 import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StarBody extends CelestialBody {
     public StarBody(StarBuilder starBuilder, boolean isClientSide) {
         super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.rotation,
                 starBuilder.atmosphericEffects, null, starBuilder,
-                ImmutableList.of(new StarHeaterTicker(1e12d, 3.828e26)),
+                ImmutableList.copyOf(starBuilder.celestialBodyTickers),
                 isClientSide);
     }
 
@@ -44,9 +48,10 @@ public class StarBody extends CelestialBody {
         private double mass = 10E24;
         protected Quaternionf rotation = new Quaternionf();
         private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
+        private final List<CelestialBodyTicker> celestialBodyTickers;
 
         public StarBuilder() {
-
+            this.celestialBodyTickers = new ArrayList<>();
         }
 
         public void setName(String name) {
@@ -68,6 +73,10 @@ public class StarBody extends CelestialBody {
 
         public void setAtmosphericEffects(PlanetAtmosphere atmosphericEffects) {
             this.atmosphericEffects = atmosphericEffects;
+        }
+
+        public void addCelestialBodyTicker(StarHeaterTicker starHeaterTicker) {
+            this.celestialBodyTickers.add(starHeaterTicker);
         }
 
         @Override

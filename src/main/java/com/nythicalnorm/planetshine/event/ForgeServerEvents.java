@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.storage.PlanetDataResolver;
+import com.nythicalnorm.planetshine.storage.PlanetTextureResolver;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,6 +42,7 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void OnResourceReload(AddReloadListenerEvent event) {
         event.addListener(new PlanetDataResolver());
+        event.addListener(new PlanetTextureResolver());
     }
 
     @SubscribeEvent
@@ -50,6 +52,7 @@ public class ForgeServerEvents {
                 CelestialBody planetaryBody = PSServer.get().getSolarSystem().getDimensionOfPlanet(serverLevel.dimension());
                 if (planetaryBody != null && serverLevel instanceof CelestialBodyAccessor celestialBodyAccessor) {
                     celestialBodyAccessor.ps$setCelestialBody(planetaryBody);
+                    planetaryBody.getCelestialServerData().setServerLevel(serverLevel);
                 }
             }
         }

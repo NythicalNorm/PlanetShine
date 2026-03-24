@@ -43,7 +43,8 @@ public class AtmosphereRenderer {
     public static void render(CelestialBody renBody, Vector3f relativeDir, double distance, PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix) {
         poseStack.pushPose();
         RenderSystem.enableBlend();
-
+        float scale = SpaceObjRenderer.maxDepthDistance();
+        poseStack.scale(scale, scale, scale);
         poseStack.mulPose(new Quaternionf().rotateTo(new Vector3f(0f,1f,0f), relativeDir));
 
         //reduce the atmosphere alpha as the player gets further away, only works if the atmosphere's alpha value is less than 1

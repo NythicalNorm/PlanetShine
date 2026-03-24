@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.planettexgen;
 
 
+import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import net.minecraft.util.Mth;
@@ -12,11 +13,12 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class PlanetMapGen {
-    public static final int size = 682;
-    private static final int imageLength = size * 3;
     private static final DoubleList blendVals = DoubleList.of(1.1d, 0.6d, 1.1d, 1.2d, 1.2d);
 
     public static BufferedImage GenerateMap(RandomSource randomSource, PlanetGradient gradient) {
+        int size = (int) (PlanetShineConfig.getPlanetTextureResolution() / 3.0d);
+        int imageLength = size * 3;
+
         BufferedImage image = new BufferedImage(imageLength, imageLength, BufferedImage.TYPE_INT_RGB);
         PerlinNoise ns = PerlinNoise.create(randomSource, 0, blendVals);
 

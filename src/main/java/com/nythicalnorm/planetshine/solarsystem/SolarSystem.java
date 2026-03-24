@@ -11,8 +11,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
-import com.nythicalnorm.planetshine.util.RunnableExecutor;
-import com.nythicalnorm.planetshine.util.Stage;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -30,7 +29,7 @@ public class SolarSystem {
     private final ConcurrentMap<OrbitId, EntityOrbitBody<?>> allSpacecraftBodies;
     private final ConcurrentMap<Long, AbstractSpaceshipBody> allVSships;
     private final StarBody rootStar;
-    private Stage universeStage;
+    private UniverseStage universeStage;
 
     public SolarSystem(Map<OrbitId, CelestialBody> pAllPlanetaryBodies,
                        ConcurrentMap<OrbitId, EntityOrbitBody<?>> pAllSpacecraftBodies,
@@ -54,11 +53,11 @@ public class SolarSystem {
         return vsShips;
     }
 
-    public void setStage(Stage stage) {
-        this.universeStage = stage;
+    public void setStage(UniverseStage universeStage) {
+        this.universeStage = universeStage;
     }
 
-    public Stage getUniverseStage() {
+    public UniverseStage getUniverseStage() {
         return universeStage;
     }
 

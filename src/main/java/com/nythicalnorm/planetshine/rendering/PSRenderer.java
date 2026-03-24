@@ -57,7 +57,7 @@ public class PSRenderer {
         // enable depth clamping shouldn't break stuff i don't think anyway.
     }
 
-    public static void renderSkybox(Minecraft mc, LevelRenderer levelRenderer, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient)
+    public static void renderSkybox(Minecraft mc, Matrix4f projectionMatrix, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient)
     {
         FogRenderer.levelFogColor();
         psClient.renderTick(partialTick);
@@ -72,8 +72,8 @@ public class PSRenderer {
         }
 
         GL11.glEnable(0x864F);
-        double fov = mc.gameRenderer.getFov(camera, partialTick, true);
-        Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
+        // double fov = mc.gameRenderer.getFov(camera, partialTick, true);
+        //Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
 
         RenderSystem.depthMask(false);
 

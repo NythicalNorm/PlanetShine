@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.util.calculations.HeatCalc;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,21 +35,33 @@ public class StarHeaterTicker implements CelestialBodyTicker {
 
     @Override
     public void onServerTick(CelestialBody celestialBody, SolarSystem solarSystem, SpaceServerLevel spaceLevel) {
+        if (heatAffectingRadius <= 0.0f) {
+            return;
+        }
+
         celestialBody.getEntityChildren().forEach(entityOrbitBody -> {
             double distSquared = entityOrbitBody.getRelativePos().lengthSquared();
 
             if (distSquared < (heatAffectingRadius * heatAffectingRadius) && entityOrbitBody.isBodyEntityLoaded()) {
-                if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody) {
+                double altitude = entityOrbitBody.getAltitude();
+                double tempOfShip = HeatCalc.getTemperatureInSpaceFromStar(coreStarLuminosity, altitude, 0.4f);
 
+                if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody) {
+                    if (playerOrbitBody.isBodyEntityLoaded()) {
+                        affectEntity(playerOrbitBody.getBody(), altitude, tempOfShip);
+                    }
                 } else if (entityOrbitBody instanceof AbstractSpaceshipBody spaceshipBody) {
-                    affectHeatOnShip((LoadedServerShip) spaceshipBody.getBody(), entityOrbitBody, Math.sqrt(distSquared), spaceLevel, solarSystem);
+                    affectHeatOnShip((LoadedServerShip) spaceshipBody.getBody(), entityOrbitBody, tempOfShip, spaceLevel);
                 }
             }
         });
     }
 
-    private void affectHeatOnShip(LoadedServerShip ship, EntityOrbitBody entityOrbitBody, double distanceFromCenter, SpaceServerLevel spaceServerLevel, SolarSystem solarSystem) {
-        double tempOfShip = HeatCalc.getTemperatureInSpaceFromStar(coreStarLuminosity, entityOrbitBody.getAltitude(), 0.4f);
+    private void affectEntity(Entity entity, double Altitude, double tempOfShip) {
+
+    }
+
+    private void affectHeatOnShip(LoadedServerShip ship, EntityOrbitBody<?> entityOrbitBody, double tempOfShip, SpaceServerLevel spaceServerLevel) {
         int rayCount = (int) Math.floor((tempOfShip - 273.15d) / 100d);
         List<BlockPos> blockPosHits = this.getSunRayedBlocks(rayCount, new Vector3d(entityOrbitBody.getAbsolutePos()), ship, spaceServerLevel);
 

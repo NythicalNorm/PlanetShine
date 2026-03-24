@@ -28,7 +28,7 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
     public static final Gson GSON_INSTANCE = Deserializers.createFunctionSerializer().create();
 
     public PlanetDataResolver() {
-        super(GSON_INSTANCE, "vsp_planetary_bodies");
+        super(GSON_INSTANCE, "ps_celestial_bodies");
     }
 
     @Override
@@ -53,10 +53,10 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
                         tempPlanetaryBodyMap.put(celestialBody.getName(), celestialBody);
                     }
                 } else {
-                    throw new IllegalStateException("Planetary Body is of unknown type: " + bodyType);
+                    throw new IllegalStateException("Celestial Body is of unknown type: " + bodyType);
                 }
             } catch (Exception e) {
-                logger.error("Unable to parse datapack for planetary body {}", key.getPath());
+                logger.error("Unable to parse datapack for Celestial body {}", key.getPath());
                 e.printStackTrace();
             }
         });

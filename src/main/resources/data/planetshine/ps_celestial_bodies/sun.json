@@ -4,6 +4,9 @@
   "radius": 696340000,
   "mass": 1.989E30,
 
+  "heat_affecting_radius": 1e10,
+  "star_luminosity": 3.828e26,
+
   "child_planets": [
     "earth"
   ],

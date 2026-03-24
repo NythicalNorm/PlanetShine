@@ -17,6 +17,7 @@ import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.vs.ShipTeleporter;
 import com.nythicalnorm.planetshine.storage.IDataSavable;
+import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.resources.ResourceKey;
@@ -57,8 +58,6 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     private static final int HOST_SPACE_GAP_SIZE = 16000;
     private static final int HOST_SPACE_DIAMETER = HOST_SPACE_GAP_SIZE / 2;
-    private static final double TELEPORT_TO_GROUND_HEIGHT = 500d;
-    public static final double TELEPORT_TO_SPACE_HEIGHT = 1000d;
 
     private boolean isDirty = false;
 
@@ -232,7 +231,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         ValkyrienSkies.api().getServerShipWorld(psServer.getMCServer()).getLoadedShips().forEach(loadedServerShip -> {
             Vector3dc currentPos = loadedServerShip.getTransform().getPositionInWorld();
 
-            if (currentPos.y() >= TELEPORT_TO_SPACE_HEIGHT && !shipTeleporter.isTeleported(loadedServerShip)) {
+            if (currentPos.y() >= PlanetShineConfig.getTeleportToSpaceHeight() && !shipTeleporter.isTeleported(loadedServerShip)) {
                 ResourceKey<Level> shipDimension = VSGameUtilsKt.getResourceKey(loadedServerShip.getChunkClaimDimension());
                 CelestialBody celestialBody = psServer.getSolarSystem().getDimensionOfPlanet(shipDimension);
 
@@ -263,12 +262,12 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         psServer.getSolarSystem().getAllSpacecraftBodies().values().forEach(entityOrbitBody -> {
             if (entityOrbitBody.isHostOfItsSpace() &&  entityOrbitBody.getOrbitalElements() != null &&
                     entityOrbitBody.getOrbitalElements().getPeriapsis() <= entityOrbitBody.getParent().getRadius() &&
-                    entityOrbitBody.getAltitude() < TELEPORT_TO_GROUND_HEIGHT) {
+                    entityOrbitBody.getAltitude() < PlanetShineConfig.getTeleportToGroundHeight()) {
                 ServerLevel planetLevel = entityOrbitBody.getParent().getCelestialServerData().getServerLevel();
                 if (planetLevel != null && entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.isBodyEntityLoaded()) {
                     Vector2d pos = PlanetCalc.getDimensionPosition(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent());
                     if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody) {
-                        teleportEntity(playerOrbitBody.getBody(), planetLevel, pos.x, TELEPORT_TO_GROUND_HEIGHT, pos.y);
+                        teleportEntity(playerOrbitBody.getBody(), planetLevel, pos.x, PlanetShineConfig.getTeleportToGroundHeight(), pos.y);
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody, true);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));
                     } else if (entityOrbitBody instanceof ServerSpaceshipBody spaceshipBody) {
@@ -284,7 +283,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     private void teleportShipToGround(ServerSpaceshipBody spaceshipBody, Vector2d pos, SpaceServerLevel spaceLevel, ServerLevel planetLevel) {
         if (spaceshipBody.getBody() != null) {
             BodyKinematics bodyKinematics = spaceshipBody.getBody().getKinematics();
-            Vector3d planetPos = new Vector3d(pos.x, TELEPORT_TO_GROUND_HEIGHT, pos.y);
+            Vector3d planetPos = new Vector3d(pos.x, PlanetShineConfig.getTeleportToGroundHeight(), pos.y);
 
             Quaterniond shipToSpace = PlanetCalc.getShipSpaceToPlanetRotation(planetPos, spaceshipBody.getRelativePos(), spaceshipBody.getParent());
 

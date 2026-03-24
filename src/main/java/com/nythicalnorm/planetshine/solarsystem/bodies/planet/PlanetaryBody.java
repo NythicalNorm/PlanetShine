@@ -5,6 +5,8 @@ import com.nythicalnorm.planetshine.solarsystem.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
+import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
+import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -14,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PlanetaryBody extends CelestialBody {
     protected final AxisAngle4f NorthPoleDir;
@@ -21,7 +25,8 @@ public class PlanetaryBody extends CelestialBody {
 
     public PlanetaryBody(PlanetBuilder planetBuilder, boolean isClientSide) {
         super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,
-                planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder, ImmutableList.of(), isClientSide);
+                planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder,
+                ImmutableList.copyOf(planetBuilder.celestialBodyTickers), isClientSide);
         this.NorthPoleDir = planetBuilder.NorthPoleDir;
         this.RotationPeriod = planetBuilder.RotationPeriod;
     }
@@ -58,9 +63,10 @@ public class PlanetaryBody extends CelestialBody {
         private long RotationPeriod = 0L;
         private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
         private @Nullable ResourceKey<Level> dimension = null;
+        private final List<CelestialBodyTicker> celestialBodyTickers;
 
         public PlanetBuilder() {
-
+            this.celestialBodyTickers = new ArrayList<>();
         }
 
         public void setName(String name) {
@@ -101,6 +107,10 @@ public class PlanetaryBody extends CelestialBody {
 
         public void setAtmosphericEffects(PlanetAtmosphere atmosphericEffects) {
             this.atmosphericEffects = atmosphericEffects;
+        }
+
+        public void addCelestialBodyTicker(StarHeaterTicker starHeaterTicker) {
+            this.celestialBodyTickers.add(starHeaterTicker);
         }
 
         public void setDimension(@Nullable ResourceKey<Level> dimension) {

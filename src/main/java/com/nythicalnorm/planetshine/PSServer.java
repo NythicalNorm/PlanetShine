@@ -25,16 +25,14 @@ import com.nythicalnorm.planetshine.storage.PSCommonSaveData;
 import com.nythicalnorm.planetshine.storage.PSDataPackManager;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
-import com.nythicalnorm.planetshine.util.Stage;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniondc;
@@ -50,7 +48,7 @@ import org.valkyrienskies.mod.common.VSGameUtilsKt;
 import java.util.List;
 import java.util.Optional;
 
-public class PSServer extends Stage {
+public class PSServer extends UniverseStage {
     private static PSServer instance;
     private final MinecraftServer server;
     private PlanetTexHandler planetTexHandler;
@@ -59,7 +57,6 @@ public class PSServer extends Stage {
     private long runningPhysTicks; // in VSPhysTicks
     private volatile boolean sleepTimeWarping = false;
     private final RunnableExecutor physTickRunnable;
-    //private final RunnableExecutor gameTickRunnable;
 
     // Called on the server starting event
     public PSServer(MinecraftServer server, SolarSystem solarSystem) {
@@ -70,7 +67,7 @@ public class PSServer extends Stage {
         this.runningPhysTicks = 0;
         this.spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
         this.physTickRunnable = new RunnableExecutor();
-        //this.gameTickRunnable = new RunnableExecutor();
+        this.initPlanets();
     }
 
     public void onDimensionDataLoaded(DimensionDataStorage dataStorage) {
@@ -83,21 +80,8 @@ public class PSServer extends Stage {
     }
 
     public void serverStarted() {
-        this.initPlanets();
         this.hostSpaceManager.serverStarted();
         server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
-
-        for(CelestialBody celestialBody: solarSystem.getAllPlanetaryBodies().values()) {
-            ResourceKey<Level> dimension = celestialBody.getDimension();
-            if (dimension != null) {
-                ServerLevel level = server.getLevel(dimension);
-                if (level != null) {
-                    celestialBody.getCelestialServerData().setServerLevel(level);
-                } else {
-                    PlanetShine.logError("ServerLevel for dimension: " + dimension + " doesn't exist at startup, not linking it to a planet");
-                }
-            }
-        }
     }
 
     public static PSServer get() {
@@ -112,7 +96,7 @@ public class PSServer extends Stage {
     }
 
     public static void close() {
-        Stage.close();
+        UniverseStage.close();
         instance.hostSpaceManager.close();
         instance = null;
     }
@@ -145,7 +129,6 @@ public class PSServer extends Stage {
     }
 
     public void OnGameTick() {
-        // this.gameTickRunnable.executeAll();
         this.hostSpaceManager.onGameTick();
         this.solarSystem.onServerTick(this.getSpaceLevel());
     }

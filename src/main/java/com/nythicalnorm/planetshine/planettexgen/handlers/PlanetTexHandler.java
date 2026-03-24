@@ -1,13 +1,15 @@
 package com.nythicalnorm.planetshine.planettexgen.handlers;
 
+import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.network.textures.ClientboundLodTexturePacket;
 import com.nythicalnorm.planetshine.network.textures.ClientboundPlanetTexturePacket;
 import com.nythicalnorm.planetshine.network.PacketHandler;
-import com.nythicalnorm.planetshine.planettexgen.GradientSupplier;
+import com.nythicalnorm.planetshine.planettexgen.PlanetGradient;
 import com.nythicalnorm.planetshine.planettexgen.lod_tex.LodTexGenTask;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.storage.PSDataPackManager;
 import com.nythicalnorm.planetshine.storage.SpacecraftDataStorage;
 import com.nythicalnorm.planetshine.util.calculations.LodTexCalc;
 import net.minecraft.network.chat.Component;
@@ -46,9 +48,15 @@ public class PlanetTexHandler {
         for (CelestialBody celestialBody : planets.getAllPlanetaryBodies().values()) {
             Path celestialBodyDir = planetsTexturesPath.resolve(celestialBody.getName());
             SpacecraftDataStorage.getOrCreateDir(celestialBodyDir);
+            PlanetGradient planetGradient = PSDataPackManager.getPlanetGradient(celestialBody.getName());
+
+            if (planetGradient == null) {
+                PlanetShine.logError("Can't load a texture data pack for planet: " + celestialBody.getName() + ", Texture will not be generated");
+                continue;
+            }
 
             CompletableFuture<byte[]> planetImgData = CompletableFuture.supplyAsync(
-                    new WholePlanetTexGenTask(celestialBodyDir, celestialBody.getName(), randomSource, GradientSupplier.textureForPlanets.get(celestialBody.getName())), texExecuter);
+                    new WholePlanetTexGenTask(celestialBodyDir, celestialBody.getName(), randomSource, planetGradient), texExecuter);
 
             celestialBody.getCelestialServerData().setPlanetTextureFolder(celestialBodyDir);
             celestialBody.getCelestialServerData().setPlanetMainTexBytes(planetImgData);
