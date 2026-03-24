@@ -48,7 +48,7 @@ public class MapGenTestDisplay {
         RandomSource random = RandomSource.create();
         long starttime = System.nanoTime();
 
-        BufferedImage planetMap = PlanetMapGen.GenerateMap(random, GradientSupplier.STAR_GRADIENT);
+        BufferedImage planetMap = PlanetMapGen.GenerateMap(random, GradientSupplier.MARS_GRADIENT);
 
         float timeDiff = ((float)(System.nanoTime() - starttime))/1000000f;
         System.out.println("Generation took : " + timeDiff + " milliseconds");

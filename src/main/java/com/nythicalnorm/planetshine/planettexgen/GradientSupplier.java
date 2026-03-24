@@ -1,7 +1,6 @@
 package com.nythicalnorm.planetshine.planettexgen;
 
 import java.awt.*;
-import java.util.Map;
 
 public class GradientSupplier {
     public static PlanetGradient STAR_GRADIENT = new PlanetGradient(new BiomeGroup[]{
@@ -39,5 +38,17 @@ public class GradientSupplier {
             }),
     });
 
-    public static final Map<String, PlanetGradient> textureForPlanets = Map.of("earth", OVERWORLD_GRADIENT,"luna", NILA_GRADIENT, "sun", STAR_GRADIENT);
+    public static PlanetGradient MARS_GRADIENT = new PlanetGradient(new BiomeGroup[] {
+            new BiomeGroup("high_lands", -0.5f, 0.2f, new BiomeGradient[]{
+                    new BiomeGradient(0f,0.4f, 0, 1, 1f, Color.decode("#fe844e")),
+                    new BiomeGradient(0.4f,0.7f, 0, 1, 1f, Color.decode("#fa7241")),
+                    new BiomeGradient(0.7f,1f, 0, 1, 1f, Color.decode("#f16a3d")),
+            }),
+
+            new BiomeGroup("low_lands", 0.2f, 0.5f, new BiomeGradient[]{
+                    new BiomeGradient(0f,0.2f, 0, 1f, 1f, Color.decode("#e46035")),
+                    new BiomeGradient(0.2f,0.3f, 0, 1f, 1f, Color.decode("#df623c")),
+                    new BiomeGradient(0.3f,1f, 0, 1f, 1f, Color.decode("#da633a")),
+            }),
+    });
 }

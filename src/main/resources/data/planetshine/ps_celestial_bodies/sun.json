@@ -8,7 +8,8 @@
   "star_luminosity": 3.828e26,
 
   "child_planets": [
-    "earth"
+    "earth",
+    "mars"
   ],
 
   "atmospheric_data": {
