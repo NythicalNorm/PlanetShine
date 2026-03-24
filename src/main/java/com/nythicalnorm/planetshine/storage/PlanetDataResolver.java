@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
@@ -45,7 +45,8 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
                 JsonObject jsonObject = element.getAsJsonObject();
                 String name = jsonObject.get("name").getAsString();
                 String bodyType = jsonObject.get("type").getAsString();
-                OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType = OrbitalBodyTypesHolder.getType(bodyType);
+                OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType =
+                        OrbitalBodyTypeRegistry.getType(ResourceLocation.parse(bodyType));
                 if (orbitalBodyType != null) {
                     OrbitalBody.Builder<?> planetBuilder = orbitalBodyType.readCelestialBodyDataPack(name, jsonObject, tempChildPlanetsMap);
                     OrbitalBody readOrbitalBody = planetBuilder.build();

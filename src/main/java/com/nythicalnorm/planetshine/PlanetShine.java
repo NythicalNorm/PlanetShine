@@ -7,6 +7,9 @@ import com.nythicalnorm.planetshine.block.PSBlocks;
 import com.nythicalnorm.planetshine.commands.PSArguments;
 import com.nythicalnorm.planetshine.event.VSServerEvents;
 import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.sound.PSSounds;
 import com.nythicalnorm.planetshine.storage.PSDataPackManager;
 import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
@@ -21,6 +24,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.NewRegistryEvent;
+import net.minecraftforge.registries.RegistryBuilder;
 import org.slf4j.Logger;
 
 @Mod(PlanetShine.MODID)
@@ -37,6 +42,7 @@ public class PlanetShine
         PSBlocks.register(modEventBus);
         PSSounds.register(modEventBus);
         PSArguments.register(modEventBus);
+        OrbitalBodyTypeRegistry.ORBITAL_BODY_TYPES.register(context.getModEventBus());
 
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -69,6 +75,16 @@ public class PlanetShine
     }
     public static void logWarn(String msg){
         LOGGER.warn(msg);
+    }
+
+    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+    public static class CommonModEvents
+    {
+        @SubscribeEvent
+        public static void createRegistries(NewRegistryEvent event) {
+            event.create(new RegistryBuilder<OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>>>()
+                    .setName(PlanetShine.rl("orbital_bodies")));
+        }
     }
 
     @SubscribeEvent

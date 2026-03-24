@@ -1,6 +1,6 @@
 {
   "name": "earth",
-  "type": "planet",
+  "type": "planetshine:planet",
   "radius": 6371000,
   "mass": 5.97219E24,
 

@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.spacecraft.spaceship;
 
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
@@ -12,6 +12,7 @@ import com.nythicalnorm.planetshine.spacecraft.hostspace.ShipHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaterniondc;
 import org.joml.Vector2ic;
@@ -27,8 +28,8 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody<Ship> {
     }
 
     @Override
-    public OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>> getType() {
-        return OrbitalBodyTypesHolder.SPACESHIP_BODY;
+    public RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>>> getType() {
+        return OrbitalBodyTypeRegistry.SPACESHIP_BODY;
     }
 
     // server side only start

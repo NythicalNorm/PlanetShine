@@ -12,6 +12,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
@@ -32,8 +33,8 @@ public class PlanetaryBody extends CelestialBody {
     }
 
     @Override
-    public OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>> getType() {
-        return OrbitalBodyTypesHolder.PLANETARY_BODY;
+    public RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>>> getType() {
+        return OrbitalBodyTypeRegistry.PLANETARY_BODY;
     }
 
     @Override

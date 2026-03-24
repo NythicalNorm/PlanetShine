@@ -23,16 +23,16 @@ import java.util.*;
 public class NetworkEncoders {
 
     public static void writeOrbitalBody(FriendlyByteBuf friendlyByteBuf, OrbitalBody orbitalBody) {
-        orbitalBody.getType().encodeToBuffer(orbitalBody, friendlyByteBuf);
+        orbitalBody.getType().get().encodeToBuffer(orbitalBody, friendlyByteBuf);
     }
 
     public static OrbitalBody readOrbitalBody(FriendlyByteBuf friendlyByteBuf) {
-        return OrbitalBodyTypesHolder.getType(readASCII(friendlyByteBuf)).decodeFromBuffer(friendlyByteBuf).build();
+        return OrbitalBodyTypeRegistry.getType(friendlyByteBuf.readResourceLocation()).decodeFromBuffer(friendlyByteBuf).build();
     }
 
     @OnlyIn(Dist.CLIENT)
     public static OrbitalBody readOrbitalBodyClient(FriendlyByteBuf friendlyByteBuf) {
-        return OrbitalBodyTypesHolder.getType(readASCII(friendlyByteBuf)).decodeFromBuffer(friendlyByteBuf).buildClientSide();
+        return OrbitalBodyTypeRegistry.getType(friendlyByteBuf.readResourceLocation()).decodeFromBuffer(friendlyByteBuf).buildClientSide();
     }
 
     public static void writePlanetaryBodyList(FriendlyByteBuf friendlyByteBuf, List<CelestialBody> bodyList) {

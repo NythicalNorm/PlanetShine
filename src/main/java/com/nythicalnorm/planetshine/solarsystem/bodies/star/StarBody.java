@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.star;
 
 import com.google.common.collect.ImmutableList;
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -12,6 +12,7 @@ import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
 import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
@@ -27,8 +28,8 @@ public class StarBody extends CelestialBody {
     }
 
     @Override
-    public OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>> getType() {
-        return OrbitalBodyTypesHolder.STAR_BODY;
+    public RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>>> getType() {
+        return OrbitalBodyTypeRegistry.STAR_BODY;
     }
 
     public void simulatePlanets(long currentTime, boolean isTimeWarping) {

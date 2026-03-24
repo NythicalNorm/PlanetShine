@@ -3,7 +3,7 @@ package com.nythicalnorm.planetshine.spacecraft.player;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.jetbrains.annotations.NotNull;
+import net.minecraftforge.registries.RegistryObject;
 import org.joml.*;
 import org.valkyrienskies.core.api.ships.LoadedShip;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -34,8 +34,8 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody<Player> {
     }
 
     @Override
-    public OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>> getType() {
-        return OrbitalBodyTypesHolder.PLAYER_ORBITAL_BODY;
+    public RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>>> getType() {
+        return OrbitalBodyTypeRegistry.PLAYER_ORBITAL_BODY;
     }
 
     // server side only start

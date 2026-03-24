@@ -5,6 +5,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
@@ -45,7 +46,7 @@ public abstract class OrbitalBody {
         return id;
     }
 
-    public abstract OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> getType();
+    public abstract RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>>> getType();
 
     public boolean isStableOrbit() {
         return isStableOrbit;
