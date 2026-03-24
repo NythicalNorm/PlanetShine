@@ -139,7 +139,7 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
     }
 
     protected void sendOrbitUpdateToRelevantPlayers() {
-        PacketHandler.sendToAllClients(new ClientboundOrbitChange(this.id, this.orbitalElements));
+        PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitChange(this.id, this.orbitalElements)));
     }
 
     private void applyQueuedVelocity() {

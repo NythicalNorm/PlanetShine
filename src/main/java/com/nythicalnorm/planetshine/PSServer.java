@@ -59,7 +59,7 @@ public class PSServer extends Stage {
     private long runningPhysTicks; // in VSPhysTicks
     private volatile boolean sleepTimeWarping = false;
     private final RunnableExecutor physTickRunnable;
-    private final RunnableExecutor gameTickRunnable;
+    //private final RunnableExecutor gameTickRunnable;
 
     // Called on the server starting event
     public PSServer(MinecraftServer server, SolarSystem solarSystem) {
@@ -70,7 +70,7 @@ public class PSServer extends Stage {
         this.runningPhysTicks = 0;
         this.spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
         this.physTickRunnable = new RunnableExecutor();
-        this.gameTickRunnable = new RunnableExecutor();
+        //this.gameTickRunnable = new RunnableExecutor();
     }
 
     public void onDimensionDataLoaded(DimensionDataStorage dataStorage) {
@@ -136,20 +136,24 @@ public class PSServer extends Stage {
         hostSpaceManager.onPhysTick();
 
         if (runningPhysTicks % 30 == 0) {
-            this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime(), this.gameTickRunnable);
+            this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
+        }
+        if (runningPhysTicks % 3 == 0) {
+            PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime)));
         }
         this.solarSystem.OnPhysTick();
     }
 
     public void OnGameTick() {
-        this.gameTickRunnable.executeAll();
-        PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime));
+        // this.gameTickRunnable.executeAll();
         this.hostSpaceManager.onGameTick();
         this.solarSystem.onServerTick(this.getSpaceLevel());
     }
 
-    public void addGameTickRunnable(Runnable runnable) {
-        this.gameTickRunnable.addRun(runnable);
+    public static void addGameTickRunnable(Runnable runnable) {
+        if (instance != null) {
+            PSServer.get().server.execute(runnable);
+        }
     }
 
     public void saveSolarSys() {

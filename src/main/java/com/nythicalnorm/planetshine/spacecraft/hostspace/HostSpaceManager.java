@@ -368,15 +368,15 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                 psServer.getSolarSystem().entityRemoveOrbital(serverPlayerSpacecraftBody, false);
 
                 // For some reason this don't get received on the client during this phase, so putting it on the next tick for now
-                psServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(entitySpacecraftBody.getOrbitId())));
-                psServer.addGameTickRunnable(() -> PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), player));
+                PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(entitySpacecraftBody.getOrbitId())));
+                PSServer.addGameTickRunnable(() -> PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), player));
             }
         }
     }
 
     public void shipLeftSpace (ServerSpaceshipBody spaceshipBody) {
         psServer.getSolarSystem().entityRemoveOrbital(spaceshipBody, false);
-        psServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(spaceshipBody.getOrbitId())));
+        PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(spaceshipBody.getOrbitId())));
     }
 
     @Override

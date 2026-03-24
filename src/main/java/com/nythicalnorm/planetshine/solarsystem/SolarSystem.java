@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.solarsystem;
 
+import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.network.PacketHandler;
@@ -73,11 +74,11 @@ public class SolarSystem {
     }
 
     @PhysTickOnly // server side only
-    public void calculateSpacecraftIntercepts(long timeElapsed, RunnableExecutor gameTickRunnable) {
+    public void calculateSpacecraftIntercepts(long timeElapsed) {
         for (EntityOrbitBody<?> entityBody : this.allSpacecraftBodies.values()) {
             if (entityBody.isHostOfItsSpace() && !entityBody.isOrbitInterceptsCalculated()) {
                 OrbitalCalc.SOIIntercept intercept = entityBody.calculateIntercepts(timeElapsed);
-                gameTickRunnable.addRun(() ->
+                PSServer.addGameTickRunnable(() ->
                         PacketHandler.sendToAllClients(new ClientboundSetOrbitIntercept(entityBody.getOrbitId(), intercept))
                 );
             }

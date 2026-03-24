@@ -53,7 +53,7 @@ public class ClientLevelMixin implements PlanetTimeAccessor {
 
     @WrapMethod(method = "getSkyDarken")
     private float getSpaceSkyDarken(float pPartialTick, Operation<Float> original) {
-        if (SpaceUtils.isSpaceLevel((Level) (Object) this)) {
+        if (SpaceUtils.isSpaceLevel((Level) (Object) this) && PSClient.get() != null) {
             return Mth.clamp(1.0f - PSClient.get().getDaylightRegion().getSunOcclusion(), 0.2f, 1f);
         } else {
             return original.call(pPartialTick);

@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.progress.ChunkProgressListener;
 import net.minecraft.world.RandomSequences;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.CustomSpawner;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -77,6 +78,16 @@ public class SpaceServerLevel extends ServerLevel implements PlanetTimeAccessor 
         } else {
             return false;
         }
+    }
+
+    @Override
+    public boolean isNaturalSpawningAllowed(BlockPos pPos) {
+        return false;
+    }
+
+    @Override
+    public boolean isNaturalSpawningAllowed(ChunkPos pChunkPos) {
+        return false;
     }
 
     @Override
