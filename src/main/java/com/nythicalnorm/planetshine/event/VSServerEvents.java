@@ -17,7 +17,7 @@ public class VSServerEvents {
        if (PSServer.get() != null) {
            PSServer solarSys = PSServer.get();
            if (event.getWorld().getDimension().equals(solarSys.getSpaceLevelString())) {
-               solarSys.OnPhysTick(event.getDelta());
+               solarSys.OnPhysTick(event.getDelta(), event.getWorld());
            }
        }
     }

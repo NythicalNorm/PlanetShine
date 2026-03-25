@@ -35,6 +35,7 @@ import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.util.GameTickOnly;
+import org.valkyrienskies.core.api.world.PhysLevel;
 import org.valkyrienskies.core.api.world.ShipWorld;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
@@ -171,8 +172,8 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         }
     }
 
-    public void onPhysTick() {
-        activeHostSpaces.forEach((vector2ic, orbitHostSpace) -> orbitHostSpace.onPhysTick());
+    public void onPhysTick(PhysLevel world) {
+        activeHostSpaces.forEach((vector2ic, orbitHostSpace) -> orbitHostSpace.onPhysTick(world));
     }
 
     public void spaceEntitySpawn(Entity entity) {

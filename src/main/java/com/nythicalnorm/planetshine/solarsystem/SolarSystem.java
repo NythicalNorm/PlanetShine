@@ -18,6 +18,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
+import org.valkyrienskies.core.api.world.PhysLevel;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -198,7 +199,7 @@ public class SolarSystem {
     }
 
     @PhysTickOnly
-    public void OnPhysTick() {
+    public void OnPhysTick(PhysLevel world) {
         for (CelestialBody celestialBody : this.getAllPlanetaryBodies().values()) {
             celestialBody.physTick(this);
         }

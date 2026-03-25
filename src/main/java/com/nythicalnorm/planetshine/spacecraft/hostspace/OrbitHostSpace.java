@@ -19,8 +19,12 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2ic;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
+import org.valkyrienskies.core.api.ships.DragController;
+import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
+import org.valkyrienskies.core.api.world.PhysLevel;
+import org.valkyrienskies.mod.api.ValkyrienSkies;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -90,8 +94,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     }
 
     @PhysTickOnly
-    public void onPhysTick() {
-
+    public void onPhysTick(PhysLevel physLevel) {
     }
 
     public void removeOrbitBody(EntityOrbitBody<?> entityOrbitBody, boolean isTeleporting) {

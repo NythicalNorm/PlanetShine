@@ -16,6 +16,7 @@ import org.joml.Vector2ic;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.Ship;
+import org.valkyrienskies.core.api.world.PhysLevel;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -30,7 +31,7 @@ public class ShipHostSpace extends OrbitHostSpace {
     }
 
     @Override
-    public void onPhysTick() {
+    public void onPhysTick(PhysLevel world) {
         velocityForLastPhysTick.clear();
     }
 

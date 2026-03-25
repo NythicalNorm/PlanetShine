@@ -40,6 +40,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
+import org.valkyrienskies.core.api.world.PhysLevel;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
@@ -106,7 +107,7 @@ public class PSServer extends UniverseStage {
     }
 
     @PhysTickOnly
-    public void OnPhysTick(double delta) {
+    public void OnPhysTick(double delta, PhysLevel physLevel) {
         physTickRunnable.executeAll();
         runningPhysTicks++;
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
@@ -117,7 +118,7 @@ public class PSServer extends UniverseStage {
         } else {
             setCurrentTime(currentTime + TimeCalc.TimePerTickToTimePerMilliTick(timeWarpSettings.get(4)));
         }
-        hostSpaceManager.onPhysTick();
+        hostSpaceManager.onPhysTick(physLevel);
 
         if (runningPhysTicks % 30 == 0) {
             this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
@@ -125,7 +126,7 @@ public class PSServer extends UniverseStage {
         if (runningPhysTicks % 3 == 0) {
             PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime)));
         }
-        this.solarSystem.OnPhysTick();
+        this.solarSystem.OnPhysTick(physLevel);
     }
 
     public void OnGameTick() {
