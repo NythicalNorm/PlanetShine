@@ -45,7 +45,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     private void updatePlanetRot(CelestialBody currentPlanet) {
-        this.playerOnPlanetRotation.set(PlanetCalc.getPlanetToSpaceRotation(this.getMcPosition(), this.relativeOrbitalPos, currentPlanet));
+        this.playerOnPlanetRotation.set(PlanetCalc.getPlanetToSpaceRotation(this.getMcPosition(), currentPlanet));
     }
 
     private void updatePlanetPos(Level level, Vec3 position, CelestialBody currentPlanetOn) {

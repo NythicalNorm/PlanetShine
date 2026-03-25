@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.mixin.core;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.mixinducks.PlanetWorldBorder;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
@@ -37,6 +38,9 @@ public abstract class LevelMixin implements CelestialBodyAccessor {
         Level level = (Level) (Object)this;
         if (celestialBody != null && level instanceof PlanetTimeAccessor planetTimeAccessor) {
             planetTimeAccessor.ps$setDaylightData(new DaylightData(celestialBody));
+        }
+        if (level.getWorldBorder() instanceof PlanetWorldBorder planetWorldBorder) {
+            planetWorldBorder.ps$setPlanetBorder(celestialBody);
         }
     }
 

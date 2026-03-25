@@ -248,9 +248,10 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         Vector3d relativeOrbitPos = PlanetCalc.getPlanetRelativePosition(ship.getTransform().getPosition(), celestialBody);
         Vector3d relativeOrbitVelocity = new Vector3d(ship.getVelocity());
 
-        relativeOrbitVelocity.rotate(PlanetCalc.getPlanetToSpaceRotation(ship.getTransform().getPosition(), relativeOrbitPos, celestialBody));
-        Quaterniond shipNewRot = PlanetCalc.getShipPlanetToSpaceRotation(ship.getTransform(), relativeOrbitPos, celestialBody);
+        Quaterniond planetToSpace = PlanetCalc.getPlanetToSpaceRotation(ship.getTransform().getPositionInWorld(), celestialBody);
+        relativeOrbitVelocity.rotate(planetToSpace);
 
+        Quaterniond shipNewRot = ship.getTransform().getRotation().mul(planetToSpace, new Quaterniond());
         // need to take into account the planets rotational velocity that is also transferred to the ship, earth moving at 1000 m/s at the equator etc...
         // though maybe I don't add this.
         OrbitalElements orbitalElements = new OrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());

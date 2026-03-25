@@ -99,9 +99,9 @@ public class OrbitDrawer {
         VertexBuffer.unbind();
     }
 
-    public static void drawCurrentEntityOrbit(EntityOrbitBody orbitalBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+    public static void drawCurrentEntityOrbit(EntityOrbitBody<?> orbitalBody, PoseStack poseStack, Matrix4f projectionMatrix) {
         OrbitalCalc.SOIIntercept soiIntercept = orbitalBody.getNextOrbitIntercept();
-        if (soiIntercept != null) {
+        if (soiIntercept != null && orbitalBody.getOrbitalElements() != null) {
             double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(orbitalBody.getEccentricAnomaly(),
                 orbitalBody.getOrbitalElements().getEccentricity());
             drawOrbit(orbitalBody.getOrbitalElements(), trueAnomaly, soiIntercept, poseStack, projectionMatrix, SHIP_ORBIT_COLOR);

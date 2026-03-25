@@ -1,7 +1,6 @@
 package com.nythicalnorm.planetshine.mixin.vs;
 
 import com.bawnorton.mixinsquared.TargetHandler;
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.nythicalnorm.planetshine.gui.screen.MouseLookScreen;
@@ -13,6 +12,7 @@ import org.joml.Quaterniondc;
 import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Mixin(value = Camera.class, priority = 1500)
 public abstract class VSCameraMixinMixin { // Yes I am going to name all mixin^2 mixins this way.
@@ -44,10 +44,10 @@ public abstract class VSCameraMixinMixin { // Yes I am going to name all mixin^2
     }
 
     @TargetHandler(mixin = "org.valkyrienskies.mod.mixin.client.MixinCamera", name = "getMaxZoomIgnoringMountedShip")
-    @ModifyReturnValue(
+    @ModifyVariable(
             method = "@MixinSquared:Handler",
-            at = @At("RETURN"),
-            require = 0)
+            at = @At("HEAD"),
+            require = 0, argsOnly = true)
     public double modifyMaxZoom(double original) {
         if (Minecraft.getInstance().screen instanceof MouseLookScreen spacecraftScreen && spacecraftScreen.movePlayerCamera()) {
             return spacecraftScreen.getCameraZoomLevel(original);

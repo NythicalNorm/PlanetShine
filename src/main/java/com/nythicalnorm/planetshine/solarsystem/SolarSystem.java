@@ -153,6 +153,8 @@ public class SolarSystem {
         entityOrbitBody.removeParent();
         entityOrbitBody.removeHostSpace(isTeleporting);
         entityOrbitBody.setOrbitalElements(null);
+        entityOrbitBody.setIntercept(null);
+
         this.allSpacecraftBodies.remove(entityOrbitBody.getOrbitId());
         if (entityOrbitBody instanceof AbstractSpaceshipBody) {
             this.allVSships.remove(entityOrbitBody.getOrbitId().getShipID());

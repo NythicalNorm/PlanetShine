@@ -44,24 +44,18 @@ public class PlanetCalc {
         else {
             zCell = 0;
         }
+
         double xWithinCell = posX - xCell*cellSize;
         double zWithinCell = posZ - zCell*cellSize;
 
         xWithinCell = Mth.clamp(xWithinCell, -halfCellSize, halfCellSize);
         zWithinCell = Mth.clamp(zWithinCell, -halfCellSize, halfCellSize);
 
-        int QuadId = xCell + 1;
-        if (xCell == 0) {
-            if (zCell == 1){
-                QuadId = 4;
-            }
-            else if (zCell == -1) {
-                QuadId = 5;
-            }
-        }
+        int QuadId = getQuadID(xCell, zCell);
+
         double radius = 0.5d;
         if (!isNormalized) {
-            radius = planetRadius + posY + 10000000;
+            radius = planetRadius + posY;
         }
         return getQuadPlanettoSquarePos(zWithinCell, xWithinCell, halfCellSize, QuadId, radius);
     }
@@ -70,6 +64,10 @@ public class PlanetCalc {
         int xCell = getCellIndex(cellSize, posX);
         int zCell = getCellIndex(cellSize, posZ);
 
+        return getQuadID(xCell, zCell);
+    }
+
+    public static int getQuadID(int xCell, int zCell) {
         xCell = Mth.clamp(xCell,-1, 2);
 
         if (xCell == 0) {
@@ -91,9 +89,24 @@ public class PlanetCalc {
         return quadId;
     }
 
+    public static boolean isPosInsidePlanetBounds(double posX, double posZ, CelestialBody celestialBody) {
+        double cellSize = getSquareCellSize(celestialBody.getRadius());
+        return isPosInsidePlanetBounds(posX, posZ, cellSize);
+    }
+
+    public static boolean isPosInsidePlanetBounds(double posX, double posZ, double cellSize) {
+        int xCell = getCellIndex(cellSize, posX);
+        int zCell = getCellIndex(cellSize, posZ);
+
+        if (xCell == 0) {
+            return (zCell <= 1 && zCell >= -1);
+        } else {
+            return  (xCell >= -1 && xCell <= 2) && zCell == 0;
+        }
+    }
+
     public static double getSquareCellSize(double planetRadius) {
-        // return Math.PI*planetRadius*0.5d;
-        return 100d;
+        return Math.PI*planetRadius*0.5d;
     }
 
     public static int getCellIndex(double cellSize, double posAxis) {
@@ -201,7 +214,7 @@ public class PlanetCalc {
         return squarePos.add(squareSideCenterPos);
     }
 
-    public static Quaterniond getPlanetToSpaceRotation(Vector3dc planetDimensionPos, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
+    public static Quaterniond getPlanetToSpaceRotation(Vector3dc planetDimensionPos, CelestialBody celestialBody) {
         double cellSize = getSquareCellSize(celestialBody.getRadius());
         int quadID = getQuadID(cellSize, planetDimensionPos.x(), planetDimensionPos.z());
         Vector3d upVector = getPlanetRelativeNonRotatingPosition(planetDimensionPos.x(), planetDimensionPos.y(), planetDimensionPos.z(),
@@ -209,29 +222,29 @@ public class PlanetCalc {
         upVector.normalize();
 
         Vector3d rightVector = new Vector3d();
+        Vector3d forwardVector = new Vector3d();
+
         switch (quadID) {
-            case 0 -> upVector.cross(0d, -1d, 0d, rightVector);
-            case 1 -> upVector.cross(0d, -1d, 0d, rightVector);
-            case 2 -> upVector.cross(0d, -1d, 0d, rightVector);
-            case 3 -> upVector.cross(0d, -1d, 0d, rightVector);
-            case 4 -> upVector.cross(0d, 0d, 1d, rightVector);
-            case 5 -> upVector.cross(0d, 0d, 1d, rightVector);
-            default -> rightVector.set(0);
+            case 0, 1, 2, 3 -> upVector.cross(0d, 1d, 0d, rightVector);
+            case 4 -> upVector.cross(1d, 0d, 0d, rightVector);
+            case 5 -> upVector.cross(-1d, 0d, 0d, rightVector);
         }
 
-        Vector3d forwardVector = upVector.cross(rightVector, new Vector3d());
+        forwardVector = rightVector.cross(upVector, forwardVector);
         forwardVector.normalize();
 
-        Quaterniond finalRot = new Quaterniond(); //.fromAxisAngleRad(1f,0f,0f, Math.PI * 0.5d);
-        finalRot.lookAlong(upVector, new Vector3d(0, 1, 0));
+        Quaterniond finalRot = new Quaterniond();
+        finalRot.lookAlong(forwardVector, upVector);
 
-        finalRot.mul(celestialBody.getRotation().x(), celestialBody.getRotation().y(),
-                celestialBody.getRotation().z(), celestialBody.getRotation().w());
+        finalRot.mul(new Quaterniond(celestialBody.getRotation()).invert());
+        finalRot.normalize();
 
         return finalRot;
     }
 
-    public static Quaterniond getShipPlanetToSpaceRotation(ShipTransform shipTransform, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
+    public static Quaterniond getShipPlanetToSpaceRotation(ShipTransform shipTransform, CelestialBody celestialBody) {
+        Quaterniond planetToSpaceRotation = getPlanetToSpaceRotation(shipTransform.getPositionInWorld(), celestialBody);
+
         return new Quaterniond();
     }
 
