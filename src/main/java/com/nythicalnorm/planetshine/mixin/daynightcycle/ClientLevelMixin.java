@@ -1,9 +1,13 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.nythicalnorm.planetshine.PSClient;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,12 +18,7 @@ public class ClientLevelMixin implements PlanetTimeAccessor {
 
     @Override
     public boolean ps$DaylightDataExists() {
-        return PSClient.get() != null && PSClient.get().isOnPlanet();
-    }
-
-    @Override
-    public void ps$setDaylightData(DaylightData daylightData) {
-        // don't need this
+        return PSClient.get() != null && (PSClient.get().isOnPlanet() || PSClient.get().weInSpaceDim());
     }
 
     @Override
@@ -49,6 +48,15 @@ public class ClientLevelMixin implements PlanetTimeAccessor {
         } else {
             ClientLevel clientLevel = (ClientLevel) (Object) this;
             return clientLevel.isDay();
+        }
+    }
+
+    @WrapMethod(method = "getSkyDarken")
+    private float getSpaceSkyDarken(float pPartialTick, Operation<Float> original) {
+        if (SpaceUtils.isSpaceLevel((Level) (Object) this) && PSClient.get() != null) {
+            return Mth.clamp(1.0f - PSClient.get().getDaylightRegion().getSunOcclusion(), 0.2f, 1f);
+        } else {
+            return original.call(pPartialTick);
         }
     }
 }

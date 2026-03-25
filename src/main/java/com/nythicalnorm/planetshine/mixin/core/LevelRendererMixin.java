@@ -32,9 +32,8 @@ public abstract class LevelRendererMixin {
 
     @Inject(method = "renderSky", at = @At("HEAD"), cancellable = true)
     public void NSPrenderSky(PoseStack pPoseStack, Matrix4f pProjectionMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
-        LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
+        // LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
         Minecraft mc = Minecraft.getInstance();
-        //long beforeTimes = Util.getNanos();
         PSClient css = PSClient.get();
 
         if (mc.level == null || css == null) {
@@ -45,13 +44,11 @@ public abstract class LevelRendererMixin {
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();
                 if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !this.doesMobEffectBlockSky(pCamera)) {
-                    PSRenderer.renderSkybox(mc, levelRenderer, pPoseStack, pPartialTick, pCamera, skyBuffer, css);
+                    PSRenderer.renderSkybox(mc, pProjectionMatrix, pPoseStack, pPartialTick, pCamera, skyBuffer, css);
                 }
             }
             ci.cancel();
         }
-        //long diff = Util.getNanos() - beforeTimes;
-        //PlanetShine.log("PSRenderer Time: " + diff);
     }
 
     @ModifyVariable(method = "renderClouds", at = @At("LOAD"), ordinal = 0, argsOnly = true)

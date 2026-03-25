@@ -17,7 +17,7 @@ public class VSServerEvents {
        if (PSServer.get() != null) {
            PSServer solarSys = PSServer.get();
            if (event.getWorld().getDimension().equals(solarSys.getSpaceLevelString())) {
-               solarSys.OnPhysTick(event.getDelta());
+               solarSys.OnPhysTick(event.getDelta(), event.getWorld());
            }
        }
     }
@@ -27,7 +27,7 @@ public class VSServerEvents {
 
     private static void onShipLoadEvent(ShipLoadEvent shipLoadEvent) {
         if (PSServer.get() != null) {
-            PSServer.get().onShipLoad(shipLoadEvent.getShip());
+            PSServer.get().getHostSpaceManager().shipAddedToSpace(shipLoadEvent.getShip());
         }
     }
 }

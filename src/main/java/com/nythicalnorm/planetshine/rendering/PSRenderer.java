@@ -9,6 +9,7 @@ import com.nythicalnorm.planetshine.rendering.map.OrbitDrawer;
 import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -56,7 +57,7 @@ public class PSRenderer {
         // enable depth clamping shouldn't break stuff i don't think anyway.
     }
 
-    public static void renderSkybox(Minecraft mc, LevelRenderer levelRenderer, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient)
+    public static void renderSkybox(Minecraft mc, Matrix4f projectionMatrix, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient)
     {
         FogRenderer.levelFogColor();
         psClient.renderTick(partialTick);
@@ -71,8 +72,8 @@ public class PSRenderer {
         }
 
         GL11.glEnable(0x864F);
-        double fov = mc.gameRenderer.getFov(camera, partialTick, true);
-        Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
+        // double fov = mc.gameRenderer.getFov(camera, partialTick, true);
+        //Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
 
         RenderSystem.depthMask(false);
 
@@ -86,7 +87,7 @@ public class PSRenderer {
                 sky_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, posShad);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-                drawSunriseDisc(poseStack, Minecraft.getInstance().level);
+                drawSunriseDisc(poseStack, psClient, Minecraft.getInstance().level);
             }
         }
 
@@ -199,12 +200,25 @@ public class PSRenderer {
         return null;
     }
 
-    private static void drawSunriseDisc(PoseStack poseStack, ClientLevel level) {
+    public static float getSunAngleOpacity() {
+        DaylightRegion daylightRegion = PSClient.get().getDaylightRegion();
+        float angle = daylightRegion.getSunAngle();
+        if (daylightRegion.isOngoingEclipse()) {
+            float delta = Mth.clamp(daylightRegion.getSunOcclusion() * 10.0f, 0.0f, 1.0f);
+            angle = Mth.lerp(delta, angle, 1.0f);
+        } else {
+            angle = angle < 0.5f ? angle * 2f : (1.0f - angle) * 2f;
+        }
+
+        return angle;
+    }
+
+    private static void drawSunriseDisc(PoseStack poseStack, PSClient psClient, ClientLevel level) {
         RenderSystem.enableBlend();
-        float[] sunriseColor = level.effects().getSunriseColor(PSClient.get().getDaylightRegion().getSunAngle(),0f);
+        float[] sunriseColor = level.effects().getSunriseColor(psClient.getDaylightRegion().getSunAngle(),0f);
         Vector3d sunPos = getSunPosOverworld();
 
-        if (sunriseColor == null || sunPos == null) {
+        if (sunriseColor == null || sunPos == null || psClient.getDaylightRegion().isOngoingEclipse()) {
             return;
         }
 

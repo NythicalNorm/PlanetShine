@@ -5,7 +5,7 @@ import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 
 import java.util.List;
 
-public abstract class Stage {
+public abstract class UniverseStage {
     public static final long WORLD_START_TIME = 0;
     public static final List<Long> timeWarpSettings = List.of(1L, 10L, 100L, 1000L, 10000L, 100000L, 1000000L);
     public static SolarSystem anySolarSystem;
@@ -15,8 +15,9 @@ public abstract class Stage {
     protected volatile int currentTimeWarpSetting = 0;
     protected final SolarSystem solarSystem;
 
-    protected Stage(SolarSystem solarSystem) {
+    protected UniverseStage(SolarSystem solarSystem) {
         this.solarSystem = solarSystem;
+        this.solarSystem.setStage(this);
         if (anySolarSystem == null) {
             anySolarSystem = solarSystem;
         }

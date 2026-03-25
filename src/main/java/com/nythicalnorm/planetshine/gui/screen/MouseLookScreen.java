@@ -15,7 +15,7 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     protected float cameraYrot = 0f;
     protected float cameraXrot = 0f;
     protected float zoomLevel = 2f;
-    protected boolean isNonRotView = false;
+    protected boolean isNonRotView = true;
 
     protected MouseLookScreen(Component pTitle) {
         super(pTitle);

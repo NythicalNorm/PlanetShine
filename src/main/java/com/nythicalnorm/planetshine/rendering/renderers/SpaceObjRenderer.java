@@ -58,7 +58,7 @@ public class SpaceObjRenderer {
             currentPlanetIn = planetOn.get();
 
             if (planetOn.get().getAtmosphere().hasAtmosphere()) {
-                currentAlbedo = css.getSunAngleOpacity();
+                currentAlbedo = PSRenderer.getSunAngleOpacity();
                 atmosphere = Optional.of(planetOn.get().getAtmosphere());
             }
         } else {
@@ -98,8 +98,12 @@ public class SpaceObjRenderer {
         }
     }
 
+    public static float maxDepthDistance() {
+        return Minecraft.getInstance().gameRenderer.getDepthFar() * 0.5f;
+    }
+
     public static void PerspectiveShift(double PlanetDistance, Vector3d PlanetPos, Quaternionf planetRot, double bodyRadius,PoseStack poseStack){
-        float inWorldPlanetsDistance = Minecraft.getInstance().gameRenderer.getDepthFar() * 0.5f;
+        float inWorldPlanetsDistance = maxDepthDistance();
         //tan amd atan cancel each other out.
         float planetApparentSize = (float) (inWorldPlanetsDistance * 2 * bodyRadius/PlanetDistance);
         PlanetPos.normalize();

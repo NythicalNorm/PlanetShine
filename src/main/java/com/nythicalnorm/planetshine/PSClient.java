@@ -9,7 +9,6 @@ import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.rendering.renderTypes.SpaceRenderable;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ClientCelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
@@ -23,7 +22,8 @@ import com.nythicalnorm.planetshine.spacecraft.hostspace.ClientHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
-import com.nythicalnorm.planetshine.util.Stage;
+import com.nythicalnorm.planetshine.util.UniverseStage;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -32,11 +32,13 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.valkyrienskies.core.api.ships.Ship;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Optional;
 
 @OnlyIn(Dist.CLIENT)
-public class PSClient extends Stage {
+public class PSClient extends UniverseStage {
     private static PSClient instance;
     private final Minecraft minecraft;
 
@@ -95,10 +97,6 @@ public class PSClient extends Stage {
         return mapRenderer;
     }
 
-    public ClientCelestialBody getClientPlanet(OrbitId planetID) {
-       return (ClientCelestialBody) this.solarSystem.getPlanet(planetID);
-    }
-
     public void setHostOrbit(OrbitId orbitId, Vector3d originPos) {
         this.getPlayerOrbit().setHostSpaceId(orbitId);
         if (orbitId != null) {
@@ -108,35 +106,29 @@ public class PSClient extends Stage {
         }
     }
 
-    public float getSunAngleOpacity() {
-        float angle = this.daylightRegion.getSunAngle();
-        angle = angle < 0.5f ? angle * 2f : (1.0f - angle) * 2f;
-        return angle;
-    }
-
     public static void close() {
         if (instance != null) {
             instance.getPlanetTexManager().close();
             PSRenderer.close();
-            Stage.close();
+            UniverseStage.close();
             instance = null;
         }
     }
 
     public void tick() {
         clientTimeHandler.tick();
-
-        if (minecraft.screen instanceof MapSolarSystemScreen) {
-            this.solarSystem.calculateOnlyEscapeIntercepts(this.getCurrentTime());
-        }
     }
 
     public void onClientLevelLoad(ClientLevel clientLevel) {
         CelestialBody celestialBody = solarSystem.getDimensionOfPlanet(clientLevel.dimension());
+
+        if (!SpaceUtils.isSpaceLevel(clientLevel)) {
+            this.solarSystem.entityRemoveOrbital(this.playerOrbit, true);
+        }
+
         if (celestialBody != null) {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);
             this.currentPlanetOn = celestialBody;
-            this.solarSystem.entityRemoveOrbital(this.playerOrbit);
             this.currentPlanetOn.addChildBody(this.playerOrbit); // I don't know how i feel about this, should client players be a child of a planet when they are on the planet itself?
         } else {
             this.playerOrbit.clearRotation();
@@ -157,10 +149,12 @@ public class PSClient extends Stage {
             this.playerOrbit.getParent().simulateSpacecraft(this.getCurrentTime(), this.isTimeWarping());
         }
 
-        if (currentPlanetOn != null && playerOrbit.getPlayerEntity() != null) {
+        if (currentPlanetOn != null) {
             this.playerOrbit.updatePlayerPosRot(currentPlanetOn);
-            BlockPos playerPos = playerOrbit.getPlayerEntity().blockPosition();
-            this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getPlayerEntity().level());
+            BlockPos playerPos = playerOrbit.getBody().blockPosition();
+            this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getBody().level());
+        } else if (weInSpaceDim()) {
+            this.daylightRegion.calculateForSpacecraft(this.playerOrbit);
         }
     }
 
@@ -196,15 +190,23 @@ public class PSClient extends Stage {
         solarSystem.entityJoinedOrbital(this.playerOrbit, newParentID);
     }
 
-    public void entityJoinOrbital(EntityOrbitBody entityOrbitBody, OrbitId orbitParent) {
+    public void entityJoinOrbital(EntityOrbitBody<?> entityOrbitBody, OrbitId orbitParent) {
         this.solarSystem.entityJoinedOrbital(entityOrbitBody, orbitParent);
     }
 
+    public void setOrbitIntercept(OrbitId spacecraftID, OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
+        EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
+        if (entityOrbitBody != null) {
+            entityOrbitBody.setIntercept(soiIntercept);
+        }
+    }
+
     public void orbitSOIChange(OrbitId spacecraftID, OrbitId newParentID, OrbitalElementsc orbitalElements) {
-        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
+        EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
 
         if (entityOrbitBody != null) {
             solarSystem.entityChangeOrbitalSOIs(entityOrbitBody, newParentID, orbitalElements);
+            entityOrbitBody.simulateFromKeplerian(this.getCurrentTime());
         }
         if (minecraft.screen instanceof MapSolarSystemScreen mapScreen) {
             if (mapScreen.getFocusedOrbitalBody().getOrbitId().equals(spacecraftID)) {
@@ -214,16 +216,16 @@ public class PSClient extends Stage {
     }
 
     public void orbitChange(OrbitId spacecraftID, OrbitalElements orbitalElements) {
-        EntityOrbitBody entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
+        EntityOrbitBody<?> entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             entityOrbitBody.setOrbitalElements(orbitalElements);
         }
     }
 
     public void orbitRemove(OrbitId spacecraftID) {
-        EntityOrbitBody entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
+        EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
-            solarSystem.entityRemoveOrbital(entityOrbitBody);
+            solarSystem.entityRemoveOrbital(entityOrbitBody, false);
         }
     }
 
@@ -244,13 +246,17 @@ public class PSClient extends Stage {
         }
     }
 
-    public @Nullable EntityOrbitBody getControllingBody() {
-        if (this.clientHostSpace != null && this.clientHostSpace.getHostBody() != null) {
-            return this.clientHostSpace.getHostBody();
-        } else {
-            return this.playerOrbit;
+    public @Nullable EntityOrbitBody<?> getControllingBody() {
+        if (this.playerOrbit.getBody() != null) {
+            Ship ship = VSGameUtilsKt.getShipMountedTo(this.playerOrbit.getBody());
+            if (ship != null) {
+                EntityOrbitBody<?> orbitBody = this.solarSystem.getSpaceshipFromVSId(ship.getId());
+                if (orbitBody != null) {
+                    return orbitBody;
+                }
+            }
         }
-        // return null;
+        return this.playerOrbit;
     }
 
     public boolean isOnPlanet()

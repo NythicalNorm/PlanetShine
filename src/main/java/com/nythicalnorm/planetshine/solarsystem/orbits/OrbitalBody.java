@@ -5,8 +5,11 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
+
+import java.util.Objects;
 
 public abstract class OrbitalBody {
     protected final OrbitId id;
@@ -17,9 +20,10 @@ public abstract class OrbitalBody {
 
     protected @Nullable OrbitalElements orbitalElements;
     protected @Nullable CelestialBody parent; // Nullable only in the case of the sun
+    protected final boolean isClientSide;
     protected boolean isStableOrbit;
 
-    public OrbitalBody(OrbitalBody.Builder<?> builder) {
+    public OrbitalBody(OrbitalBody.Builder<?> builder, boolean isClientSide) {
         this.id = builder.id;
         this.displayName = builder.displayName;
         this.relativeOrbitalPos = builder.relativeOrbitalPos;
@@ -27,6 +31,7 @@ public abstract class OrbitalBody {
         this.relativeVelocity = builder.relativeVelocity;
         this.orbitalElements = builder.orbitalElements;
         this.isStableOrbit = builder.isStableOrbit;
+        this.isClientSide = isClientSide;
     }
 
     public Component getDisplayName() {
@@ -41,7 +46,7 @@ public abstract class OrbitalBody {
         return id;
     }
 
-    public abstract OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> getType();
+    public abstract RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>>> getType();
 
     public boolean isStableOrbit() {
         return isStableOrbit;
@@ -65,6 +70,18 @@ public abstract class OrbitalBody {
 
     public @Nullable CelestialBody getParent() {
         return parent;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        OrbitalBody that = (OrbitalBody) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 
     public void setStableOrbit(boolean stableOrbit) {

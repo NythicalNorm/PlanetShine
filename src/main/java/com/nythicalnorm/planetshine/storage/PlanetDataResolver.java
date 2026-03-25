@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
@@ -28,7 +28,7 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
     public static final Gson GSON_INSTANCE = Deserializers.createFunctionSerializer().create();
 
     public PlanetDataResolver() {
-        super(GSON_INSTANCE, "vsp_planetary_bodies");
+        super(GSON_INSTANCE, "ps_celestial_bodies");
     }
 
     @Override
@@ -45,7 +45,8 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
                 JsonObject jsonObject = element.getAsJsonObject();
                 String name = jsonObject.get("name").getAsString();
                 String bodyType = jsonObject.get("type").getAsString();
-                OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType = OrbitalBodyTypesHolder.getType(bodyType);
+                OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType =
+                        OrbitalBodyTypeRegistry.getType(ResourceLocation.parse(bodyType));
                 if (orbitalBodyType != null) {
                     OrbitalBody.Builder<?> planetBuilder = orbitalBodyType.readCelestialBodyDataPack(name, jsonObject, tempChildPlanetsMap);
                     OrbitalBody readOrbitalBody = planetBuilder.build();
@@ -53,10 +54,10 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
                         tempPlanetaryBodyMap.put(celestialBody.getName(), celestialBody);
                     }
                 } else {
-                    throw new IllegalStateException("Planetary Body is of unknown type: " + bodyType);
+                    throw new IllegalStateException("Celestial Body is of unknown type: " + bodyType);
                 }
             } catch (Exception e) {
-                logger.error("Unable to parse datapack for planetary body {}", key.getPath());
+                logger.error("Unable to parse datapack for Celestial body {}", key.getPath());
                 e.printStackTrace();
             }
         });

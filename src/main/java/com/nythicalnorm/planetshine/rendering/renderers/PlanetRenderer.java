@@ -6,7 +6,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ClientCelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
@@ -64,7 +63,7 @@ public class PlanetRenderer {
         RenderSystem.setShaderColor(1.0f,1.0f,1.0f, opacityEasing);
 
         QuadSphereModelGenerator.getSphereBuffer().bind();
-        ResourceLocation planetTex = ((ClientCelestialBody) planet).getMainTexture();
+        ResourceLocation planetTex = planet.getMainTexture();
         RenderSystem.setShaderTexture(0, Objects.requireNonNullElseGet(planetTex, MissingTextureAtlasSprite::getLocation));
 
         Vector3d absoluteDir = new Vector3d(planet.getAbsolutePos()).normalize();

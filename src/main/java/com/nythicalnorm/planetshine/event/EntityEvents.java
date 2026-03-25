@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -55,13 +56,12 @@ public class EntityEvents {
             return;
         }
 
-        Entity entity = event.getEntity();
-        if (SpaceUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
-            PSServer.get().getHostSpaceManager().spaceEntitySpawn(entity);
+        if (SpaceUtils.isSpaceLevel((ServerLevel) event.getEntity().level()) && PSServer.get() != null) {
+            PSServer.get().getHostSpaceManager().spaceEntitySpawn(event.getEntity());
         }
 
-        if (entity instanceof LivingEntity) {
-            AttributeMap entityAttributes = ((LivingEntity)entity).getAttributes();
+        if (event.getEntity() instanceof LivingEntity livingEntity) {
+            AttributeMap entityAttributes = livingEntity.getAttributes();
             CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) event.getLevel();
 
             //Optional<Double> levelGravity = PlanetDimensions.getAccelerationDueToGravityAt(entity.level());
@@ -96,7 +96,7 @@ public class EntityEvents {
         }
 
         Entity entity = event.getEntity();
-        if (SpaceUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
+        if (SpaceUtils.isSpaceLevel((ServerLevel) entity.level()) && PSServer.get() != null) {
             PSServer.get().getHostSpaceManager().spaceEntityLeave(entity);
         }
     }

@@ -1,32 +1,40 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
+import com.google.common.collect.ImmutableList;
 import com.nythicalnorm.planetshine.solarsystem.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
+import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
+import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.List;
 
-public abstract class PlanetaryBody extends CelestialBody {
+public class PlanetaryBody extends CelestialBody {
     protected final AxisAngle4f NorthPoleDir;
     protected final long RotationPeriod;
 
-    public PlanetaryBody(PlanetBuilder planetBuilder) {
-        super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,  planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder);
+    public PlanetaryBody(PlanetBuilder planetBuilder, boolean isClientSide) {
+        super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,
+                planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder,
+                ImmutableList.copyOf(planetBuilder.celestialBodyTickers), isClientSide);
         this.NorthPoleDir = planetBuilder.NorthPoleDir;
         this.RotationPeriod = planetBuilder.RotationPeriod;
     }
 
     @Override
-    public OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>> getType() {
-        return OrbitalBodyTypesHolder.PLANETARY_BODY;
+    public RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>>> getType() {
+        return OrbitalBodyTypeRegistry.PLANETARY_BODY;
     }
 
     @Override
@@ -56,9 +64,10 @@ public abstract class PlanetaryBody extends CelestialBody {
         private long RotationPeriod = 0L;
         private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
         private @Nullable ResourceKey<Level> dimension = null;
+        private final List<CelestialBodyTicker> celestialBodyTickers;
 
         public PlanetBuilder() {
-
+            this.celestialBodyTickers = new ArrayList<>();
         }
 
         public void setName(String name) {
@@ -101,19 +110,23 @@ public abstract class PlanetaryBody extends CelestialBody {
             this.atmosphericEffects = atmosphericEffects;
         }
 
+        public void addCelestialBodyTicker(StarHeaterTicker starHeaterTicker) {
+            this.celestialBodyTickers.add(starHeaterTicker);
+        }
+
         public void setDimension(@Nullable ResourceKey<Level> dimension) {
             this.dimension = dimension;
         }
 
         @Override
         public PlanetaryBody build() {
-            return new ServerPlanetaryBody(this);
+            return new PlanetaryBody(this, false);
         }
 
         @OnlyIn(Dist.CLIENT)
         @Override
         public PlanetaryBody buildClientSide() {
-            return new ClientPlanetaryBody(this);
+            return new PlanetaryBody(this, true);
         }
     }
 }

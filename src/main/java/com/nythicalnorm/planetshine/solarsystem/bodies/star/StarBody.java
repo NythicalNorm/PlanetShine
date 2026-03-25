@@ -1,26 +1,35 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.star;
 
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.google.common.collect.ImmutableList;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
+import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
+import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 
-public abstract class StarBody extends CelestialBody {
+import java.util.ArrayList;
+import java.util.List;
 
-    public StarBody(StarBuilder starBuilder) {
-        super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.rotation, starBuilder.atmosphericEffects, null, starBuilder);
+public class StarBody extends CelestialBody {
+    public StarBody(StarBuilder starBuilder, boolean isClientSide) {
+        super(starBuilder.name, starBuilder.radius, starBuilder.mass, starBuilder.rotation,
+                starBuilder.atmosphericEffects, null, starBuilder,
+                ImmutableList.copyOf(starBuilder.celestialBodyTickers),
+                isClientSide);
     }
 
     @Override
-    public OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>> getType() {
-        return OrbitalBodyTypesHolder.STAR_BODY;
+    public RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends Builder<?>>> getType() {
+        return OrbitalBodyTypeRegistry.STAR_BODY;
     }
 
     public void simulatePlanets(long currentTime, boolean isTimeWarping) {
@@ -40,9 +49,10 @@ public abstract class StarBody extends CelestialBody {
         private double mass = 10E24;
         protected Quaternionf rotation = new Quaternionf();
         private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
+        private final List<CelestialBodyTicker> celestialBodyTickers;
 
         public StarBuilder() {
-
+            this.celestialBodyTickers = new ArrayList<>();
         }
 
         public void setName(String name) {
@@ -66,15 +76,19 @@ public abstract class StarBody extends CelestialBody {
             this.atmosphericEffects = atmosphericEffects;
         }
 
+        public void addCelestialBodyTicker(StarHeaterTicker starHeaterTicker) {
+            this.celestialBodyTickers.add(starHeaterTicker);
+        }
+
         @Override
         public StarBody build() {
-            return new ServerStarBody(this);
+            return new StarBody(this, false);
         }
 
         @OnlyIn(Dist.CLIENT)
         @Override
         public StarBody buildClientSide() {
-            return new ClientStarBody(this);
+            return new StarBody(this, true);
         }
     }
 }

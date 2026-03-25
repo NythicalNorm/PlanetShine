@@ -8,7 +8,6 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.rendering.renderers.LodTexRenderer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ClientCelestialBody;
 import com.nythicalnorm.planetshine.util.calculations.LodTexCalc;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -47,7 +46,7 @@ public class ClientTexManager {
         return lodTexAtlasID;
     }
 
-    public void incomingPlanetTexture(ClientCelestialBody planet, byte[] tex) {
+    public void incomingPlanetTexture(CelestialBody planet, byte[] tex) {
         PlanetShine.log(planet.getName() +" texture received, Size: " + tex.length);
 
         try {

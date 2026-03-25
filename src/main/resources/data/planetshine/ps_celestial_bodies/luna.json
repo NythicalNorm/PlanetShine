@@ -1,6 +1,6 @@
 {
   "name": "luna",
-  "type": "planet",
+  "type": "planetshine:planet",
   "radius": 1737400,
   "mass": 7.34767309E22,
 
@@ -24,6 +24,6 @@
   "atmospheric_data": {
     "has_atmosphere": false,
     "alpha_night": 1.0,
-    "alpha_day": 0.005
+    "alpha_day": 0.1
   }
 }

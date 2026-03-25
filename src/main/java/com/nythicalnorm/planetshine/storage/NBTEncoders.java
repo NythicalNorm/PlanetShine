@@ -1,9 +1,11 @@
 package com.nythicalnorm.planetshine.storage;
 
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
@@ -100,10 +102,15 @@ public class NBTEncoders {
     }
 
     public static CompoundTag putOrbitalBody(OrbitalBody orbitalBody) {
-       return orbitalBody.getType().encodeToNBT(orbitalBody);
+       return orbitalBody.getType().get().encodeToNBT(orbitalBody);
     }
 
     public static OrbitalBody getOrbitalBody(CompoundTag tag) {
-       return OrbitalBodyTypesHolder.getType(tag.getString("type_name")).decodeFromNBT(tag).build();
+       String resourceLoc = tag.getString("type_name");
+       if (resourceLoc.contains(":")) {
+           return OrbitalBodyTypeRegistry.getType(ResourceLocation.parse(resourceLoc)).decodeFromNBT(tag).build();
+       } else {
+           return OrbitalBodyTypeRegistry.getType(PlanetShine.rl(resourceLoc)).decodeFromNBT(tag).build();
+       }
     }
 }

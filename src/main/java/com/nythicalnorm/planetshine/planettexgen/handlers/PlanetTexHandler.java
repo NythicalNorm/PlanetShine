@@ -1,14 +1,15 @@
 package com.nythicalnorm.planetshine.planettexgen.handlers;
 
+import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.network.textures.ClientboundLodTexturePacket;
 import com.nythicalnorm.planetshine.network.textures.ClientboundPlanetTexturePacket;
 import com.nythicalnorm.planetshine.network.PacketHandler;
-import com.nythicalnorm.planetshine.planettexgen.GradientSupplier;
+import com.nythicalnorm.planetshine.planettexgen.PlanetGradient;
 import com.nythicalnorm.planetshine.planettexgen.lod_tex.LodTexGenTask;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ServerCelestialBody;
+import com.nythicalnorm.planetshine.storage.PSDataPackManager;
 import com.nythicalnorm.planetshine.storage.SpacecraftDataStorage;
 import com.nythicalnorm.planetshine.util.calculations.LodTexCalc;
 import net.minecraft.network.chat.Component;
@@ -45,19 +46,24 @@ public class PlanetTexHandler {
         server.getPlayerList().broadcastSystemMessage(Component.translatable("planetshine.state.planetgen_start"), true);
 
         for (CelestialBody celestialBody : planets.getAllPlanetaryBodies().values()) {
-            ServerCelestialBody serverCelestialBody = (ServerCelestialBody) celestialBody;
-            Path celestialBodyDir = planetsTexturesPath.resolve(serverCelestialBody.getName());
+            Path celestialBodyDir = planetsTexturesPath.resolve(celestialBody.getName());
             SpacecraftDataStorage.getOrCreateDir(celestialBodyDir);
+            PlanetGradient planetGradient = PSDataPackManager.getPlanetGradient(celestialBody.getName());
+
+            if (planetGradient == null) {
+                PlanetShine.logError("Can't load a texture data pack for planet: " + celestialBody.getName() + ", Texture will not be generated");
+                continue;
+            }
 
             CompletableFuture<byte[]> planetImgData = CompletableFuture.supplyAsync(
-                    new WholePlanetTexGenTask(celestialBodyDir, serverCelestialBody.getName(), randomSource, GradientSupplier.textureForPlanets.get(serverCelestialBody.getName())), texExecuter);
+                    new WholePlanetTexGenTask(celestialBodyDir, celestialBody.getName(), randomSource, planetGradient), texExecuter);
 
-            serverCelestialBody.setPlanetTextureFolder(celestialBodyDir);
-            serverCelestialBody.setPlanetMainTexBytes(planetImgData);
+            celestialBody.getCelestialServerData().setPlanetTextureFolder(celestialBodyDir);
+            celestialBody.getCelestialServerData().setPlanetMainTexBytes(planetImgData);
 
             planetImgData.thenRun(() -> {
                 server.getPlayerList().broadcastSystemMessage(Component.translatable("planetshine.state.planetgen_end",
-                        serverCelestialBody.getName()), true);
+                        celestialBody.getName()), true);
             });
         }
     }
@@ -76,10 +82,10 @@ public class PlanetTexHandler {
         int texturePixelSize = LodTexCalc.getTexturePixelSize(playerOnPlanet);
         Vector2i texPos = LodTexCalc.getPlanetTexCoordinates(plrPos, texturePixelSize);
 
-        File biomeTexLocation = getFilePath(((ServerCelestialBody)playerOnPlanet).getPlanetTextureFolder(), texPos.x, texPos.y);
+        File biomeTexLocation = getFilePath(playerOnPlanet.getCelestialServerData().getPlanetTextureFolder(), texPos.x, texPos.y);
 
         CompletableFuture<byte[]> biomeTex = CompletableFuture.supplyAsync(
-                new LodTexGenTask(((ServerCelestialBody)playerOnPlanet).getLevel(), 0,  texPos.x, texPos.y, texturePixelSize, biomeTexLocation), texExecuter);
+                new LodTexGenTask(playerOnPlanet.getCelestialServerData().getServerLevel(), 0,  texPos.x, texPos.y, texturePixelSize, biomeTexLocation), texExecuter);
 
         int index = texPos.x + (texPos.y * LodTexCalc.texQuadsPerCubeCell);
 
@@ -97,7 +103,7 @@ public class PlanetTexHandler {
 
     public void sendAllTexToPlayer(ServerPlayer player, Map<OrbitId, CelestialBody> allPlanetaryBodies) {
         for (CelestialBody celestialBody : allPlanetaryBodies.values()) {
-            ((ServerCelestialBody)celestialBody).getPlanetMainTexBytes().thenAccept(texBytes -> sendToPlayer(player,
+            celestialBody.getCelestialServerData().getPlanetMainTexBytes().thenAccept(texBytes -> sendToPlayer(player,
                     celestialBody.getOrbitId(), texBytes));
         }
     }

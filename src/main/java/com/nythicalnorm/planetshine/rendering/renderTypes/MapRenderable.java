@@ -7,6 +7,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,12 +15,11 @@ import java.util.List;
 @OnlyIn(Dist.CLIENT)
 public abstract class MapRenderable {
     protected final MapRelativeState relativeState;
-    OrbitalBody parentBody;
+    protected Vector3f currentBodyPos;
     protected List<MapRenderable> childRenderables;
 
-    public MapRenderable(MapRelativeState mapRelativeState, OrbitalBody parentBody) {
+    public MapRenderable(MapRelativeState mapRelativeState) {
         this.relativeState = mapRelativeState;
-        this.parentBody = parentBody;
         this.childRenderables = new ArrayList<>();
     }
 
@@ -29,15 +29,17 @@ public abstract class MapRenderable {
 
     public void propagateRender(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, Vector3f parentPos, OrbitalBody currentFocusedBody) {
         poseStack.pushPose();
-        if (relativeState.equals(MapRelativeState.AlwaysParentRelative)) {
-            poseStack.translate(parentPos.x, parentPos.y, parentPos.z);
-        }
-        Vector3f parentBodyPos = render(graphics, poseStack, projectionMatrix, currentFocusedBody);
+
+        this.currentBodyPos = render(graphics, poseStack, projectionMatrix, currentFocusedBody);
         poseStack.popPose();
 
         for (MapRenderable childRenderable : childRenderables) {
-            childRenderable.propagateRender(graphics, poseStack, projectionMatrix, parentBodyPos, currentFocusedBody);
+            childRenderable.propagateRender(graphics, poseStack, projectionMatrix, this.currentBodyPos, currentFocusedBody);
         }
+    }
+
+    public Vector3fc getMapPos() {
+        return currentBodyPos;
     }
 
     public abstract Vector3f render(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix, OrbitalBody currentFocusedBody);

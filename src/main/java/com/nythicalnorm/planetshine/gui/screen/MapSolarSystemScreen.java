@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.gui.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.nythicalnorm.planetshine.PSClient;
+import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.gui.PSScreenManager;
 import com.nythicalnorm.planetshine.gui.widgets.AltitudeWidget;
 import com.nythicalnorm.planetshine.gui.widgets.NavballWidget;
@@ -13,6 +14,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.gui.widgets.TimeWarpWidget;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
+import com.nythicalnorm.planetshine.util.ProjectionUtils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -21,6 +23,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
 
 import java.lang.Math;
 
@@ -34,6 +37,10 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     protected double radiusZoomLevel = 0f;
     private @Nullable Screen prevScreen;
 
+    protected Matrix4f projectionMatrix;
+    protected Matrix4f lastCameraModelView;
+    protected Vector3f relativeCameraPos;
+
     public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen) {
         super(Component.empty());
         PSClient.getInstance().ifPresent (psClient -> {
@@ -41,6 +48,8 @@ public class MapSolarSystemScreen extends MouseLookScreen {
             this.mapRenderer = psClient.getMapRenderer();
         });
         this.isSpacecraftScreenOpen = PisSpacecraftScreenOpen;
+        this.projectionMatrix = new Matrix4f();
+        this.relativeCameraPos = new Vector3f();
     }
 
     public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen, MapState mapState) {
@@ -83,25 +92,30 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         RenderSystem.depthMask(false);
+
         PoseStack mapPosestack = new PoseStack();
-        Matrix4f projectionMatrix = new Matrix4f().setPerspective(70, (float) graphics.guiWidth()/graphics.guiHeight(), 0.0000001f, 100.0f);
+        projectionMatrix = projectionMatrix.setPerspective(70, (float) graphics.guiWidth()/graphics.guiHeight(), 1000f, 8e10f);
 
         Quaternionf dragCameraRot = new Quaternionf().rotateYXZ(cameraYrot, cameraXrot, 0f); //.mul(yRotQuaternion);
-        Vector3d relativeCameraPos = new Vector3d(0d, 0d, zoomLevel * radiusZoomLevel);
-        relativeCameraPos.rotate(new Quaterniond(dragCameraRot.x, dragCameraRot.y,dragCameraRot.z,dragCameraRot.w));
-        //Vector3d absoluteCameraPos = currentFocusedBody.getAbsolutePos().add(relativeCameraPos);
+        relativeCameraPos.set(0d, 0d, zoomLevel * radiusZoomLevel);
+        relativeCameraPos.rotate(new Quaternionf(dragCameraRot.x, dragCameraRot.y, dragCameraRot.z, dragCameraRot.w));
 
+        relativeCameraPos.set(MapRenderer.toMapCoordinate(relativeCameraPos));
+        GL11.glEnable(0x864F);
         mapPosestack.pushPose();
         mapPosestack.mulPose(dragCameraRot.conjugate());
-
         mapRenderer.renderSkybox(mapPosestack, projectionMatrix);
+
+        mapPosestack.translate(-relativeCameraPos.x, -relativeCameraPos.y, -relativeCameraPos.z);
+        this.lastCameraModelView = mapPosestack.last().pose();
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
-        mapRenderer.renderMapObjects(graphics, mapPosestack, projectionMatrix, relativeCameraPos, FocusableBodies[currentFocusedBodyIndex]);
+        mapRenderer.renderMapObjects(graphics, mapPosestack, projectionMatrix, FocusableBodies[currentFocusedBodyIndex]);
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
         mapPosestack.popPose();
+        GL11.glDisable(0x864F);
 
         if (!mapPosestack.clear()) {
             throw new IllegalStateException("popped poses are not closed properly.");
@@ -122,6 +136,25 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         } else {
             return prevScreen;
         }
+    }
+
+    @Override
+    public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
+        if (pButton == 0) {
+            Vector3d rayDir = ProjectionUtils.screenToWorldRay((float) pMouseX, (float) pMouseY, width, height, projectionMatrix, lastCameraModelView);
+            Vector3d cameraPos = new Vector3d(relativeCameraPos);
+            OrbitalBody body = this.getFocusedOrbitalBody();
+
+            rayDir.normalize();
+            cameraPos = cameraPos.add(body.getAbsolutePos());
+
+            CelestialBody celestialBody = ProjectionUtils.raycastPlanets(cameraPos, rayDir, PSClient.get().getSolarSystem());
+            if (celestialBody != null) {
+                PlanetShine.log(celestialBody.getName());
+            }
+        }
+
+        return super.mouseClicked(pMouseX, pMouseY, pButton);
     }
 
     @Override

@@ -13,12 +13,13 @@ public class ClientSpaceshipBody extends AbstractSpaceshipBody {
 
     @Override
     public void init() {
-        if (this.getShip() != null) {
+        super.init();
+        if (this.getBody() != null) {
             return;
         }
         ClientShipWorld clientShipWorld = ValkyrienSkies.api().getClientShipWorld(Minecraft.getInstance());
         if (clientShipWorld != null) {
-            this.setShip(clientShipWorld.getLoadedShips().getById(this.id.getShipID()));
+            this.setBody(clientShipWorld.getLoadedShips().getById(this.id.getShipID()));
         }
     }
 

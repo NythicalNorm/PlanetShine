@@ -1,9 +1,11 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.ServerCelestialBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.joml.Vector2i;
+import org.joml.Vector3d;
+import org.valkyrienskies.core.api.ships.ServerShip;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Map;
 
@@ -23,13 +25,22 @@ public class DaylightData {
         DaylightRegion region = daylightRegions.computeIfAbsent(pos, k -> new DaylightRegion());
 
         if (!region.isCalculatedThisTick()) {
-            region.calculate(pos.x, pos.y, this.celestialBody, ((ServerCelestialBody)celestialBody).getLevel());
+            region.calculate(pos.x, pos.y, this.celestialBody, celestialBody.getCelestialServerData().getServerLevel());
         }
 
         return region;
     }
 
     private Vector2i getRegionLoc(double x, double z) {
+        if (VSGameUtilsKt.isBlockInShipyard(celestialBody.getCelestialServerData().getServerLevel(), x, 0d, z)) {
+            ServerShip ship = VSGameUtilsKt.getShipManagingPos(celestialBody.getCelestialServerData().getServerLevel(),  x, 0d, z);
+            if (ship != null) {
+                Vector3d newPos = ship.getShipToWorld().transformPosition(new Vector3d(x, 0d, z));
+                x = newPos.x();
+                z = newPos.z();
+            }
+        }
+
         int locX = (int) (Math.round(x / daylightRegionSize) * daylightRegionSize);
         int locZ = (int) (Math.round(z / daylightRegionSize) * daylightRegionSize);
         return new Vector2i(locX, locZ);

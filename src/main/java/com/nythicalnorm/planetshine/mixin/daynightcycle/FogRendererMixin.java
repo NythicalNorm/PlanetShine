@@ -1,5 +1,6 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle;
 
+import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraftforge.api.distmarker.Dist;
@@ -18,6 +19,9 @@ public class FogRendererMixin {
     private static float setupColor(Vector3f instance, Vector3fc v) {
         Vector3d sunPos = PSRenderer.getSunPosOverworld();
         if (sunPos != null) {
+            if (PSClient.get().getDaylightRegion().isOngoingEclipse()) {
+                return -1.0f;
+            }
             return -instance.dot((float) sunPos.x, (float) sunPos.y, (float) sunPos.z);
         }
         return instance.dot(v);

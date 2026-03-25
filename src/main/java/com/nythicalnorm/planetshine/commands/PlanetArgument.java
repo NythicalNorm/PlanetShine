@@ -9,7 +9,7 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
-import com.nythicalnorm.planetshine.util.Stage;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
@@ -43,7 +43,7 @@ public class PlanetArgument implements ArgumentType<String> {
         String parsedBody = null;
         if (reader.canRead()) {
             String planetName = reader.readString();
-            SolarSystem solarSystem = Stage.getAnySolarSystem();
+            SolarSystem solarSystem = UniverseStage.getAnySolarSystem();
 
             if (!planetName.isEmpty() && solarSystem.getPlanet(planetName) != null) {
                 parsedBody = planetName;
@@ -59,7 +59,7 @@ public class PlanetArgument implements ArgumentType<String> {
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
-        Iterable<String> planets = Stage.getAnySolarSystem().getAllPlanetNames();
+        Iterable<String> planets = UniverseStage.getAnySolarSystem().getAllPlanetNames();
         return context.getSource() instanceof SharedSuggestionProvider ? SharedSuggestionProvider.suggest(planets, builder) : Suggestions.empty();
     }
 

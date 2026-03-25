@@ -5,13 +5,15 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
+import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.Calc;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -25,6 +27,10 @@ public class OrbitDrawer {
     private static Uniform distanceToFoci;
     private static Uniform semiMinorAxisMultiplier;
     private static Uniform endTrueAnomaly;
+
+    public static final float[] PLANET_ORBIT_COLOR = Calc.getRGBAFloats(0xFFFFFF, 1.0f);
+    public static final float[] SHIP_ORBIT_COLOR = Calc.getRGBAFloats(0xbe29ec, 1.0f);
+    public static final float[] FUTURE_SHIP_ORBIT_COLOR = Calc.getRGBAFloats(0xffa500, 1.0f);
 
     public static void setupShader() {
         net.minecraft.client.renderer.ShaderInstance orbitShader = PSShaders.getOrbitShader();
@@ -93,8 +99,35 @@ public class OrbitDrawer {
         VertexBuffer.unbind();
     }
 
-    public static void drawOrbit(OrbitalBody orbitalBody, float scaleFactor, PoseStack poseStack, Matrix4f projectionMatrix) {
-        OrbitalElementsc orbitalElements = orbitalBody.getOrbitalElements();
+    public static void drawCurrentEntityOrbit(EntityOrbitBody orbitalBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+        OrbitalCalc.SOIIntercept soiIntercept = orbitalBody.getNextOrbitIntercept();
+        if (soiIntercept != null) {
+            double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(orbitalBody.getEccentricAnomaly(),
+                orbitalBody.getOrbitalElements().getEccentricity());
+            drawOrbit(orbitalBody.getOrbitalElements(), trueAnomaly, soiIntercept, poseStack, projectionMatrix, SHIP_ORBIT_COLOR);
+        } else {
+            drawOrbit(orbitalBody.getOrbitalElements(), 0d, null,
+                    poseStack, projectionMatrix, SHIP_ORBIT_COLOR);
+        }
+    }
+
+    public static void drawCelestialBodyOrbit(CelestialBody orbitalBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+        drawOrbit(orbitalBody.getOrbitalElements(), 0d, null,
+                poseStack, projectionMatrix, PLANET_ORBIT_COLOR);
+    }
+
+    public static void drawFutureOrbit(OrbitalElementsc orbitalElements, double trueAnomaly, OrbitalCalc.SOIIntercept soiIntercept,
+                                       PoseStack poseStack, Matrix4f projectionMatrix) {
+        if (soiIntercept != null) {
+            drawOrbit(orbitalElements, trueAnomaly, soiIntercept, poseStack, projectionMatrix, FUTURE_SHIP_ORBIT_COLOR);
+        } else {
+            drawOrbit(orbitalElements, 0d, null,
+                    poseStack, projectionMatrix, FUTURE_SHIP_ORBIT_COLOR);
+        }
+    }
+
+    private static void drawOrbit(OrbitalElementsc orbitalElements, double currentTrueAnomaly, @Nullable OrbitalCalc.SOIIntercept soiIntercept,
+                                  PoseStack poseStack, Matrix4f projectionMatrix, float[] color) {
         if (orbitalElements == null) {
             return;
         }
@@ -106,10 +139,18 @@ public class OrbitDrawer {
         double b = isElliptical ? a*Math.sqrt(1-(orbitalElements.getEccentricity() * orbitalElements.getEccentricity()))
                 : a*Math.sqrt((orbitalElements.getEccentricity() * orbitalElements.getEccentricity()) - 1);
 
-        a = a*scaleFactor;
-        b = b*scaleFactor;
+        a = a * MapRenderer.SCALE_FACTOR;
+        b = b * MapRenderer.SCALE_FACTOR;
         float distanceFromCenterToFoci =  isElliptical ? (float) -Math.sqrt(a*a - b*b) : (float) Math.sqrt(a*a + b*b);
-        setCullingUniforms(orbitalElements, b / a);
+
+        if (soiIntercept != null) {
+            setCullingUniforms(orbitalElements, currentTrueAnomaly, soiIntercept, b / a);
+        } else {
+            distanceToFoci.set(0.0f);
+            startTrueAnomaly.set((float) -Math.PI);
+            semiMinorAxisMultiplier.set(1.0f);
+            endTrueAnomaly.set((float) Math.PI);
+        }
 
         poseStack.pushPose();
         poseStack.mulPose(new Quaternionf().set(orbitalElements.getOrbitRotation()));
@@ -117,11 +158,7 @@ public class OrbitDrawer {
         poseStack.translate(distanceFromCenterToFoci, 0f, 0f);
         poseStack.scale((float) a,1f,(float) b);
 
-        if (orbitalBody instanceof EntityOrbitBody) {
-            RenderSystem.setShaderColor(0.0f,0.0f,1.0f,1.0f);
-        } else {
-            RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
-        }
+        RenderSystem.setShaderColor(color[0], color[1], color[2], color[3]);
 
         drawBuffer.bind();
         drawBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, PSShaders.getOrbitShader());
@@ -129,22 +166,17 @@ public class OrbitDrawer {
         poseStack.popPose();
     }
 
-    private static void setCullingUniforms(OrbitalElementsc orbitalElements, double baRatio) {
+    private static void setCullingUniforms(OrbitalElementsc orbitalElements, double trueAnomaly, OrbitalCalc.SOIIntercept intercept, double baRatio) {
         if (orbitalElements.isHyperbolic()) {
-            double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(orbitalElements.getEccentricityAnomaly(),
-                    orbitalElements.getEccentricity());
-
-//            if (trueAnomaly < 0f) {
-//                trueAnomaly = trueAnomaly + (2 * Math.PI);
-//            }
-
             startTrueAnomaly.set((float) trueAnomaly);
+            endTrueAnomaly.set((float) intercept.trueAnomaly());
             distanceToFoci.set((float) orbitalElements.getEccentricity());
             semiMinorAxisMultiplier.set((float) baRatio);
         } else {
-            distanceToFoci.set(0.0f);
-            startTrueAnomaly.set((float) -Math.PI);
-            semiMinorAxisMultiplier.set(1.0f);
+            startTrueAnomaly.set((float) trueAnomaly);
+            endTrueAnomaly.set((float) intercept.trueAnomaly());
+            distanceToFoci.set((float) orbitalElements.getEccentricity());
+            semiMinorAxisMultiplier.set((float) -baRatio);
         }
     }
 }

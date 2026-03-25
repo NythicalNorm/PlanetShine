@@ -8,21 +8,20 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.planetshine.util.RenderingCommon;
+import com.nythicalnorm.planetshine.util.ProjectionUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 @OnlyIn(Dist.CLIENT)
 public class MapRenderablePlanet extends MapRenderable {
     protected CelestialBody planetBody;
 
-    public MapRenderablePlanet(CelestialBody planetBody, MapRelativeState mapRelativeState, @Nullable OrbitalBody parentBody) {
-        super(mapRelativeState, parentBody);
+    public MapRenderablePlanet(CelestialBody planetBody, MapRelativeState mapRelativeState) {
+        super(mapRelativeState);
         this.planetBody = planetBody;
     }
 
@@ -47,23 +46,23 @@ public class MapRenderablePlanet extends MapRenderable {
 
     private void renderChildBodies(GuiGraphics graphics, CelestialBody planetBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
         planetBody.getPlanetChildren().forEach(celestialBody ->
-                OrbitDrawer.drawOrbit(celestialBody, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix));
+                OrbitDrawer.drawCelestialBodyOrbit(celestialBody, poseStack, projectionMatrix));
         planetBody.getEntityChildren().forEach(entityOrbitBody -> {
             if (this.renderIconForOrbitalBody(graphics, entityOrbitBody, currentFocusedBody, poseStack, projectionMatrix)) {
                 RenderSystem.enableBlend();
-                OrbitDrawer.drawOrbit(entityOrbitBody, MapRenderer.SCALE_FACTOR, poseStack, projectionMatrix);
+                OrbitDrawer.drawCurrentEntityOrbit(entityOrbitBody, poseStack, projectionMatrix);
             }
         });
         RenderSystem.disableBlend();
     }
 
-    public boolean renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+    public boolean renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody<?> entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
         Vector3f pos = MapRenderer.toMapCoordinate(entityOrbitBody.getRelativePos());
         Matrix4f poseMatrix = new Matrix4f(poseStack.last().pose());
         RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
 
         Screen screen = Minecraft.getInstance().screen;
-        Vector2i screenPos = RenderingCommon.worldToScreenCoordinate(pos, poseMatrix, projectionMatrix, screen.width, screen.height);
+        Vector2i screenPos = ProjectionUtils.worldToScreenCoordinate(pos, poseMatrix, projectionMatrix, screen.width, screen.height);
         if (screenPos != null) {
             return entityOrbitBody.drawIcon(graphics, screenPos, 8);
         }
