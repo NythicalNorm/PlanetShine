@@ -8,7 +8,7 @@ import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
@@ -28,9 +28,9 @@ public class OrbitDrawer {
     private static Uniform semiMinorAxisMultiplier;
     private static Uniform endTrueAnomaly;
 
-    public static final float[] PLANET_ORBIT_COLOR = Calc.getRGBAFloats(0xFFFFFF, 1.0f);
-    public static final float[] SHIP_ORBIT_COLOR = Calc.getRGBAFloats(0xbe29ec, 1.0f);
-    public static final float[] FUTURE_SHIP_ORBIT_COLOR = Calc.getRGBAFloats(0xffa500, 1.0f);
+    public static final float[] PLANET_ORBIT_COLOR = MiscCalc.getRGBAFloats(0xFFFFFF, 1.0f);
+    public static final float[] SHIP_ORBIT_COLOR = MiscCalc.getRGBAFloats(0xbe29ec, 1.0f);
+    public static final float[] FUTURE_SHIP_ORBIT_COLOR = MiscCalc.getRGBAFloats(0xffa500, 1.0f);
 
     public static void setupShader() {
         net.minecraft.client.renderer.ShaderInstance orbitShader = PSShaders.getOrbitShader();

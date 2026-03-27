@@ -22,6 +22,7 @@ import org.joml.Quaternionfc;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
+import org.valkyrienskies.core.api.world.PhysLevel;
 
 import java.util.Collection;
 import java.util.Map;
@@ -231,7 +232,7 @@ public abstract class CelestialBody extends OrbitalBody {
     }
 
     @PhysTickOnly
-    public void physTick(SolarSystem solarSystem) {
+    public void physTick(SolarSystem solarSystem, PhysLevel physLevel) {
         this.celestialBodyTickers.forEach(ticker -> ticker.onPhysTick(this, solarSystem));
     }
 }

@@ -5,8 +5,8 @@ import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.network.*;
 import com.nythicalnorm.planetshine.network.orbitaldata.*;
 import com.nythicalnorm.planetshine.network.time.ClientboundSolarSystemTimeUpdate;
-import com.nythicalnorm.planetshine.network.time.ClientboundTimeWarpUpdate;
 import com.nythicalnorm.planetshine.planettexgen.lod_tex.BiomeColorHolder;
+import com.nythicalnorm.planetshine.server.TimeWarpManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -27,11 +27,9 @@ import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
@@ -43,7 +41,6 @@ import org.valkyrienskies.core.api.util.PhysTickOnly;
 import org.valkyrienskies.core.api.world.PhysLevel;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
-import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.List;
@@ -54,9 +51,9 @@ public class PSServer extends UniverseStage {
     private final MinecraftServer server;
     private PlanetTexHandler planetTexHandler;
     private HostSpaceManager hostSpaceManager;
+    private TimeWarpManager timeWarpManager;
     private final SpacecraftDataStorage spacecraftDataStorage;
     private long runningPhysTicks; // in VSPhysTicks
-    private volatile boolean sleepTimeWarping = false;
     private final RunnableExecutor physTickRunnable;
 
     // Called on the server starting event
@@ -78,6 +75,7 @@ public class PSServer extends UniverseStage {
         this.spacecraftDataStorage.readSpacecraftData(solarSystem);
         this.planetTexHandler = new PlanetTexHandler();
         this.hostSpaceManager = new HostSpaceManager(this, solarSystem.getAllSpacecraftBodies().values(), spacecraftDataStorage.readHostSpaces());
+        this.timeWarpManager = new TimeWarpManager(this);
     }
 
     public void serverStarted() {
@@ -113,7 +111,7 @@ public class PSServer extends UniverseStage {
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
         solarSystem.UpdateSpacecraft(currentTime, this.isTimeWarping());
 
-        if (!sleepTimeWarping) {
+        if (!timeWarpManager.isSleepTimeWarping()) {
             setCurrentTime(currentTime + timePassPerTick);
         } else {
             setCurrentTime(currentTime + TimeCalc.TimePerTickToTimePerMilliTick(timeWarpSettings.get(4)));
@@ -143,20 +141,6 @@ public class PSServer extends UniverseStage {
     public void saveSolarSys() {
         spacecraftDataStorage.saveSpacecraft(this.solarSystem);
         spacecraftDataStorage.saveHostSpaces(this.hostSpaceManager);
-    }
-
-    public void ChangeTimeWarp(long proposedSetTimeWarpSpeed, ServerPlayer player) {
-        long timePassPerSec = (long) Mth.clamp(proposedSetTimeWarpSpeed, 0, 5000000);
-        timePassPerSec = TimeCalc.TimePerTickToTimePerMilliTick(timePassPerSec);
-        setTimePassPerTick(timePassPerSec);
-
-        server.getPlayerList().broadcastSystemMessage(Component.translatable("planetshine.state.settimewarp",
-                proposedSetTimeWarpSpeed), true);
-        PacketHandler.sendToAllClients(new ClientboundTimeWarpUpdate(true, timePassPerSec));
-    }
-
-    public void setSleepTimeWarping(boolean sleepTimeWarping) {
-        this.sleepTimeWarping = sleepTimeWarping;
     }
 
     public void playerJoined(ServerPlayer player) {
@@ -271,7 +255,7 @@ public class PSServer extends UniverseStage {
         return hostSpaceManager;
     }
 
-    public String getSpaceLevelString() {
-        return ValkyrienSkies.api().getDimensionId(this.getSpaceLevel());
+    public TimeWarpManager getTimeWarpManager() {
+        return timeWarpManager;
     }
 }

@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.gui.screen;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -16,6 +17,9 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     protected float cameraXrot = 0f;
     protected float zoomLevel = 2f;
     protected boolean isNonRotView = true;
+    Component currentMessage = Component.empty();
+    float messageRemainingTicks;
+    public static final int textColor = 0x00ff2b;
 
     protected MouseLookScreen(Component pTitle) {
         super(pTitle);
@@ -61,19 +65,23 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
         if (PSKeyBinds.INC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
             PSClient.getInstance().ifPresent((psClient ->
-                    psClient.TryChangeTimeWarp(true)));
+                    psClient.TryChangeTimeWarp(true, this.overrideTimeWarpAllowance())));
             return true;
         }
 
         else if (PSKeyBinds.DEC_TIME_WARP_KEY.matches(pKeyCode, pScanCode)) {
             PSClient.getInstance().ifPresent((psClient ->
-                    psClient.TryChangeTimeWarp(false)));
+                    psClient.TryChangeTimeWarp(false, this.overrideTimeWarpAllowance())));
             return true;
         }
         return super.keyPressed(pKeyCode, pScanCode, pModifiers);
     }
 
     public boolean movePlayerCamera() {
+        return false;
+    }
+
+    public boolean overrideTimeWarpAllowance() {
         return false;
     }
 
@@ -92,6 +100,32 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
 
     public float getViewXrot() {
         return -cameraXrot*Mth.RAD_TO_DEG;
+    }
+
+    public boolean resetKeysOnScreenOpen() {
+        return false;
+    }
+
+    @Override
+    public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+        super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
+
+        if (this.messageRemainingTicks > 0f) {
+            renderSystemMessage(pGuiGraphics);
+            this.messageRemainingTicks -= pPartialTick;
+        }
+    }
+
+    private void renderSystemMessage(GuiGraphics pGuiGraphics) {
+        pGuiGraphics.pose().pushPose();
+        pGuiGraphics.pose().translate((float)(this.width / 2), 50f, 0.0F);
+        pGuiGraphics.drawString(font, this.currentMessage, -font.width(this.currentMessage) / 2, -4, textColor);
+        pGuiGraphics.pose().popPose();
+    }
+
+    public void setSystemMessage(Component message) {
+        this.currentMessage = message;
+        this.messageRemainingTicks = 60f;
     }
 
     public static class MouseLookScreenState {

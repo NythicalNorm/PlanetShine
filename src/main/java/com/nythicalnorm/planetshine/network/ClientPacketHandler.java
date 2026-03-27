@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.network;
 
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.gui.screen.map.BlockEntityMapScreen;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -136,6 +137,15 @@ public class ClientPacketHandler {
     public static void setOrbitIntercept(OrbitId spacecraftID, OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
         if (PSClient.get() != null) {
             PSClient.get().setOrbitIntercept(spacecraftID, soiIntercept);
+        }
+    }
+
+    public static void openTimeWarpMapScreen() {
+        PSClient psClient = PSClient.get();
+        if (psClient != null) {
+            if (psClient.doRender()) {
+                psClient.addRunnableToRenderTick(() -> Minecraft.getInstance().setScreen(new BlockEntityMapScreen()));
+            }
         }
     }
 }

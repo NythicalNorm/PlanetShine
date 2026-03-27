@@ -21,10 +21,10 @@ public class ForgeClientEvents {
     public static void OnKeyInput (InputEvent.Key event) {
         if (PSKeyBinds.INC_TIME_WARP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent((psClient ->
-                    psClient.TryChangeTimeWarp(true)));
+                    psClient.TryChangeTimeWarp(true, false)));
         } else if (PSKeyBinds.DEC_TIME_WARP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent((psClient ->
-                    psClient.TryChangeTimeWarp(false)));
+                    psClient.TryChangeTimeWarp(false, false)));
         } else if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent(psClient -> {
                 if (psClient.doRender()) {

@@ -1,6 +1,6 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
-import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 
 public class PlanetAtmosphere {
     protected final boolean hasAtmosphere;
@@ -27,11 +27,11 @@ public class PlanetAtmosphere {
 
     public float[] getOverlayColor(float alpha)
     {
-        return Calc.getRGBAFloats(surfaceColor, alpha);
+        return MiscCalc.getRGBAFloats(surfaceColor, alpha);
     }
 
     public float[] getAtmoColor() {
-        return Calc.getRGBAFloats(atmoColor, 1.0f);
+        return MiscCalc.getRGBAFloats(atmoColor, 1.0f);
     }
 
     public int getOverlayColorInt()

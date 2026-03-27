@@ -21,6 +21,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.ClientHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
+import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
@@ -50,6 +51,7 @@ public class PSClient extends UniverseStage {
 
     private final PSScreenManager screenManager;
     private final ClientTexManager planetTexManager;
+    private final RunnableExecutor renderTickRunnables;
 
     // Rendering stuff
     private final MapRenderer mapRenderer;
@@ -57,6 +59,7 @@ public class PSClient extends UniverseStage {
 
     public PSClient(@NotNull ClientPlayerOrbitBody playerDataFromServer, SolarSystem solarSystem) {
         super(solarSystem);
+        this.renderTickRunnables = new RunnableExecutor();
         minecraft = Minecraft.getInstance();
         this.playerOrbit = playerDataFromServer;
         this.screenManager = new PSScreenManager();
@@ -116,7 +119,12 @@ public class PSClient extends UniverseStage {
     }
 
     public void tick() {
-        clientTimeHandler.tick();
+        this.clientTimeHandler.tick();
+        this.renderTickRunnables.executeAll();
+    }
+
+    public void addRunnableToRenderTick(Runnable runnable) {
+        this.renderTickRunnables.addRun(runnable);
     }
 
     public void onClientLevelLoad(ClientLevel clientLevel) {
@@ -170,12 +178,12 @@ public class PSClient extends UniverseStage {
         return clientHostSpace;
     }
 
-    public void TryChangeTimeWarp(boolean doInc) {
+    public void TryChangeTimeWarp(boolean doInc, boolean allowOnPlanet) {
         int propesedSetIndex = getCurrentTimeWarpSetting();
         propesedSetIndex = doInc ? ++propesedSetIndex : --propesedSetIndex;
 
         if (propesedSetIndex >= 0 && propesedSetIndex < timeWarpSettings.size()) {
-            PacketHandler.sendToServer(new ServerboundTimeWarpChange(timeWarpSettings.get(propesedSetIndex)));
+            PacketHandler.sendToServer(new ServerboundTimeWarpChange(timeWarpSettings.get(propesedSetIndex), allowOnPlanet));
         }
     }
 

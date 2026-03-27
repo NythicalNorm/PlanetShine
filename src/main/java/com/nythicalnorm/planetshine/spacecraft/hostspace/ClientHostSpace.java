@@ -11,9 +11,9 @@ import org.joml.Vector3d;
 public class ClientHostSpace implements OrbitHostAccessor {
     private final OrbitId orbitIdOfHost;
     private final Vector3d originPos;
-    private final EntityOrbitBody hostBody;
+    private final EntityOrbitBody<?> hostBody;
 
-    public ClientHostSpace(OrbitId orbitIdOfHost, Vector3d originPos, EntityOrbitBody hostBody) {
+    public ClientHostSpace(OrbitId orbitIdOfHost, Vector3d originPos, EntityOrbitBody<?> hostBody) {
         this.orbitIdOfHost = orbitIdOfHost;
         this.originPos = originPos;
         this.hostBody = hostBody;
@@ -30,7 +30,7 @@ public class ClientHostSpace implements OrbitHostAccessor {
     }
 
     @Override
-    public EntityOrbitBody getHostBody() {
+    public EntityOrbitBody<?> getHostBody() {
         if (hostBody != null) {
             return hostBody;
         } else {

@@ -19,7 +19,11 @@ public class MinecraftMixin {
 
     @WrapOperation(method = "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/KeyMapping;releaseAll()V"))
     public void keyboardReleaseAll(Operation<Void> original) {
-        if (!(this.screen instanceof MouseLookScreen)) {
+        if (this.screen instanceof MouseLookScreen mouseLookScreen) {
+            if (mouseLookScreen.resetKeysOnScreenOpen()) {
+                original.call();
+            }
+        } else {
             original.call();
         }
     }

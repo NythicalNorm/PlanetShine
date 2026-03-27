@@ -33,8 +33,8 @@
     "spaceentites.LivingEntitySpaceMixin",
     "spaceentites.LocalPlayerSpaceMixin",
     "spaceentites.PlayerSpaceMixin",
+    "timewarp.BedBlockMixin",
     "vs.PhysShipImplMixin",
-    "worldborder.EntityMixin",
     "worldborder.WorldBorderMixin",
     "worldgen.ClimateMixin"
   ],
@@ -44,6 +44,7 @@
     "daynightcycle.ClientLevelMixin",
     "daynightcycle.FogRendererMixin",
     "ship_gui.CameraMixin",
+    "ship_gui.ChatListenerMixin",
     "ship_gui.DebugScreenOverlayMixin",
     "ship_gui.KeyboardHandlerMixin",
     "ship_gui.MinecraftMixin",

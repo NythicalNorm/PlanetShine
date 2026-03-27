@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.mixin.vs;
 
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
-import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -52,12 +52,12 @@ public abstract class PhysShipImplMixin {
                 double forceThreshold = 0.1 * getMass();
                 double forceThresholdSquared = forceThreshold * forceThreshold;
 
-                Vector3d invForcesTotal = Calc.pollVectorQueue(invForces);
+                Vector3d invForcesTotal = MiscCalc.pollVectorQueue(invForces);
                 if (invForcesTotal.lengthSquared() > forceThresholdSquared) {
                     serverSpaceshipBody.addVelocityForUpdate(invForcesTotal.div(getMass()));
                 }
 
-                Vector3d rotForcesTotal = Calc.pollVectorQueue(rotForces);
+                Vector3d rotForcesTotal = MiscCalc.pollVectorQueue(rotForces);
                 if (rotForcesTotal.lengthSquared() > forceThresholdSquared) {
                     rotForcesTotal = rotateForceToWorld(rotForcesTotal);
                     rotForcesTotal.div(getMass());

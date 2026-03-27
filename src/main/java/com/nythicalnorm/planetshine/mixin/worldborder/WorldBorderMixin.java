@@ -25,19 +25,19 @@ import java.util.List;
 @Mixin(value = WorldBorder.class, priority = 800)
 public class WorldBorderMixin implements PlanetWorldBorder {
     @Unique
-    VoxelShape ps$worldBorderShape;
+    VoxelShape ps$planetBorderShape;
 
     @Unique
     double ps$cellSize;
 
-    @Override
-    public VoxelShape ps$getPlanetBorder() {
-        return ps$worldBorderShape;
-    }
+//    @Override
+//    public VoxelShape ps$getPlanetBorder() {
+//        return ps$worldBorderShape;
+//    }
 
     @Unique
     private boolean ps$isPlanetWorldBorder() {
-        return ps$worldBorderShape != null && PlanetShineConfig.getOverrideVanillaWorldBorder();
+        return ps$planetBorderShape != null && PlanetShineConfig.isOverrideVanillaWorldBorder();
     }
 
     @Override
@@ -57,12 +57,12 @@ public class WorldBorderMixin implements PlanetWorldBorder {
                 Shapes.box(halfSize + cellSize, minY, -halfSize, halfSize + cellSize + cellSize, maxY, halfSize) // more right
         };
 
-        this.ps$worldBorderShape = Shapes.empty();
+        this.ps$planetBorderShape = Shapes.empty();
         for (VoxelShape cube : cubes) {
-            this.ps$worldBorderShape = Shapes.join(ps$worldBorderShape, cube, BooleanOp.OR);
+            this.ps$planetBorderShape = Shapes.join(ps$planetBorderShape, cube, BooleanOp.OR);
         }
 
-        this.ps$worldBorderShape = Shapes.join(Shapes.INFINITY, this.ps$worldBorderShape, BooleanOp.ONLY_FIRST);
+        this.ps$planetBorderShape = Shapes.join(Shapes.INFINITY, this.ps$planetBorderShape, BooleanOp.ONLY_FIRST);
     }
 
     @ModifyReturnValue(method = "isWithinBounds(Lnet/minecraft/core/BlockPos;)Z", at = @At("RETURN"))
@@ -150,7 +150,7 @@ public class WorldBorderMixin implements PlanetWorldBorder {
     @WrapMethod(method = "getCollisionShape")
     public VoxelShape getPlanetCollisionShape(Operation<VoxelShape> original) {
         if (ps$isPlanetWorldBorder()) {
-            return ps$worldBorderShape;
+            return ps$planetBorderShape;
         } else {
             return original.call();
         }

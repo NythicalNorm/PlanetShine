@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.event;
 
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import org.valkyrienskies.core.api.events.PhysTickEvent;
 import org.valkyrienskies.core.api.events.ShipLoadEvent;
 import org.valkyrienskies.core.api.events.TickEndEvent;
@@ -15,9 +16,9 @@ public class VSServerEvents {
 
     private static void onPhysTick(PhysTickEvent event) {
        if (PSServer.get() != null) {
-           PSServer solarSys = PSServer.get();
-           if (event.getWorld().getDimension().equals(solarSys.getSpaceLevelString())) {
-               solarSys.OnPhysTick(event.getDelta(), event.getWorld());
+           PSServer psServer = PSServer.get();
+           if (event.getWorld().getDimension().equals(SpaceUtils.getSpaceLevelString())) {
+               psServer.OnPhysTick(event.getDelta(), event.getWorld());
            }
        }
     }

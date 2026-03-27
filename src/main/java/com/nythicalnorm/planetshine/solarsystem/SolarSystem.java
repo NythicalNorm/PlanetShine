@@ -149,16 +149,16 @@ public class SolarSystem {
 
     @GameTickOnly
     public void entityRemoveOrbital(EntityOrbitBody<?> entityOrbitBody, boolean isTeleporting) {
+        this.allSpacecraftBodies.remove(entityOrbitBody.getOrbitId());
+        if (entityOrbitBody instanceof AbstractSpaceshipBody) {
+            this.allVSships.remove(entityOrbitBody.getOrbitId().getShipID());
+        }
+
         entityOrbitBody.OnRemove();
         entityOrbitBody.removeParent();
         entityOrbitBody.removeHostSpace(isTeleporting);
         entityOrbitBody.setOrbitalElements(null);
         entityOrbitBody.setIntercept(null);
-
-        this.allSpacecraftBodies.remove(entityOrbitBody.getOrbitId());
-        if (entityOrbitBody instanceof AbstractSpaceshipBody) {
-            this.allVSships.remove(entityOrbitBody.getOrbitId().getShipID());
-        }
     }
 
     public List<String> getAllPlanetNames() {
@@ -203,7 +203,7 @@ public class SolarSystem {
     @PhysTickOnly
     public void OnPhysTick(PhysLevel world) {
         for (CelestialBody celestialBody : this.getAllPlanetaryBodies().values()) {
-            celestialBody.physTick(this);
+            celestialBody.physTick(this, world);
         }
     }
 

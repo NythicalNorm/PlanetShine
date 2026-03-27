@@ -10,7 +10,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
-import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -19,12 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2ic;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
-import org.valkyrienskies.core.api.ships.DragController;
-import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 import org.valkyrienskies.core.api.world.PhysLevel;
-import org.valkyrienskies.mod.api.ValkyrienSkies;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -72,7 +69,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
 
     public void OnGameTick() {
         this.sunOcclusion = DayNightCycleCalc.getSunOcclusionForSpacecraft(this.hostBody);
-        Vector3d velocity = Calc.pollVectorQueue(velocityForLastGameTick);
+        Vector3d velocity = MiscCalc.pollVectorQueue(velocityForLastGameTick);
 
         if (velocity.x() == 0.0d && velocity.y() == 0.0d && velocity.z() == 0.0d) {
             return;

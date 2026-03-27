@@ -7,7 +7,9 @@
 
   "sounds.planetshine.propeller_start": "The Handheld Thruster turns on",
 
-  "planetshine.state.settimewarp": "Setting Time Warp to: %1$sx",
+  "planetshine.timewarp.set": "Setting Time Warp to: %1$sx",
+  "planetshine.timewarp.not_in_space": "Can't time warp on planets. Shift click a bed, or go to space to time warp",
+  "planetshine.timewarp.mobs_nearby": "Can't time warp now, there are monsters nearby ;)",
   "planetshine.state.planetgen_start": "Starting Planet texture generation...",
   "planetshine.state.planetgen_end": "planet %1$s's texture generation complete",
 

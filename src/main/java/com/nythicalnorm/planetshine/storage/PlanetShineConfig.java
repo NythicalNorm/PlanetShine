@@ -33,7 +33,7 @@ public class PlanetShineConfig {
         }
     }
 
-    public static boolean getOverrideVanillaWorldBorder() {
+    public static boolean isOverrideVanillaWorldBorder() {
         try {
             return OverrideVanillaWorldBorder.get();
         } catch (Exception e) {

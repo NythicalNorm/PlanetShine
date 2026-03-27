@@ -89,31 +89,30 @@ public class ServerLevelMixin implements PlanetTimeAccessor {
         this.ps$daylightData = daylightData;
     }
 
-    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;wakeUpAllPlayers()V"))
-    public void wakeUpAllPlayers(ServerLevel instance, Operation<Void> original) {
-        if (((PlanetTimeAccessor)instance).ps$DaylightDataExists()) {
+    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughDeepSleeping(ILjava/util/List;)Z"))
+    private boolean wakeUpAllPlayers(SleepStatus instance, int pRequiredSleepPercentage, List<ServerPlayer> pSleepingPlayers, Operation<Boolean> original) {
+        if (this.ps$DaylightDataExists()) {
             boolean isDayAtAnyPlayerPos = false;
             for(Player player : players) {
                 if (player.isSleeping() && ps$isDay(player.position().x(), player.position().z())) {
                     isDayAtAnyPlayerPos = true;
                 }
             }
-            PSServer.get().setSleepTimeWarping(!isDayAtAnyPlayerPos);
-            if (isDayAtAnyPlayerPos) {
-                original.call(instance);
-            }
+
+            PSServer.get().getTimeWarpManager().setSleepTimeWarping(!isDayAtAnyPlayerPos);
+            return isDayAtAnyPlayerPos;
         } else {
-            original.call(instance);
+            return original.call(instance, pRequiredSleepPercentage, pSleepingPlayers);
         }
     }
 
     @Inject(method = "updateSleepingPlayerList", at = @At(value = "TAIL"))
     public void updatePlayerSleep(CallbackInfo ci) {
         ServerLevel level = (ServerLevel) (Object) this;
-        if (((PlanetTimeAccessor)level).ps$DaylightDataExists()) {
+        if (this.ps$DaylightDataExists()) {
             int i = level.getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
             if (!sleepStatus.areEnoughSleeping(i)) {
-                PSServer.get().setSleepTimeWarping(false);
+                PSServer.get().getTimeWarpManager().setSleepTimeWarping(false);
             }
         }
     }

@@ -41,19 +41,17 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     protected Matrix4f lastCameraModelView;
     protected Vector3f relativeCameraPos;
 
-    public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen) {
+    public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen, @Nullable MapState mapState) {
         super(Component.empty());
-        PSClient.getInstance().ifPresent (psClient -> {
+        if (PSClient.get() != null) {
+            PSClient psClient = PSClient.get();
             this.screenManager = psClient.getScreenManager();
             this.mapRenderer = psClient.getMapRenderer();
-        });
+        }
         this.isSpacecraftScreenOpen = PisSpacecraftScreenOpen;
         this.projectionMatrix = new Matrix4f();
         this.relativeCameraPos = new Vector3f();
-    }
 
-    public MapSolarSystemScreen(boolean PisSpacecraftScreenOpen, MapState mapState) {
-        this(PisSpacecraftScreenOpen);
         this.populateFocusedBodiesList();
 
         if (mapState != null) {

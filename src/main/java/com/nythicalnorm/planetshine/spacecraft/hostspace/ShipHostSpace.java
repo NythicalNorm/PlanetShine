@@ -10,7 +10,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.vs.ShipTeleporter;
-import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2ic;
 import org.joml.Vector3d;
@@ -80,7 +80,7 @@ public class ShipHostSpace extends OrbitHostSpace {
 
             for (ServerSpaceshipBody spaceshipBody : this.nonHostShips) {
                 if (spaceshipBody.isBodyEntityLoaded()) {
-                    int shipVolume = Calc.getShipVolume(spaceshipBody.getBody());
+                    int shipVolume = MiscCalc.getShipVolume(spaceshipBody.getBody());
                     if (shipVolume > biggestVolumeFound) {
                         newHost = spaceshipBody;
                     }

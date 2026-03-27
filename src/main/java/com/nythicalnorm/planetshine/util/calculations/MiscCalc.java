@@ -1,5 +1,6 @@
-package com.nythicalnorm.planetshine.util;
+package com.nythicalnorm.planetshine.util.calculations;
 
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.joml.primitives.AABBic;
@@ -7,7 +8,7 @@ import org.valkyrienskies.core.api.ships.Ship;
 
 import java.util.Queue;
 
-public class Calc {
+public class MiscCalc {
     public static Vector3d pollVectorQueue(Queue<Vector3dc> vectors) {
         Vector3d total = new Vector3d();
         Vector3dc impulse;
@@ -30,7 +31,10 @@ public class Calc {
     }
 
 
-    public static int getShipVolume(Ship ship) {
+    public static int getShipVolume(@Nullable Ship ship) {
+        if (ship == null){
+            return 0;
+        }
         AABBic aabb = ship.getShipAABB();
         if (aabb == null) {
             return 0;
