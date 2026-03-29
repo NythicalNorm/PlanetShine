@@ -4,6 +4,7 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.gui.widgets.AltitudeWidget;
 import com.nythicalnorm.planetshine.gui.widgets.NavballWidget;
 import com.nythicalnorm.planetshine.gui.widgets.TimeWarpWidget;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import net.minecraft.client.CameraType;
@@ -17,10 +18,10 @@ import org.joml.Vector3dc;
 import java.util.Objects;
 
 public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOrbitDataDisplay {
-    private final EntityOrbitBody controllingBody;
+    private final EntityOrbitBody<?> controllingBody;
     private final Options minecraftOptions;
 
-    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody controllingBody, SpacecraftScreenState spacecraftScreenState) {
+    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody<?> controllingBody, SpacecraftScreenState spacecraftScreenState) {
         super(pTitle);
         this.controllingBody = controllingBody;
         this.minecraftOptions = Minecraft.getInstance().options;
@@ -84,7 +85,7 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     }
 
     @Override
-    public Vector3dc getVelocityVector() {
+    public Vector3dc getRelativeVelocity() {
         Vector3dc velocity = controllingBody.getOrbitalElements() != null ?
                 controllingBody.getRelativeVelocity() : controllingBody.getMcVelocity();
 
@@ -94,6 +95,16 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     @Override
     public double getAltitude() {
         return controllingBody.getAltitude();
+    }
+
+    @Override
+    public OrbitalElementsc getOrbitalElements() {
+        return this.controllingBody.getOrbitalElements();
+    }
+
+    @Override
+    public Vector3dc getRelativePosition() {
+        return this.controllingBody.getRelativePos();
     }
 
     @Override

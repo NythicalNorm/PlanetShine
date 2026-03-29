@@ -34,6 +34,24 @@ public class NavballWidget extends AbstractWidget {
     private static final ResourceLocation NAVBALL_TEXTURE = ResourceLocation.fromNamespaceAndPath(PlanetShine.MODID,
             "textures/gui/navball.png");
 
+    private static final ResourceLocation NAVBALL_ICONS_TEXTURE = ResourceLocation.fromNamespaceAndPath(PlanetShine.MODID,
+            "textures/gui/navball_icons.png");
+
+    private static final Vector2i LEVEL_INDICATION = new Vector2i(0, 0);
+    private static final Vector2i PROGRADE = new Vector2i(16, 0);
+    private static final Vector2i RETROGRADE = new Vector2i(32, 0);
+    private static final Vector2i RADIAL_OUT = new Vector2i(48, 0);
+    private static final Vector2i RADIAL_IN = new Vector2i(0, 16);
+    private static final Vector2i NORMAL = new Vector2i(16, 16);
+    private static final Vector2i ANTI_NORMAL = new Vector2i(32, 16);
+    private static final Vector2i MANEUVER = new Vector2i(48, 16);
+    private static final Vector2i TARGET_RETROGRADE = new Vector2i(0, 32);
+    private static final Vector2i TARGET_PROGRADE = new Vector2i(16, 32);
+    private static final float NAVBALL_ICONS_SCALE = 1.0f / 8.0f;
+
+    private static final Quaternionf NAVBALL_INITIAL_ROT = new Quaternionf().rotateYXZ(Mth.HALF_PI, 0f, Mth.HALF_PI);
+
+
     public NavballWidget(int pX, int pY, int pWidth, int pHeight, Component pMessage) {
         super(pX, pY, pWidth, pHeight, pMessage);
     }
@@ -46,12 +64,14 @@ public class NavballWidget extends AbstractWidget {
         Screen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
 
         if (spacecraftScreen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
-            this.renderNavBall(orbitDataDisplay, pGuiGraphics);
-            Vector3dc bodyVelocity = orbitDataDisplay.getVelocityVector();
-            this.renderNavballIcons(pGuiGraphics, xPos, yPos);
+            Quaternionf invertedSpacecraftRot = new Quaternionf().set(orbitDataDisplay.getSpacecraftRotation()).invert();
+
+            this.renderNavBall(orbitDataDisplay, pGuiGraphics, invertedSpacecraftRot);
 
             pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos, yPos, 0, 0, 94, 86);
-            this.renderRelativeVelocity(pGuiGraphics, xPos, yPos,(int) bodyVelocity.length());
+            this.renderNavballIcons(pGuiGraphics, orbitDataDisplay, xPos, yPos, invertedSpacecraftRot);
+
+            this.renderRelativeVelocity(pGuiGraphics, xPos, yPos,(int) orbitDataDisplay.getRelativeVelocity().length());
             this.renderGForceBar(pGuiGraphics, xPos, yPos);
         }
 
@@ -61,11 +81,70 @@ public class NavballWidget extends AbstractWidget {
         }
     }
 
-    private void renderNavballIcons(@NotNull GuiGraphics pGuiGraphics, int xPos, int yPos) {
+    private void renderNavballIcons(@NotNull GuiGraphics graphics, ISpacecraftOrbitDataDisplay orbitData,
+                                    int xPos, int yPos, Quaternionf invertedSpacecraftRot) {
+        graphics.pose().pushPose();
+        graphics.pose().translate(xPos + 47, yPos + 51, 0.0f);
+        graphics.pose().scale(NAVBALL_ICONS_SCALE, NAVBALL_ICONS_SCALE, NAVBALL_ICONS_SCALE);
 
+        Quaternionf spacecraftRotation = new Quaternionf().rotationX(Mth.HALF_PI);
+        spacecraftRotation.mul(invertedSpacecraftRot);
+
+        // Normal
+        Vector3f normalOriginal = new Vector3f().set(orbitData.getRelativeVelocity()).cross(
+                (float) -orbitData.getRelativePosition().x(),
+                (float) -orbitData.getRelativePosition().y(),
+                (float) -orbitData.getRelativePosition().z()
+                , new Vector3f());
+        normalOriginal.normalize();
+        this.vectorToIcon(graphics, new Vector3f(normalOriginal), spacecraftRotation, NORMAL);
+
+        // Anti-Normal
+        Vector3f antiNormal = normalOriginal.negate();
+        this.vectorToIcon(graphics, antiNormal, spacecraftRotation, ANTI_NORMAL);
+
+        // Radial OUT
+        this.vectorToIcon(graphics, new Vector3f().set(orbitData.getRelativePosition()), spacecraftRotation, RADIAL_OUT);
+
+        // Radial IN
+        this.vectorToIcon(graphics, new Vector3f().set(orbitData.getRelativePosition()).negate(), spacecraftRotation, RADIAL_IN);
+
+        // Prograde
+        this.vectorToIcon(graphics, new Vector3f().set(orbitData.getRelativeVelocity()), spacecraftRotation, PROGRADE);
+
+        // Retrograde
+        this.vectorToIcon(graphics, new Vector3f().set(orbitData.getRelativeVelocity()).negate(), spacecraftRotation, RETROGRADE);
+
+        //Level Indication
+        this.drawIcon(graphics, LEVEL_INDICATION, new Vector3f());
+        graphics.pose().popPose();
     }
 
-    private void renderNavBall(ISpacecraftOrbitDataDisplay orbitData, GuiGraphics pGuiGraphics) {
+    private void vectorToIcon(GuiGraphics graphics,Vector3f vector, Quaternionf rotation, Vector2i texturePos) {
+        vector.normalize();
+        vector.rotate(rotation);
+        this.drawIcon(graphics, texturePos, vector);
+    }
+
+    private void drawIcon(GuiGraphics graphics, Vector2i icon, Vector3fc pos) {
+        if (pos.z() < 0.0f) {
+            return;
+        }
+
+        int navballMult = (int) (0.5f / NAVBALL_ICONS_SCALE);
+        int centerDist = Math.round(256f * NAVBALL_ICONS_SCALE);
+        int xPos = -Math.round(pos.y() * navballMult * 62f);
+        int yPos = -Math.round(pos.x() * navballMult * 62f);
+
+        graphics.blit(
+                NAVBALL_ICONS_TEXTURE,
+                xPos - centerDist, yPos - centerDist,
+                icon.x() * navballMult, icon.y() * navballMult,
+                64, 64
+        );
+    }
+
+    private void renderNavBall(ISpacecraftOrbitDataDisplay orbitData, GuiGraphics pGuiGraphics, Quaternionf invertedSpacecraftRot) {
         RenderSystem.depthMask(false);
         RenderSystem.enableDepthTest();
 
@@ -86,9 +165,8 @@ public class NavballWidget extends AbstractWidget {
         Quaterniondc rotation = orbitData.getSpacecraftRotation();
 
         if (rotation != null) {
-            Quaternionf setupRot = new Quaternionf().rotateYXZ(Mth.HALF_PI, 0f, Mth.HALF_PI);
-            navballPosestack.mulPose(setupRot);
-            navballPosestack.mulPose(new Quaternionf().set(rotation).invert());
+            navballPosestack.mulPose(NAVBALL_INITIAL_ROT);
+            navballPosestack.mulPose(invertedSpacecraftRot);
         }
 
         QuadSphereModelGenerator.getSphereBuffer().bind();
