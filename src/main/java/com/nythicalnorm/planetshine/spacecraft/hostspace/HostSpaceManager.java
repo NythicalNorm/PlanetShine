@@ -165,7 +165,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     public void onGameTick() {
         activeHostSpaces.forEach((vector2ic, orbitHostSpace) -> orbitHostSpace.OnGameTick());
 
-        this.checkShipTeleportToSpace();
+        // this.checkShipTeleportToSpace();
         // checkEntityTeleportToPlanet();
         if (spaceLevel.getGameTime() % 20L == 0) {
             this.checkCleanUpVSShips(ValkyrienSkies.api().getShipWorld(spaceLevel));
@@ -256,7 +256,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         // though maybe I don't add this.
         OrbitalElements orbitalElements = new OrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());
 
-        psServer.shipTeleportToOrbit(celestialBody, ship, orbitalElements, shipNewRot, ship.getAngularVelocity());
+        this.psServer.shipTeleportToOrbit(celestialBody, ship, orbitalElements, shipNewRot, ship.getAngularVelocity());
     }
 
 

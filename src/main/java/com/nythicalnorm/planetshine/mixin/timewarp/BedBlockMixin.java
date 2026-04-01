@@ -2,8 +2,9 @@ package com.nythicalnorm.planetshine.mixin.timewarp;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.nythicalnorm.planetshine.network.ClientPacketHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -17,12 +18,11 @@ import org.spongepowered.asm.mixin.Mixin;
 public class BedBlockMixin { // temporary solution to be survival friendly, will come up with a better solution to the problem eventually
     @WrapMethod(method = "use")
     private InteractionResult useBed(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit, Operation<InteractionResult> original) {
-        if (pPlayer.isCrouching()) {
-            if (pLevel.isClientSide()) {
-                ClientPacketHandler.openTimeWarpMapScreen();
-            }
-            return InteractionResult.CONSUME;
+        if (!pLevel.isClientSide()) {
+            ((ServerPlayer)pPlayer).sendSystemMessage(Component.literal(
+                    "Time travel into the future is required to skip the time, luckily you can mimic this by sleeping irl"), true);
         }
-        return original.call(pState, pLevel, pPos, pPlayer, pHand, pHit);
+
+        return InteractionResult.FAIL;
     }
 }

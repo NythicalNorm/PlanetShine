@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
 import com.google.common.collect.ImmutableList;
+import com.nythicalnorm.planetshine.server.TimeWarpManager;
 import com.nythicalnorm.planetshine.solarsystem.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
@@ -10,6 +11,7 @@ import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.RegistryObject;
@@ -41,8 +43,15 @@ public class PlanetaryBody extends CelestialBody {
     protected void simulate(long TimeElapsed, Vector3dc parentPos) {
         super.simulate(TimeElapsed, parentPos);
 
-        float rotationAngle = NorthPoleDir.angle + (float)((2*Math.PI/RotationPeriod) * (TimeElapsed % RotationPeriod));
         this.rotation.identity().rotationTo(NorthPoleDir.x,NorthPoleDir.y,NorthPoleDir.z, 0f, 1f, 0f);
+        float rotationAngle;
+
+        if (this.dimension != null && this.dimension.equals(Level.OVERWORLD)) {
+            rotationAngle = TimeWarpManager.getCurrentTimeEarthAngle(new Vector3f().set(this.getRelativePos()), this.rotation);
+        } else {
+            rotationAngle = NorthPoleDir.angle + (float)((2*Math.PI/RotationPeriod) * (TimeElapsed % RotationPeriod));
+        }
+
         Quaternionf rotated = new Quaternionf(new AxisAngle4f(rotationAngle, 0f, 1f, 0f));
         this.rotation.mul(rotated);
     }

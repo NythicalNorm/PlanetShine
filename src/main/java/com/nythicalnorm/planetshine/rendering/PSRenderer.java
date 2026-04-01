@@ -129,7 +129,7 @@ public class PSRenderer {
         RandomSource randomsource = RandomSource.create(1000L);
         pBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        for(int i = 0; i < 700; ++i) {
+        for(int i = 0; i < 1500; ++i) {
             double d0 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
             double d1 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
             double d2 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);

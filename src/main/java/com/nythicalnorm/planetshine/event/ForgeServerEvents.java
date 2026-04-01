@@ -35,7 +35,7 @@ public class ForgeServerEvents {
 
     @SubscribeEvent
     public static void onCommandsRegister(RegisterCommandsEvent event) {
-        new PSTeleportCommand(event.getDispatcher());
+        //new PSTeleportCommand(event.getDispatcher());
         ConfigCommand.register(event.getDispatcher());
     }
 

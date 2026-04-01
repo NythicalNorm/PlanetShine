@@ -14,7 +14,12 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Quaternionfc;
+import org.joml.Vector3f;
 
+import java.time.Instant;
+import java.time.LocalTime;
 import java.util.List;
 
 public class TimeWarpManager {
@@ -37,10 +42,10 @@ public class TimeWarpManager {
     }
 
     public void TryChangeTimeWarp(long proposedSetTimeWarpSpeed, boolean allowOnPlanet, ServerPlayer player) {
-        TimeWarpAllowanceReason allowanceReason = changeTimeWarp(proposedSetTimeWarpSpeed, allowOnPlanet, player);
-        if (!allowanceReason.isAllowed()) {
-            player.sendSystemMessage(allowanceReason.text, true);
-        }
+        Component nope = Component.literal("Nope :)");
+        player.sendSystemMessage(nope, true);
+
+        //changeTimeWarp(proposedSetTimeWarpSpeed, allowOnPlanet, player);
     }
 
     public TimeWarpAllowanceReason changeTimeWarp(long proposedSetTimeWarpSpeed, boolean allowOnPlanet, ServerPlayer player) {
@@ -64,6 +69,30 @@ public class TimeWarpManager {
                 proposedSetTimeWarpSpeed), true);
         PacketHandler.sendToAllClients(new ClientboundTimeWarpUpdate(true, timePassPerSec));
         return new TimeWarpAllowanceReason(null, true);
+    }
+
+    public long getCurrentPCTime() {
+        long nowInMilli = Instant.now().toEpochMilli();
+        return nowInMilli * 6L;
+    }
+
+    public static float getCurrentTimeEarthAngle(Vector3f relativePos, Quaternionfc northPoleRot) {
+        relativePos.normalize();
+        relativePos.rotate(new Quaternionf(northPoleRot));
+
+        double angleToSun = Math.atan2(relativePos.z(), relativePos.x());
+
+        return (float) -angleToSun + getLocalTimeToAngle();
+    }
+
+    private static float getLocalTimeToAngle() {
+        LocalTime now = LocalTime.now();
+
+        long millisSinceMidnight =
+                now.toNanoOfDay() / 1_000_000;
+
+        float value = millisSinceMidnight / 86_400_000f;
+        return value * Mth.TWO_PI;
     }
 
     private TimeWarpAllowanceReason checkIfTimeWarpIsPossible() {

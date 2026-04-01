@@ -111,11 +111,9 @@ public class PSServer extends UniverseStage {
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
         solarSystem.UpdateSpacecraft(currentTime, this.isTimeWarping());
 
-        if (!timeWarpManager.isSleepTimeWarping()) {
-            setCurrentTime(currentTime + timePassPerTick);
-        } else {
-            setCurrentTime(currentTime + TimeCalc.TimePerTickToTimePerMilliTick(timeWarpSettings.get(4)));
-        }
+        currentTime = timeWarpManager.getCurrentPCTime();
+        //setCurrentTime(currentTime + timePassPerTick);
+
         hostSpaceManager.onPhysTick(physLevel);
 
         if (runningPhysTicks % 30 == 0) {

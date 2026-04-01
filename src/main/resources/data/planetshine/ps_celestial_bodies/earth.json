@@ -9,7 +9,7 @@
     "declination": 23.44
   },
 
-  "starting_rotation": 3.59537825909,
+  "starting_rotation": 0,
   "rotation_period": 86400,
   "dimension_id": "minecraft:overworld",
 
@@ -20,7 +20,7 @@
   "orbital_elements": {
     "semi_major_axis": 149653496273.0,
     "eccentricity": 1.704239718110438E-02,
-    "periapsis_time": 6.2504793475201942954,
+    "periapsis_time": 434586000,
 
     "inclination": 4.657951002584728917e-6,
     "argument_of_periapsis": 5.1970176873649567284,
