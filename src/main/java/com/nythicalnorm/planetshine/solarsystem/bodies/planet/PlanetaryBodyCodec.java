@@ -23,7 +23,7 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
     @Override
     public void encodeBuffer(PlanetaryBody planetBody, FriendlyByteBuf byteBuf) {
         super.encodeBuffer(planetBody, byteBuf);
-        NetworkEncoders.writeASCII(byteBuf, planetBody.getName());
+        NetworkEncoders.writeUTF8(byteBuf, planetBody.getName());
         byteBuf.writeDouble(planetBody.getRadius());
         byteBuf.writeDouble(planetBody.getMass());
         NetworkEncoders.writeQuaternionfc(byteBuf, planetBody.getRotation());
@@ -47,7 +47,7 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
     @Override
     public PlanetaryBody.PlanetBuilder decodeBuffer(PlanetaryBody.PlanetBuilder planetBuilder, FriendlyByteBuf byteBuf) {
         super.decodeBuffer(planetBuilder, byteBuf);
-        planetBuilder.setName(NetworkEncoders.readASCII(byteBuf));
+        planetBuilder.setName(NetworkEncoders.readUTF8(byteBuf));
         planetBuilder.setRadius(byteBuf.readDouble());
         planetBuilder.setMass(byteBuf.readDouble());
         planetBuilder.setRotation(byteBuf.readQuaternion());

@@ -8,6 +8,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBodyCodec;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.spacecraft.*;
+import com.nythicalnorm.planetshine.spacecraft.irlship.AbstractIrlSpacecraft;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.SpaceshipBodyCodec;
@@ -38,6 +39,11 @@ public class OrbitalBodyTypeRegistry {
     public static final RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>>> SPACESHIP_BODY =
             ORBITAL_BODY_TYPES.register("vs_ship",
                     () -> new OrbitalBodyType<>(new SpaceshipBodyCodec(), AbstractSpaceshipBody.ShipOrbitBuilder::new));
+
+    public static final RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>>> IRL_SPACECRAFT_BODY =
+            ORBITAL_BODY_TYPES.register("irl_ship",
+                    () -> new OrbitalBodyType<>(new IRLSpacecraftCodec(), AbstractIrlSpacecraft.IRLSpacecraftBuilder::new));
+
 
     public static OrbitalBodyType <? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> getType(ResourceLocation resourceLocation) {
         return RegistryManager.ACTIVE.getRegistry(ORBITAL_BODY_REGISTRY_KEY).getValue(resourceLocation);

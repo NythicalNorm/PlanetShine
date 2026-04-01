@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.util.calculations;
 
 public class TimeCalc {
-    private static final long longTicksPerSecond = 6000;
+    public static final long longTicksPerSecond = 6000;
     public static final long TickToMilliTick = 100;
     public static final int PhysTickPerSec = 60;
 

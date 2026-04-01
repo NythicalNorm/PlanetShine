@@ -14,6 +14,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.planettexgen.handlers.PlanetTexHandler;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.spacecraft.irlship.AbstractIrlSpacecraft;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
@@ -26,7 +27,7 @@ import com.nythicalnorm.planetshine.storage.PSDataPackManager;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.UniverseStage;
-import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -141,6 +142,10 @@ public class PSServer extends UniverseStage {
         spacecraftDataStorage.saveHostSpaces(this.hostSpaceManager);
     }
 
+    public void sendAllMessage(String message) {
+        server.getPlayerList().broadcastSystemMessage(Component.literal(message), false);
+    }
+
     public void playerJoined(ServerPlayer player) {
         OrbitId playerEntityID = new OrbitId(player);
         List<CelestialBody> allPlanetaryBodies = solarSystem.getAllPlanetaryBodies().values().stream().toList();
@@ -201,6 +206,27 @@ public class PSServer extends UniverseStage {
         }
     }
 
+    public void IrlSpacecraftJoinOrbital(AbstractIrlSpacecraft irlSpacecraft, CelestialBody planet) {
+        this.solarSystem.entityJoinedOrbital(planet, irlSpacecraft);
+        PacketHandler.sendToAllClients(new ClientboundEntityBodyJoinOrbital(irlSpacecraft));
+    }
+
+    public AbstractIrlSpacecraft getIRLSpacecraft(String spacecraftName) {
+        for (EntityOrbitBody<?> entityOrbitBody : this.solarSystem.getAllSpacecraftBodies().values()) {
+            if (entityOrbitBody instanceof AbstractIrlSpacecraft irlSpacecraft) {
+                if (irlSpacecraft.getBody().equals(spacecraftName)) {
+                    return irlSpacecraft;
+                }
+            }
+        }
+        return null;
+    }
+
+    public void removeIRLSpacecraft(EntityOrbitBody<?> spaceshipBody) {
+        this.getSolarSystem().entityRemoveOrbital(spaceshipBody, false);
+        PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(spaceshipBody.getOrbitId())));
+    }
+
     // player teleport and this are very similar, but eh can't be bothered to actually make a common method or generic glorp.
     public void shipTeleportToOrbit(CelestialBody planet, LoadedServerShip ship, OrbitalElements elements,
                                     Quaterniondc shipNewRotation, Vector3dc shipNewOmega) {
@@ -255,5 +281,9 @@ public class PSServer extends UniverseStage {
 
     public TimeWarpManager getTimeWarpManager() {
         return timeWarpManager;
+    }
+
+    public void updateHorizonsSpacecraft() {
+
     }
 }

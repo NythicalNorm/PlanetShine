@@ -31,7 +31,7 @@ public class PlanetArgument implements ArgumentType<String> {
     }
 
     public static PlanetArgument planetArgument() {
-        return new PlanetArgument("suriyan");
+        return new PlanetArgument("sun");
     }
 
     public static PlanetArgument planetArgument(String planet) {

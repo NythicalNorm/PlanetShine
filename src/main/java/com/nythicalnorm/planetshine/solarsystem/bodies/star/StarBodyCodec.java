@@ -17,7 +17,7 @@ public class StarBodyCodec extends OrbitCodec<StarBody, StarBody.StarBuilder> {
     @Override
     public void encodeBuffer(StarBody sunBody, FriendlyByteBuf byteBuf) {
         super.encodeBuffer(sunBody, byteBuf);
-        NetworkEncoders.writeASCII(byteBuf, sunBody.getName());
+        NetworkEncoders.writeUTF8(byteBuf, sunBody.getName());
         byteBuf.writeDouble(sunBody.getRadius());
         byteBuf.writeDouble(sunBody.getMass());
         NetworkEncoders.writeQuaternionfc(byteBuf, sunBody.getRotation());
@@ -28,7 +28,7 @@ public class StarBodyCodec extends OrbitCodec<StarBody, StarBody.StarBuilder> {
     @Override
     public StarBody.StarBuilder decodeBuffer(StarBody.StarBuilder sunBody, FriendlyByteBuf byteBuf) {
         super.decodeBuffer(sunBody, byteBuf);
-        sunBody.setName(NetworkEncoders.readASCII(byteBuf));
+        sunBody.setName(NetworkEncoders.readUTF8(byteBuf));
         sunBody.setRadius(byteBuf.readDouble());
         sunBody.setMass(byteBuf.readDouble());
         sunBody.setRotation(byteBuf.readQuaternion());

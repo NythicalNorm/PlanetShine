@@ -63,6 +63,11 @@ public class OrbitId {
         return new OrbitId(UUID.nameUUIDFromBytes(bytes));
     }
 
+    public static OrbitId getIdFromUTFString(String name) {
+        byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
+        return new OrbitId(UUID.nameUUIDFromBytes(bytes));
+    }
+
     public OrbitId(FriendlyByteBuf byteBuf) {
         this.mostSignificantBits = byteBuf.readLong();
         this.leastSignificantBits = byteBuf.readLong();

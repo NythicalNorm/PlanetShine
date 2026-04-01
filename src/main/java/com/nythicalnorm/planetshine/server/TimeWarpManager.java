@@ -44,7 +44,6 @@ public class TimeWarpManager {
     public void TryChangeTimeWarp(long proposedSetTimeWarpSpeed, boolean allowOnPlanet, ServerPlayer player) {
         Component nope = Component.literal("Nope :)");
         player.sendSystemMessage(nope, true);
-
         //changeTimeWarp(proposedSetTimeWarpSpeed, allowOnPlanet, player);
     }
 

@@ -1,8 +1,10 @@
 package com.nythicalnorm.planetshine.event;
 
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.commands.PSTeleportCommand;
+import com.nythicalnorm.planetshine.commands.AddHorizonsSpacecraftCommand;
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.commands.RemoveHorizonsSpacecraftCommand;
+import com.nythicalnorm.planetshine.commands.UpdateHorizonsSpacecraftCommand;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
@@ -36,6 +38,9 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void onCommandsRegister(RegisterCommandsEvent event) {
         //new PSTeleportCommand(event.getDispatcher());
+        new AddHorizonsSpacecraftCommand(event.getDispatcher());
+        new RemoveHorizonsSpacecraftCommand(event.getDispatcher());
+        new UpdateHorizonsSpacecraftCommand(event.getDispatcher());
         ConfigCommand.register(event.getDispatcher());
     }
 

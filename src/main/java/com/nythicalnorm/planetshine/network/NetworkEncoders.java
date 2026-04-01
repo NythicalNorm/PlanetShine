@@ -171,14 +171,14 @@ public class NetworkEncoders {
         return new Vector3d(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
     }
 
-    public static void writeASCII(FriendlyByteBuf friendlyByteBuf, String text) {
+    public static void writeUTF8(FriendlyByteBuf friendlyByteBuf, String text) {
         friendlyByteBuf.writeVarInt(text.length());
-        friendlyByteBuf.writeCharSequence(text, StandardCharsets.US_ASCII);
+        friendlyByteBuf.writeCharSequence(text, StandardCharsets.UTF_8);
     }
 
-    public static String readASCII(FriendlyByteBuf friendlyByteBuf) {
+    public static String readUTF8(FriendlyByteBuf friendlyByteBuf) {
         int stringSize = friendlyByteBuf.readVarInt();
-        return friendlyByteBuf.readCharSequence(stringSize, StandardCharsets.US_ASCII).toString();
+        return friendlyByteBuf.readCharSequence(stringSize, StandardCharsets.UTF_8).toString();
     }
 
     public static void writeOrbitIntercept(FriendlyByteBuf friendlyByteBuf, OrbitalCalc.SOIIntercept soiIntercept) {
