@@ -2,11 +2,14 @@ package com.nythicalnorm.planetshine.storage;
 
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.horizons.JPLHorizons;
 import com.nythicalnorm.planetshine.planettexgen.PlanetGradient;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceKey;
@@ -65,6 +68,28 @@ public class PSDataPackManager {
 
     public static PSCommonSaveData createOrLoadSaveData(DimensionDataStorage dataStorage) {
        return dataStorage.computeIfAbsent(PSCommonSaveData::load, PSCommonSaveData::new, PSCommonData);
+    }
+
+    public static final Map<String, String> planetNameToID = Map.of(
+            "earth", "399",
+            "luna", "301",
+            "mars", "499"
+    );
+
+
+    public static void fetchPlanetOrbits(Map<OrbitId, CelestialBody> allPlanetaryBodies) {
+        for (CelestialBody body : allPlanetaryBodies.values()) {
+            if (body instanceof PlanetaryBody) {
+                String jplId = planetNameToID.get(body.getName());
+
+                if (jplId != null) {
+                    OrbitalElements orbitalElements = JPLHorizons.getOrbitalElementData(jplId, body.getParent().getName(), body.getParent().getMass());
+                    if (orbitalElements != null) {
+                        body.setOrbitalElements(orbitalElements);
+                    }
+                }
+            }
+        }
     }
 
     private static void loadPlanetData(Map<OrbitId, CelestialBody> pAllPlanetaryBodies, Map<ResourceKey<Level>, CelestialBody> pPlanetDimensions) {

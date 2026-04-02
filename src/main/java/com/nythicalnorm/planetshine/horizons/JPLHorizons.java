@@ -144,8 +144,7 @@ public class JPLHorizons {
             String resultString = result.getAsString();
             String responseEphem = getBetweenDelimiters(resultString);
             String[] ephemerisData = responseEphem.split(",");
-            OrbitalElements orbitalElements = parseOrbitalElements(ephemerisData, mass);
-            return orbitalElements;
+            return parseOrbitalElements(ephemerisData, mass);
         }
         return null;
     }
@@ -162,7 +161,11 @@ public class JPLHorizons {
             double longitudeOfAscendingNode = Math.toRadians(Double.parseDouble(ephemerisData[5]));
             double argumentOfPeriapsis = Math.toRadians(Double.parseDouble(ephemerisData[6]));
 
-            double semiMajorAxis = Double.parseDouble(ephemerisData[12]) * 1000d;
+            double semiMajorAxis = Double.parseDouble(ephemerisData[11]) * 1000d;
+
+            if (eccentricity > 1.0d && semiMajorAxis > 0.0d) {
+                semiMajorAxis = -semiMajorAxis;
+            }
 
             return new OrbitalElements(semiMajorAxis, eccentricity, periapsisTime, inclination, argumentOfPeriapsis, longitudeOfAscendingNode, parentMass);
         } catch (Exception e) {
@@ -176,8 +179,14 @@ public class JPLHorizons {
 
         for (String line : text.split("\\R")) { // splits on any newline
             if (line.startsWith("Target body name:")) {
-                result = line;
-                return result.substring(18);
+                result = line.substring(18);
+
+                int index = result.indexOf("(");
+                if (index >= 1) {
+                    result = result.substring(0, index - 1);
+                }
+
+                return result;
             }
         }
 
@@ -193,8 +202,7 @@ public class JPLHorizons {
 
         if (startIndex != -1 && endIndex != -1) {
             // Extract the substring between the delimiters
-            String result = str.substring(startIndex + startDelimiter.length(), endIndex);
-            return result;
+            return str.substring(startIndex + startDelimiter.length(), endIndex);
         } else {
             PSServer.get().sendAllMessage("Cannot parse response from JPL Horizons");
             return "";

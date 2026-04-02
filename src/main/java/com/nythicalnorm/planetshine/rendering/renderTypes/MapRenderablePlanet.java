@@ -8,6 +8,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.irlship.ClientIrlSpacecraft;
 import com.nythicalnorm.planetshine.util.ProjectionUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -48,10 +49,9 @@ public class MapRenderablePlanet extends MapRenderable {
         planetBody.getPlanetChildren().forEach(celestialBody ->
                 OrbitDrawer.drawCelestialBodyOrbit(celestialBody, poseStack, projectionMatrix));
         planetBody.getEntityChildren().forEach(entityOrbitBody -> {
-            if (this.renderIconForOrbitalBody(graphics, entityOrbitBody, currentFocusedBody, poseStack, projectionMatrix)) {
-                RenderSystem.enableBlend();
-                OrbitDrawer.drawCurrentEntityOrbit(entityOrbitBody, poseStack, projectionMatrix);
-            }
+            this.renderIconForOrbitalBody(graphics, entityOrbitBody, currentFocusedBody, poseStack, projectionMatrix);
+            RenderSystem.enableBlend();
+            OrbitDrawer.drawCurrentEntityOrbit(entityOrbitBody, poseStack, projectionMatrix);
         });
         RenderSystem.disableBlend();
     }
@@ -65,6 +65,8 @@ public class MapRenderablePlanet extends MapRenderable {
         Vector2i screenPos = ProjectionUtils.worldToScreenCoordinate(pos, poseMatrix, projectionMatrix, screen.width, screen.height);
         if (screenPos != null) {
             return entityOrbitBody.drawIcon(graphics, screenPos, 8);
+        } else if (entityOrbitBody instanceof ClientIrlSpacecraft clientIrlSpacecraft) {
+            clientIrlSpacecraft.clearMapIconPos();
         }
         return false;
     }

@@ -66,6 +66,8 @@ public class PSServer extends UniverseStage {
         this.runningPhysTicks = 0;
         this.spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
         this.physTickRunnable = new RunnableExecutor();
+
+        PSDataPackManager.fetchPlanetOrbits(solarSystem.getAllPlanetaryBodies());
         this.initPlanets();
     }
 
@@ -112,13 +114,12 @@ public class PSServer extends UniverseStage {
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
         solarSystem.UpdateSpacecraft(currentTime, this.isTimeWarping());
 
-        currentTime = timeWarpManager.getCurrentPCTime();
-        //setCurrentTime(currentTime + timePassPerTick);
+        this.currentTime = timeWarpManager.getCurrentPCTime();
 
         hostSpaceManager.onPhysTick(physLevel);
 
         if (runningPhysTicks % 30 == 0) {
-            this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
+            //this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
         }
         if (runningPhysTicks % 3 == 0) {
             PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime)));
@@ -281,9 +282,5 @@ public class PSServer extends UniverseStage {
 
     public TimeWarpManager getTimeWarpManager() {
         return timeWarpManager;
-    }
-
-    public void updateHorizonsSpacecraft() {
-
     }
 }

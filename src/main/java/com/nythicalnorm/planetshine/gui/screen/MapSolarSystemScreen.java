@@ -13,6 +13,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.gui.widgets.TimeWarpWidget;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
+import com.nythicalnorm.planetshine.spacecraft.irlship.ClientIrlSpacecraft;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import com.nythicalnorm.planetshine.util.ProjectionUtils;
 import net.minecraft.client.gui.GuiGraphics;
@@ -26,6 +27,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import java.lang.Math;
+import java.util.Collection;
 
 @OnlyIn(Dist.CLIENT)
 public class MapSolarSystemScreen extends MouseLookScreen {
@@ -119,7 +121,27 @@ public class MapSolarSystemScreen extends MouseLookScreen {
             throw new IllegalStateException("popped poses are not closed properly.");
         }
 
+        this.renderSpacecraftToolTip(graphics, mouseX, mouseY);
         super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private void renderSpacecraftToolTip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        Collection<EntityOrbitBody<?>> entityOrbitBodies = PSClient.get().getSolarSystem().getAllSpacecraftBodies().values();
+
+        for (EntityOrbitBody<?> entityOrbitBody : entityOrbitBodies) {
+            if (entityOrbitBody instanceof ClientIrlSpacecraft irlSpacecraft) {
+                Vector2i iconPos = irlSpacecraft.getMapIconPos();
+                if (iconPos == null) {
+                    continue;
+                }
+
+                int xDiff = Math.abs(mouseX - iconPos.x());
+                int yDiff = Math.abs(mouseY - iconPos.y());
+                if (xDiff < 8 && yDiff < 8) {
+                    guiGraphics.renderTooltip(this.font, irlSpacecraft.getDisplayName(), mouseX, mouseY);
+                }
+            }
+        }
     }
 
     @Override

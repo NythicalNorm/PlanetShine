@@ -28,7 +28,7 @@ public class RemoveHorizonsSpacecraftCommand {
 
         if (irlSpacecraft != null) {
             PSServer.get().removeIRLSpacecraft(irlSpacecraft);
-            PSServer.get().sendAllMessage("Remove spacecraft " +  spacecraftName);
+            PSServer.get().sendAllMessage("Removed spacecraft " +  spacecraftName);
             return 0;
         }
 

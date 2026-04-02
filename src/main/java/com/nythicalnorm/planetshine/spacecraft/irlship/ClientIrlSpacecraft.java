@@ -17,9 +17,27 @@ public class ClientIrlSpacecraft extends AbstractIrlSpacecraft {
     private static final Vector2i ISS_ICON = new Vector2i(8, 0);
     private static final Vector2i SATELLITE_ICON = new Vector2i(16, 0);
 
+    private Vector2i mapIconPos;
 
     public ClientIrlSpacecraft(IRLSpacecraftBuilder orbitalBuilder) {
         super(orbitalBuilder, true);
+        this.mapIconPos = new Vector2i();
+    }
+
+    public Vector2i getMapIconPos() {
+        return mapIconPos;
+    }
+
+    public void setMapIconPos(int xPos, int yPos) {
+        if (mapIconPos != null) {
+            mapIconPos.set(xPos, yPos);
+        } else {
+            mapIconPos = new Vector2i(xPos, yPos);
+        }
+    }
+
+    public void clearMapIconPos() {
+        mapIconPos = null;
     }
 
     @Override
@@ -31,6 +49,8 @@ public class ClientIrlSpacecraft extends AbstractIrlSpacecraft {
     public boolean drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
         int xPos = (screenPos.x - (size / 2));
         int yPos = (screenPos.y - (size / 2));
+
+        this.setMapIconPos(xPos, yPos);
 
         if (this.body.equals("1998-067A") || this.body.trim().toLowerCase().contains("spacestation")) {
             drawSpecificIcon(graphics, ISS_ICON, xPos, yPos);
