@@ -119,7 +119,7 @@ public class PSServer extends UniverseStage {
         hostSpaceManager.onPhysTick(physLevel);
 
         if (runningPhysTicks % 30 == 0) {
-            //this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
+            this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
         }
         if (runningPhysTicks % 3 == 0) {
             PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundSolarSystemTimeUpdate(currentTime)));

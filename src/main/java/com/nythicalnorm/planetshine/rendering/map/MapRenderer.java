@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.renderTypes.*;
 import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
+import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
@@ -38,7 +39,10 @@ public class MapRenderer {
         }
 
         renderTree.propagateRender(graphics, poseStack, projectionMatrix, null, currentFocus);
-        ManeuverRenderer.renderFromBody(PSClient.get().getControllingBody(), this.mapRenderables, poseStack, projectionMatrix);
+
+        for (EntityOrbitBody<?> orbitBody : PSClient.get().getSolarSystem().getAllSpacecraftBodies().values()) {
+            ManeuverRenderer.renderFromBody(orbitBody, this.mapRenderables, poseStack, projectionMatrix);
+        }
 
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }

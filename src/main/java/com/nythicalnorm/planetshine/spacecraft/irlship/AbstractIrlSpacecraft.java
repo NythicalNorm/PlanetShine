@@ -21,7 +21,7 @@ import org.valkyrienskies.core.api.ships.Ship;
 
 public abstract class AbstractIrlSpacecraft extends EntityOrbitBody<String> {
     public AbstractIrlSpacecraft(IRLSpacecraftBuilder orbitalBuilder, boolean isClientSide) {
-        super(orbitalBuilder, orbitalBuilder.hostSpaceID, null, isClientSide);
+        super(orbitalBuilder, orbitalBuilder.hostSpaceID, orbitalBuilder.soiIntercept, isClientSide);
         this.body = orbitalBuilder.jplId;
     }
 

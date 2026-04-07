@@ -11,12 +11,23 @@ public class IRLSpacecraftCodec extends OrbitCodec<AbstractIrlSpacecraft, Abstra
     public void encodeBuffer(AbstractIrlSpacecraft orbit, FriendlyByteBuf byteBuf) {
         super.encodeBuffer(orbit, byteBuf);
         NetworkEncoders.writeUTF8(byteBuf, orbit.getBody());
+
+        if (orbit.getNextOrbitIntercept() != null) {
+            byteBuf.writeBoolean(true);
+            NetworkEncoders.writeOrbitIntercept(byteBuf, orbit.getNextOrbitIntercept());
+        } else {
+            byteBuf.writeBoolean(false);
+        }
     }
 
     @Override
     public AbstractIrlSpacecraft.IRLSpacecraftBuilder decodeBuffer(AbstractIrlSpacecraft.IRLSpacecraftBuilder orbit, FriendlyByteBuf byteBuf) {
         super.decodeBuffer(orbit, byteBuf);
         orbit.setJplId(NetworkEncoders.readUTF8(byteBuf));
+
+        if (byteBuf.readBoolean()) {
+            orbit.setSoiIntercept(NetworkEncoders.readOrbitIntercept(byteBuf));
+        }
 
         return orbit;
     }
