@@ -4,7 +4,7 @@ import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
-import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.util.calculations.HeatCalc;
 import net.minecraft.core.BlockPos;
@@ -19,10 +19,12 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import org.joml.primitives.AABBic;
-import org.valkyrienskies.core.api.ships.LoadedServerShip;
+import org.valkyrienskies.core.api.ships.Ship;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class StarHeaterTicker implements CelestialBodyTicker {
     private final double heatAffectingRadius;
@@ -39,29 +41,44 @@ public class StarHeaterTicker implements CelestialBodyTicker {
             return;
         }
 
-        celestialBody.getEntityChildren().forEach(entityOrbitBody -> {
-            double distSquared = entityOrbitBody.getRelativePos().lengthSquared();
+        Collection<OrbitHostSpace> hostSpaces = spaceLevel.getHostSpaceManager().getActiveHostSpaces();
 
-            if (distSquared < (heatAffectingRadius * heatAffectingRadius) && entityOrbitBody.isBodyEntityLoaded()) {
-                double altitude = entityOrbitBody.getAltitude();
+        hostSpaces.forEach(orbitHostSpace -> {
+            if (orbitHostSpace.getHostBody() == null) {
+                return;
+            }
+            double distSquared = orbitHostSpace.getHostBody().getAbsolutePos().lengthSquared();
+
+            if (distSquared < (heatAffectingRadius * heatAffectingRadius) && orbitHostSpace.getHostBody().isBodyEntityLoaded()) {
+                double altitude = orbitHostSpace.getHostBody().getAltitude();
                 double tempOfShip = HeatCalc.getTemperatureInSpaceFromStar(coreStarLuminosity, altitude, 0.4f);
 
-                if (entityOrbitBody instanceof AbstractPlayerOrbitBody playerOrbitBody) {
-                    if (playerOrbitBody.isBodyEntityLoaded()) {
-                        affectEntity(playerOrbitBody.getBody(), altitude, tempOfShip);
-                    }
-                } else if (entityOrbitBody instanceof AbstractSpaceshipBody spaceshipBody) {
-                    affectHeatOnShip((LoadedServerShip) spaceshipBody.getBody(), entityOrbitBody, tempOfShip, spaceLevel);
-                }
+                Consumer<AbstractSpaceshipBody> orbitBodyConsumer = (entityOrbitBody ->
+                        affectHeatOnShip(entityOrbitBody.getBody(), entityOrbitBody, tempOfShip, spaceLevel));
+
+                Consumer<Entity> entityConsumer = (entity -> affectEntity(entity, altitude, tempOfShip));
+
+                orbitHostSpace.affectShips(orbitBodyConsumer);
+                orbitHostSpace.affectMCEntities(entityConsumer);
             }
         });
     }
 
     private void affectEntity(Entity entity, double Altitude, double tempOfShip) {
+        if (entity == null) {
+            return;
+        }
 
+        if (tempOfShip > 1000d) {
+            entity.hurt(entity.damageSources().onFire(), (float) (tempOfShip / 1000d));
+        }
     }
 
-    private void affectHeatOnShip(LoadedServerShip ship, EntityOrbitBody<?> entityOrbitBody, double tempOfShip, SpaceServerLevel spaceServerLevel) {
+    private void affectHeatOnShip(Ship ship, EntityOrbitBody<?> entityOrbitBody, double tempOfShip, SpaceServerLevel spaceServerLevel) {
+        if (ship == null) {
+            return;
+        }
+
         int rayCount = (int) Math.floor((tempOfShip - 273.15d) / 100d);
         List<BlockPos> blockPosHits = this.getSunRayedBlocks(rayCount, new Vector3d(entityOrbitBody.getAbsolutePos()), ship, spaceServerLevel);
 
@@ -78,7 +95,7 @@ public class StarHeaterTicker implements CelestialBodyTicker {
         });
     }
 
-    private List<BlockPos> getSunRayedBlocks(int rayCount, Vector3d sunPos, LoadedServerShip ship, SpaceServerLevel spaceServerLevel) {
+    private List<BlockPos> getSunRayedBlocks(int rayCount, Vector3d sunPos, Ship ship, SpaceServerLevel spaceServerLevel) {
         AABBic shipAABBic = ship.getShipAABB();
         List<BlockPos> blockPosHits = new ArrayList<>();
         rayCount = Mth.clamp(rayCount, 0, 50);

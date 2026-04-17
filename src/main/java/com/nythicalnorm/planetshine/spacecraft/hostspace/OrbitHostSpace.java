@@ -8,7 +8,9 @@ import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
@@ -25,6 +27,7 @@ import org.valkyrienskies.core.api.world.PhysLevel;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 public abstract class OrbitHostSpace implements OrbitHostAccessor {
     protected final OrbitId orbitIdOfHost;
@@ -199,5 +202,20 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                 entity.remove(Entity.RemovalReason.DISCARDED);
             }
         });
+    }
+
+    // Be careful cause you can call this on game and physics threads. so make sure you are doing proper operations on them.
+    public void affectShips(Consumer<AbstractSpaceshipBody> orbitBodyConsumer) {
+    }
+
+    public void affectMCEntities(Consumer<Entity> orbitBodyConsumer) {
+        for (Entity entity : this.nonHostEntities) {
+            orbitBodyConsumer.accept(entity);
+        }
+        for (AbstractPlayerOrbitBody playerOrbitBody : this.playerOrbitBodies) {
+            if (playerOrbitBody.isBodyEntityLoaded()) {
+                orbitBodyConsumer.accept(playerOrbitBody.getBody());
+            }
+        }
     }
 }

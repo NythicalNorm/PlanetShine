@@ -380,6 +380,10 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitRemove(spaceshipBody.getOrbitId())));
     }
 
+    public Collection<OrbitHostSpace> getActiveHostSpaces() {
+        return activeHostSpaces.values();
+    }
+
     @Override
     public boolean isDirty() {
         return isDirty;

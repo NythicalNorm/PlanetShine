@@ -54,7 +54,12 @@ public class SpacecraftDataStorage {
                 for (Tag tag : spacecraftList) {
                     if (tag instanceof CompoundTag compoundTag) {
                         OrbitalBody orbitalBody = NBTEncoders.getOrbitalBody(compoundTag);
-                        solarSystem.entityJoinedOrbital(celestialBody, orbitalBody);
+                        if (orbitalBody != null) {
+                            solarSystem.entityJoinedOrbital(celestialBody, orbitalBody);
+                        } else {
+                            String typeName = compoundTag.getString("type_name");
+                            PlanetShine.logError("Can't read entity orbital body of type: " + typeName);
+                        }
                     }
                 }
             }
@@ -87,7 +92,7 @@ public class SpacecraftDataStorage {
             File planetFileLoc = celestialBody.getCelestialServerData().getPlanetDataFile();
             ListTag spacecraftTags = new ListTag();
 
-            for (EntityOrbitBody orbitalBody : celestialBody.getEntityChildren()) {
+            for (EntityOrbitBody<?> orbitalBody : celestialBody.getEntityChildren()) {
                 CompoundTag orbitalTag = NBTEncoders.putOrbitalBody(orbitalBody);
                 spacecraftTags.add(orbitalTag);
             }

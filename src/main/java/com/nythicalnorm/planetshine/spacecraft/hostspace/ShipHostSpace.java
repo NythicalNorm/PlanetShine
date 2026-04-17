@@ -8,6 +8,7 @@ import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.vs.ShipTeleporter;
 import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
@@ -19,6 +20,7 @@ import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.world.PhysLevel;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 public class ShipHostSpace extends OrbitHostSpace {
     protected final ConcurrentLinkedQueue<Vector3dc> velocityForLastPhysTick;
@@ -112,5 +114,13 @@ public class ShipHostSpace extends OrbitHostSpace {
             newHost.addShipToHostSpace(serverSpaceshipBody);
         });
         super.handleHostSpaceHandover(orbitBody, newHost);
+    }
+
+    @Override
+    public void affectShips(Consumer<AbstractSpaceshipBody> orbitBodyConsumer) {
+        orbitBodyConsumer.accept((AbstractSpaceshipBody) this.hostBody);
+        for (AbstractSpaceshipBody entityOrbitBody : this.nonHostShips) {
+            orbitBodyConsumer.accept(entityOrbitBody);
+        }
     }
 }
