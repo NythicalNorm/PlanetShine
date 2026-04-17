@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.spacecraft.hostspace;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3d;
@@ -36,5 +37,16 @@ public class ClientHostSpace implements OrbitHostAccessor {
         } else {
             return PSClient.get().getSolarSystem().getSpacecraftOrbit(this.orbitIdOfHost);
         }
+    }
+
+    @Override
+    public boolean isUnloadedHostSpace() {
+        ClientPlayerOrbitBody clientPlayerOrbitBody = PSClient.get().getPlayerOrbit();
+
+        if (clientPlayerOrbitBody.getHostSpaceID().isPresent() && this.hostBody != null &&
+                clientPlayerOrbitBody.getHostSpaceID().get().equals(this.hostBody.getOrbitId())) {
+            return false;
+        }
+        return true;
     }
 }

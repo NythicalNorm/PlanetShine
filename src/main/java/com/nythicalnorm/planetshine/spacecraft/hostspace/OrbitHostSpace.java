@@ -157,7 +157,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         double distance = Double.POSITIVE_INFINITY;
 
         for (ServerPlayerOrbitBody orbitBody : this.playerOrbitBodies) {
-            if (orbitBody.isPlayerLoggedIn() && orbitBody.getMcPosition().distance(this.getOriginPos()) < distance) {
+            if (orbitBody.isBodyEntityLoaded() && orbitBody.getMcPosition().distance(this.getOriginPos()) < distance) {
                 newHost = orbitBody;
             }
         }
@@ -217,5 +217,10 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                 orbitBodyConsumer.accept(playerOrbitBody.getBody());
             }
         }
+    }
+
+    @Override
+    public boolean isUnloadedHostSpace() {
+        return false;
     }
 }

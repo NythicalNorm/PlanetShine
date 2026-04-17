@@ -14,11 +14,6 @@ public class ServerPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     @Override
-    public boolean isPlayerLoggedIn() {
-        return this.body != null;
-    }
-
-    @Override
     public OrbitHostAccessor getHostSpaceAccess() {
         return this.orbitHostSpace.get();
     }

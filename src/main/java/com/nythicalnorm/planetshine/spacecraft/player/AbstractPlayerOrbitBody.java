@@ -24,7 +24,6 @@ import org.valkyrienskies.mod.common.VSGameUtilsKt;
 import java.util.Optional;
 
 public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody<Player> {
-
     public AbstractPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder, boolean isClientSide) {
         super(playerSpacecraftBuilder, playerSpacecraftBuilder.currentHostSpace, playerSpacecraftBuilder.soiIntercept, isClientSide);
         this.body = playerSpacecraftBuilder.player;
@@ -124,8 +123,6 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody<Player> {
     public void playerLeft() {
         this.body = null;
     }
-
-    public abstract boolean isPlayerLoggedIn();
 
     public static class PlayerOrbitBuilder extends OrbitalBody.Builder<AbstractPlayerOrbitBody> {
         Player player = null;

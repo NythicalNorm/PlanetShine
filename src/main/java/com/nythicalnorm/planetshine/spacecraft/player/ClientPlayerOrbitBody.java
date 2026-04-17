@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.spacecraft.player;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.spacecraft.ServerboundPlayerHostVelUpdate;
+import com.nythicalnorm.planetshine.rendering.map.MapIconRenderable;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
@@ -22,10 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
 @OnlyIn(Dist.CLIENT)
-public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
+public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements MapIconRenderable {
     private final Vector3d clientDeltaVelLast;
     private final Quaterniond playerOnPlanetRotation;
     private PlayerInfo playerInfo;
+    private Vector2i mapPos;
 
     public ClientPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
         super(playerSpacecraftBuilder, true);
@@ -92,8 +94,8 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     @Override
-    public boolean isPlayerLoggedIn() {
-        return this.playerInfo != null || this.body != null;
+    public boolean isBodyEntityLoaded() {
+        return super.isBodyEntityLoaded() || this.playerInfo != null;
     }
 
     public void playerJoined(PlayerInfo pPlayerInfo) {
@@ -117,11 +119,23 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     @Override
-    public boolean drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
-        if (this.isPlayerLoggedIn()) {
-            PlayerFaceRenderer.draw(graphics, this.getSkinTexture(), (screenPos.x - (size/2)), (screenPos.y - (size/2)), size);
-            return true;
-        }
-        return false;
+    public Vector2i getLatestMapPos() {
+        return mapPos;
+    }
+
+    @Override
+    public void setLatestMapPos(Vector2i pos) {
+        this.mapPos = pos;
+    }
+
+    @Override
+    public void drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
+        this.setLatestMapPos(screenPos);
+        PlayerFaceRenderer.draw(graphics, this.getSkinTexture(), (screenPos.x - (size/2)), (screenPos.y - (size/2)), size);
+    }
+
+    @Override
+    public boolean shouldDraw() {
+        return this.isBodyEntityLoaded();
     }
 }

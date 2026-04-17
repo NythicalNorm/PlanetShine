@@ -34,7 +34,7 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         minecraftOptions.setCameraType(CameraType.THIRD_PERSON_BACK);
         minecraftOptions.hideGui = true;
 
-        this.addRenderableWidget(new TimeWarpWidget(0,0, width, height, Component.empty()));
+        this.addRenderableWidget(new TimeWarpWidget(0,0, Component.empty()));
         this.addRenderableWidget(new NavballWidget(width/2, height, width, height, Component.empty()));
         this.addRenderableWidget(new AltitudeWidget(width/2, 0, width, height, Component.empty()));
     }

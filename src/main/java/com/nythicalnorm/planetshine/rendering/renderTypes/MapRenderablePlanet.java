@@ -2,12 +2,12 @@ package com.nythicalnorm.planetshine.rendering.renderTypes;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.nythicalnorm.planetshine.rendering.map.MapIconRenderable;
 import com.nythicalnorm.planetshine.rendering.map.OrbitDrawer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
-import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.ProjectionUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -48,25 +48,29 @@ public class MapRenderablePlanet extends MapRenderable {
         planetBody.getPlanetChildren().forEach(celestialBody ->
                 OrbitDrawer.drawCelestialBodyOrbit(celestialBody, poseStack, projectionMatrix));
         planetBody.getEntityChildren().forEach(entityOrbitBody -> {
-            if (this.renderIconForOrbitalBody(graphics, entityOrbitBody, currentFocusedBody, poseStack, projectionMatrix)) {
+            if (entityOrbitBody instanceof MapIconRenderable mapIconRenderable && mapIconRenderable.shouldDraw()) {
                 RenderSystem.enableBlend();
                 OrbitDrawer.drawCurrentEntityOrbit(entityOrbitBody, poseStack, projectionMatrix);
+                this.renderIconForOrbitalBody(graphics, entityOrbitBody.getRelativePos(), mapIconRenderable,
+                        currentFocusedBody, poseStack, projectionMatrix);
             }
         });
         RenderSystem.disableBlend();
     }
 
-    public boolean renderIconForOrbitalBody(GuiGraphics graphics, EntityOrbitBody<?> entityOrbitBody, OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
-        Vector3f pos = MapRenderer.toMapCoordinate(entityOrbitBody.getRelativePos());
+    public void renderIconForOrbitalBody(GuiGraphics graphics, Vector3dc relativePos, MapIconRenderable mapIconRenderable,
+                                         OrbitalBody currentFocusedBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+        Vector3f pos = MapRenderer.toMapCoordinate(relativePos);
         Matrix4f poseMatrix = new Matrix4f(poseStack.last().pose());
         RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
 
         Screen screen = Minecraft.getInstance().screen;
         Vector2i screenPos = ProjectionUtils.worldToScreenCoordinate(pos, poseMatrix, projectionMatrix, screen.width, screen.height);
         if (screenPos != null) {
-            return entityOrbitBody.drawIcon(graphics, screenPos, 8);
+            mapIconRenderable.drawIcon(graphics, screenPos, 8);
+        } else {
+            mapIconRenderable.setLatestMapPos(null);
         }
-        return false;
     }
 
     public CelestialBody getBody() {

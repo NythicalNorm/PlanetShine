@@ -41,7 +41,6 @@ public class PSScreenManager {
     }
 
     public boolean isNotDrawPlanetShine() {
-        updateScreenState();
         return Minecraft.getInstance().screen instanceof MapSolarSystemScreen;
     }
 

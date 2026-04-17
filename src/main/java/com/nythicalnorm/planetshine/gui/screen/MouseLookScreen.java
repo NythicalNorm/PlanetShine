@@ -4,15 +4,15 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 
 @OnlyIn(Dist.CLIENT)
-public abstract class MouseLookScreen extends Screen implements GuiEventListener {
+public abstract class MouseLookScreen extends Screen {
     protected float cameraYrot = 0f;
     protected float cameraXrot = 0f;
     protected float zoomLevel = 2f;
@@ -21,12 +21,44 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     float messageRemainingTicks;
     public static final int textColor = 0x00ff2b;
 
+    boolean pressed = false;
+    long lastClickTime = 0;
+
     protected MouseLookScreen(Component pTitle) {
         super(pTitle);
     }
 
     @Override
     public boolean isPauseScreen() {
+        return false;
+    }
+
+    @Override
+    public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
+        if (pButton == 0) {
+            pressed = true;
+        }
+        return super.mouseClicked(pMouseX, pMouseY, pButton);
+    }
+
+    @Override
+    public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) {
+        if (pButton == 0 && pressed) {
+            long now = System.currentTimeMillis();
+
+            if (now - lastClickTime < 200) {
+                lastClickTime = 0;
+                return this.mouseLeftDoubleClicked(pMouseX, pMouseY);
+            } else {
+                lastClickTime = now;
+            }
+
+            pressed = false;
+        }
+        return super.mouseReleased(pMouseX, pMouseY, pButton);
+    }
+
+    protected boolean mouseLeftDoubleClicked(double pMouseX, double pMouseY) {
         return false;
     }
 
@@ -107,7 +139,7 @@ public abstract class MouseLookScreen extends Screen implements GuiEventListener
     }
 
     @Override
-    public void render(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
+    public void render(@NotNull GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
         super.render(pGuiGraphics, pMouseX, pMouseY, pPartialTick);
 
         if (this.messageRemainingTicks > 0f) {

@@ -12,9 +12,6 @@ import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.util.GameTickOnly;
@@ -79,8 +76,7 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         }
         // if this isn't the host of its space set the orbit based on the host.
         if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null && this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
-            Vector3dc originPos = this.getHostSpaceAccess().getOriginPos();
-            this.setStateVectorsFromHostBody(originPos, this.getHostSpaceAccess().getHostBody(), TimeElapsed);
+            this.setStateVectorsFromHostBody(this.getHostSpaceAccess(), TimeElapsed);
         } else { // if its not accelerating do the normal simulation
             if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
                 this.simulateFromKeplerian(TimeElapsed);
@@ -112,29 +108,33 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         this.relativeOrbitalPos.add(velocityPerTick);
     }
 
-    protected void setStateVectorsFromHostBody(Vector3dc originPos, EntityOrbitBody<?> hostBody, long TimeElapsed) {
+    protected void setStateVectorsFromHostBody(OrbitHostAccessor orbitHostAccessor, long TimeElapsed) {
         Vector3dc mcVelocity = this.getMcVelocity();
         Vector3dc mcPosition = this.getMcPosition();
 
-        if (mcVelocity == null || mcPosition == null) {
+        if (mcVelocity == null || mcPosition == null || this.parent == null || this.orbitalElements == null) {
             return;
         }
 
         Vector3d relativePos = new Vector3d();
         Vector3d relativeVel = new Vector3d(mcVelocity);
-        mcPosition.sub(originPos, relativePos);
+        mcPosition.sub(orbitHostAccessor.getOriginPos(), relativePos);
+
+        EntityOrbitBody<?> hostBody = orbitHostAccessor.isUnloadedHostSpace() ? this.parent.getSolarSystem().getSpacecraftOrbit(this.hostSpaceID.get())
+                : orbitHostAccessor.getHostBody();
+
         this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
 
         // need to change this so this isn't as janky.
-        if (relativePos.lengthSquared() > 1 || relativeVel.lengthSquared() > 1) {
-            this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
-            this.relativeVelocity.set(relativeVel.add(this.getHostSpaceAccess().getHostBody().getRelativeVelocity()));
-            this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
-        } else {
+        if ((relativePos.lengthSquared() < 1 && relativeVel.lengthSquared() < 1) || orbitHostAccessor.isUnloadedHostSpace()) {
             this.relativeOrbitalPos.set(hostBody.getRelativePos());
             this.relativeVelocity.set(hostBody.getRelativeVelocity());
             this.orbitalElements.set(hostBody.getOrbitalElements());
             this.lastCalculatedEccentricAnomaly = hostBody.getEccentricAnomaly();
+        } else {
+            this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
+            this.relativeVelocity.set(relativeVel.add(hostBody.getRelativeVelocity()));
+            this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
         }
     }
 
@@ -264,11 +264,6 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
     }
 
     public abstract OrbitHostSpace createHostSpace(Vector2ic posNew);
-
-    @OnlyIn(Dist.CLIENT) // kinda sus but hey it works without having generics glorp.
-    public boolean drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
-        return false;
-    }
 
     // called when the entity is leaving orbit and entering a another dimension
     public void OnRemove() {

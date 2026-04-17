@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -61,19 +62,21 @@ public class PSRenderer {
     {
         FogRenderer.levelFogColor();
         psClient.renderTick(partialTick);
+        psClient.getScreenManager().updateScreenState();
 
-        if (mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine()) {
+        if (!SpaceUtils.isSpaceLevel(mc.player.level()) && (
+                mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine()
+        )) {
             return;
         }
 
+        //temporary place to put this need to figure out when to call this.
         if (isFirstTime) {
             setupShaders();
             isFirstTime = false;
         }
 
         GL11.glEnable(0x864F);
-        // double fov = mc.gameRenderer.getFov(camera, partialTick, true);
-        //Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
 
         RenderSystem.depthMask(false);
 

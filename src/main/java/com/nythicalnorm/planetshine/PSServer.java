@@ -27,6 +27,7 @@ import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +45,7 @@ import org.valkyrienskies.core.internal.ShipTeleportData;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class PSServer extends UniverseStage {
@@ -190,6 +192,7 @@ public class PSServer extends UniverseStage {
             builder.setPlayer(player);
             builder.setStableOrbit(false);
             builder.setOrbitalElements(elements);
+            builder.setDisplayName(player.getName());
 
             AbstractPlayerOrbitBody playerOrbitBody = builder.build();
             OrbitHostSpace playerHostSpace = hostSpaceManager.getOrCreateHostSpace(playerOrbitBody);
@@ -217,6 +220,7 @@ public class PSServer extends UniverseStage {
             builder.setShip(ship);
             builder.setStableOrbit(false);
             builder.setOrbitalElements(elements);
+            builder.setDisplayName(Component.literal(Objects.requireNonNullElse(ship.getSlug(), "Spacecraft-" + ship.getId())));
 
             AbstractSpaceshipBody spaceshipOrbitBody = builder.build();
             OrbitHostSpace shipHostSpace = hostSpaceManager.getOrCreateHostSpace(spaceshipOrbitBody);
