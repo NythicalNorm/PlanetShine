@@ -52,7 +52,7 @@ public class ClientSpaceshipBody extends AbstractSpaceshipBody implements MapIco
     }
 
     @Override
-    public boolean shouldDraw() {
+    public boolean shouldDrawIcon() {
         OrbitHostAccessor orbitHostAccessor = PSClient.get().getCurrentHostSpace();
         if (this.isBodyEntityLoaded() && orbitHostAccessor != null && orbitHostAccessor.getOrbitIdOfHost().equals(this.getOrbitId())) {
             Vector3dc localPlayerPos = PSClient.get().getPlayerOrbit().getMcPosition();

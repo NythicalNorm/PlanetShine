@@ -88,6 +88,10 @@ public class MapRenderer {
         return this.mapRenderables.get(orbitId);
     }
 
+    public Collection<MapRenderable> getMapRenderables() {
+        return this.mapRenderables.values();
+    }
+
     public static Vector3f toMapCoordinate(Vector3dc position) {
         return new Vector3f((float) position.x() * SCALE_FACTOR, (float) position.y() * SCALE_FACTOR, (float) position.z() * SCALE_FACTOR);
     }

@@ -24,5 +24,10 @@
   "planetshine.commands.planet_invalid": "Invalid Planet at: ",
 
   "planetshine.screen.time": "Year %1$s, Day %2$s, %3$s:%4$s",
-  "planetshine.screen.orbital_speed": "%1$s b/s"
+  "planetshine.screen.orbital_speed": "%1$s b/s",
+
+  "planetshine.planets.earth": "Earth",
+  "planetshine.planets.luna": "The Moon",
+  "planetshine.planets.mars": "Mars",
+  "planetshine.planets.sun": "Sun"
 }

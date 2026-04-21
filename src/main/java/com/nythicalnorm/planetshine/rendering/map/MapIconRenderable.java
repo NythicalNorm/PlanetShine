@@ -10,8 +10,6 @@ import org.joml.Vector2ic;
 public interface MapIconRenderable {
     Vector2ic getLatestMapPos();
     void setLatestMapPos(Vector2i pos);
-
     void drawIcon(GuiGraphics graphics, Vector2i screenPos, int i);
-
-    boolean shouldDraw();
+    boolean shouldDrawIcon();
 }

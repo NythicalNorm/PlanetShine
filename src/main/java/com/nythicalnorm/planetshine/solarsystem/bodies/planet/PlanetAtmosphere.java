@@ -25,7 +25,7 @@ public class PlanetAtmosphere {
         return hasAtmosphere;
     }
 
-    public float[] getOverlayColor(float alpha)
+    public float[] getSurfaceColor(float alpha)
     {
         return MiscCalc.getRGBAFloats(surfaceColor, alpha);
     }

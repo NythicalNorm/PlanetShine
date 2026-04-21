@@ -135,7 +135,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements Ma
     }
 
     @Override
-    public boolean shouldDraw() {
+    public boolean shouldDrawIcon() {
         return this.isBodyEntityLoaded();
     }
 }

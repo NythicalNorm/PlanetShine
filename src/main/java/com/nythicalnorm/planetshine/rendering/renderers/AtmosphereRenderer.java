@@ -51,7 +51,7 @@ public class AtmosphereRenderer {
         //float distDiffAtmo =  1f - (float)((distance - renBody.getRadius())/atmosphere.getAtmosphereHeight());
         float colorAlpha = Mth.clamp(atmosphere.getAtmosphereAlpha(),0f, 1f);// Mth.clamp(distDiffAtmo,0f,1f), 1f);
 
-        float[] overlayColor = atmosphere.getOverlayColor(colorAlpha);
+        float[] overlayColor = atmosphere.getSurfaceColor(colorAlpha);
         float[] atmosphereColor = atmosphere.getAtmoColor();
 
         float planetAnglularSize = cosOfasin(renBody.getRadius()/distance);

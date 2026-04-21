@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
 import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -73,6 +74,9 @@ public class PlanetaryBody extends CelestialBody {
         public void setName(String name) {
             this.name = name.toLowerCase().trim();
             this.setId(OrbitId.getIdFromString(name));
+
+            Component planetDisplayName = Component.translatable("planetshine.planets." + name);
+            this.setDisplayName(planetDisplayName);
         }
 
         public void setRadius(double radius) {

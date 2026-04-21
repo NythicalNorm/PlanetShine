@@ -23,6 +23,7 @@
 
   "atmospheric_data": {
     "has_atmosphere": false,
+    "surface_color": "d0d0d0",
     "alpha_night": 1.0,
     "alpha_day": 0.1
   }

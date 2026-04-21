@@ -7,7 +7,10 @@ import com.nythicalnorm.planetshine.gui.PSScreenManager;
 import com.nythicalnorm.planetshine.gui.widgets.AltitudeWidget;
 import com.nythicalnorm.planetshine.gui.widgets.NavballWidget;
 import com.nythicalnorm.planetshine.rendering.map.MapIconRenderable;
+import com.nythicalnorm.planetshine.rendering.renderTypes.MapRenderable;
+import com.nythicalnorm.planetshine.rendering.renderTypes.MapRenderablePlanet;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
+import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
@@ -27,6 +30,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import java.lang.Math;
+import java.util.Collection;
 
 @OnlyIn(Dist.CLIENT)
 public class MapSolarSystemScreen extends MouseLookScreen {
@@ -83,6 +87,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         for (int i = 0; i < focusableBodies.length; i++) {
             if (focusableBodies[i].getOrbitId().equals(mapState.getFocusedBody())) {
                 changeFocusBody(i);
+                return;
             }
         }
     }
@@ -123,6 +128,18 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
+    public Vector3fc getRelativeCameraPos() {
+        return relativeCameraPos;
+    }
+
+    public Vector3dc getAbsoluteCameraPos() {
+        return this.getFocusedOrbitalBody().getAbsolutePos().add(this.relativeCameraPos, new Vector3d());
+    }
+
+    public MapRenderer getMapRenderer() {
+        return mapRenderer;
+    }
+
     @Override
     protected float getMaxDistanceZoom() {
         return 1424600000000f/((float) radiusZoomLevel);
@@ -139,11 +156,17 @@ public class MapSolarSystemScreen extends MouseLookScreen {
 
     @Override
     protected boolean mouseLeftDoubleClicked(double pMouseX, double pMouseY) {
-        // check for all the icons
-        OrbitalBody orbitalBody = this.findEntityOrbitBodyHoveringOver((int) pMouseX, (int) pMouseY);
+        SolarSystem solarSystem =  PSClient.get().getSolarSystem();
+        // check for all the planet icons
+        OrbitalBody clickedBody = this.findPlanetOrbitBodyHoveringOver((int) pMouseX, (int) pMouseY, mapRenderer.getMapRenderables());
 
-        if (orbitalBody != null) {
-            this.setFocusBody(orbitalBody);
+        // check for all the entity icons
+        if (clickedBody == null) {
+            clickedBody = this.findEntityOrbitBodyHoveringOver((int) pMouseX, (int) pMouseY, solarSystem.getAllSpacecraftBodies().values());
+        }
+
+        if (clickedBody != null) {
+            this.setFocusBody(clickedBody);
             return true;
         }
 
@@ -155,7 +178,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         rayDir.normalize();
         cameraPos = cameraPos.add(body.getAbsolutePos());
 
-        CelestialBody celestialBody = ProjectionUtils.raycastPlanets(cameraPos, rayDir, PSClient.get().getSolarSystem());
+        CelestialBody celestialBody = ProjectionUtils.raycastPlanets(cameraPos, rayDir, solarSystem);
         if (celestialBody != null) {
             this.setFocusBody(celestialBody);
             return true;
@@ -165,12 +188,19 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     }
 
     private void renderToolTip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        if (isHoveringOver(mouseX, mouseY, PSClient.get().getPlayerOrbit())) {
-            renderSpacecraftTooltip(guiGraphics, mouseX, mouseY, PSClient.get().getPlayerOrbit());
+        PSClient psClient = PSClient.get();
+
+        OrbitalBody hoveringOverPlanet = findPlanetOrbitBodyHoveringOver(mouseX, mouseY, mapRenderer.getMapRenderables());
+        if (hoveringOverPlanet != null) {
+            renderSpacecraftTooltip(guiGraphics, mouseX, mouseY, hoveringOverPlanet);
+        }
+
+        if (isHoveringOver(mouseX, mouseY, psClient.getPlayerOrbit())) {
+            renderSpacecraftTooltip(guiGraphics, mouseX, mouseY, psClient.getPlayerOrbit());
             return;
         }
 
-        OrbitalBody hoverOverBody = findEntityOrbitBodyHoveringOver(mouseX, mouseY);
+        OrbitalBody hoverOverBody = findEntityOrbitBodyHoveringOver(mouseX, mouseY, psClient.getSolarSystem().getAllSpacecraftBodies().values());
         if (hoverOverBody != null) {
             renderSpacecraftTooltip(guiGraphics, mouseX, mouseY, hoverOverBody);
         }
@@ -183,9 +213,19 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         }
     }
 
-    private @Nullable OrbitalBody findEntityOrbitBodyHoveringOver(int mouseX, int mouseY) {
-        for (OrbitalBody orbitalBody : this.focusableBodies) {
-            if (isHoveringOver(mouseX, mouseY, orbitalBody)) {
+    private @Nullable OrbitalBody findPlanetOrbitBodyHoveringOver(int mouseX, int mouseY, Collection<MapRenderable> bodiesToSearch) {
+        for (MapRenderable mapRenderable : bodiesToSearch) {
+            if (mapRenderable instanceof MapRenderablePlanet mapRenderablePlanet && isHoveringOver(mouseX, mouseY, mapRenderablePlanet)) {
+                return mapRenderablePlanet.getBody();
+            }
+        }
+
+        return null;
+    }
+
+    private <T extends OrbitalBody> @Nullable OrbitalBody findEntityOrbitBodyHoveringOver(int mouseX, int mouseY, Collection<T> bodiesToSearch) {
+        for (OrbitalBody orbitalBody : bodiesToSearch) {
+            if (orbitalBody instanceof MapIconRenderable mapIconRenderable && isHoveringOver(mouseX, mouseY, mapIconRenderable)) {
                 return orbitalBody;
             }
         }
@@ -193,8 +233,8 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         return null;
     }
 
-    private boolean isHoveringOver(int mouseX, int mouseY, OrbitalBody entityOrbitBody) {
-        if (entityOrbitBody instanceof MapIconRenderable mapIconRenderable && mapIconRenderable.shouldDraw()) {
+    private boolean isHoveringOver(int mouseX, int mouseY, MapIconRenderable mapIconRenderable) {
+        if (mapIconRenderable.shouldDrawIcon()) {
             Vector2ic iconPos = mapIconRenderable.getLatestMapPos();
             if (iconPos == null) {
                 return false;

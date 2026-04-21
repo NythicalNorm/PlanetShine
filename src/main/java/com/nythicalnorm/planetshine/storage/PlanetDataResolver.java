@@ -45,6 +45,7 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
                 JsonObject jsonObject = element.getAsJsonObject();
                 String name = jsonObject.get("name").getAsString();
                 String bodyType = jsonObject.get("type").getAsString();
+
                 OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType =
                         OrbitalBodyTypeRegistry.getType(ResourceLocation.parse(bodyType));
                 if (orbitalBodyType != null) {
@@ -89,7 +90,7 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
 
     public static PlanetAtmosphere parseAtmosphericData(JsonObject jsonObj) {
         boolean hasAtmosphere = jsonObj.get("has_atmosphere").getAsBoolean();
-        int surfaceColor = 0;
+        int surfaceColor = Integer.parseInt(jsonObj.get("surface_color").getAsString(), 16);
         int atmosphereColor = 0;
         double atmosphereHeight = 0d;
         float atmosphereAlpha = 0f;
@@ -97,7 +98,6 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
         float alphaDay;
 
         if (hasAtmosphere) {
-            surfaceColor = Integer.parseInt(jsonObj.get("surface_color").getAsString(), 16);
             atmosphereColor = Integer.parseInt(jsonObj.get("atmosphere_color").getAsString(), 16);
             atmosphereHeight = jsonObj.get("atmosphere_height").getAsDouble();
             atmosphereAlpha = jsonObj.get("atmosphere_alpha").getAsFloat();
