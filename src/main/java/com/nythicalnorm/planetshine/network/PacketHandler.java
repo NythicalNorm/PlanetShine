@@ -70,6 +70,12 @@ public class PacketHandler {
                 .consumerMainThread(ClientboundOrbitChange::handle)
                 .add();
 
+        INSTANCE.messageBuilder(ClientboundStateVectorChange.class, id++)
+                .encoder(ClientboundStateVectorChange::encode)
+                .decoder(ClientboundStateVectorChange::new)
+                .consumerMainThread(ClientboundStateVectorChange::handle)
+                .add();
+
         INSTANCE.messageBuilder(ClientboundOrbitRemove.class, id++)
                 .encoder(ClientboundOrbitRemove::encode)
                 .decoder(ClientboundOrbitRemove::new)

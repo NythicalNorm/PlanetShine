@@ -93,6 +93,7 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
         int surfaceColor = Integer.parseInt(jsonObj.get("surface_color").getAsString(), 16);
         int atmosphereColor = 0;
         double atmosphereHeight = 0d;
+        double atmospherePressure = 0d;
         float atmosphereAlpha = 0f;
         float alphaNight;
         float alphaDay;
@@ -100,12 +101,13 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
         if (hasAtmosphere) {
             atmosphereColor = Integer.parseInt(jsonObj.get("atmosphere_color").getAsString(), 16);
             atmosphereHeight = jsonObj.get("atmosphere_height").getAsDouble();
+            atmospherePressure = jsonObj.get("atmosphere_pressure").getAsDouble();
             atmosphereAlpha = jsonObj.get("atmosphere_alpha").getAsFloat();
         }
         alphaNight = jsonObj.get("alpha_night").getAsFloat();
         alphaDay = jsonObj.get("alpha_day").getAsFloat();
 
-        return new PlanetAtmosphere(hasAtmosphere, surfaceColor, atmosphereColor, atmosphereHeight, atmosphereAlpha, alphaNight, alphaDay);
+        return new PlanetAtmosphere(hasAtmosphere, surfaceColor, atmosphereColor, atmosphereHeight, atmospherePressure, atmosphereAlpha, alphaNight, alphaDay);
     }
 
     public record PlanetLoadedData(StarBody rootStar, Map<String, CelestialBody> tempPlanetaryBodyMap, Map<String, String[]> tempChildPlanetsMap) {

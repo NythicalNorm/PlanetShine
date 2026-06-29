@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.nythicalnorm.planetshine.network.NetworkEncoders;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitCodec;
+import com.nythicalnorm.planetshine.solarsystem.ticker.PlanetAtmosphereTicker;
 import com.nythicalnorm.planetshine.storage.PlanetDataResolver;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.core.registries.Registries;
@@ -28,10 +29,10 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
         byteBuf.writeDouble(planetBody.getMass());
         NetworkEncoders.writeQuaternionfc(byteBuf, planetBody.getRotation());
 
-        byteBuf.writeFloat(planetBody.getNorthPoleDir().angle);
-        byteBuf.writeFloat(planetBody.getNorthPoleDir().x);
-        byteBuf.writeFloat(planetBody.getNorthPoleDir().y);
-        byteBuf.writeFloat(planetBody.getNorthPoleDir().z);
+        byteBuf.writeFloat(planetBody.getNorthPoleAxisAngle().angle);
+        byteBuf.writeFloat(planetBody.getNorthPoleAxisAngle().x);
+        byteBuf.writeFloat(planetBody.getNorthPoleAxisAngle().y);
+        byteBuf.writeFloat(planetBody.getNorthPoleAxisAngle().z);
 
         byteBuf.writeLong(planetBody.getRotationPeriod());
         NetworkEncoders.writePlanetAtmosphere(byteBuf, planetBody.getAtmosphere());
@@ -102,7 +103,11 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
 
         JsonElement atmosphericData = jsonObj.get("atmospheric_data");
         if (atmosphericData != null) {
-            body.setAtmosphericEffects(PlanetDataResolver.parseAtmosphericData(atmosphericData.getAsJsonObject()));
+            PlanetAtmosphere planetAtmosphere = PlanetDataResolver.parseAtmosphericData(atmosphericData.getAsJsonObject());
+            body.setAtmosphericEffects(planetAtmosphere);
+            if (planetAtmosphere.hasAtmosphere()) {
+                body.addCelestialBodyTicker(new PlanetAtmosphereTicker(planetAtmosphere.getAtmosphereHeight()));
+            }
         }
 
         List<String> childPlanetNames = new ArrayList<>();

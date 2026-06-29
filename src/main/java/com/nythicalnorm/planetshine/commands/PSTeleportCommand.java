@@ -12,6 +12,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.LoadedShip;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -53,15 +54,20 @@ public class PSTeleportCommand {
                     if (semiMajorAxisInput < 0) {
                         semiMajorAxis = (semiMajorAxisInput*1000d) - planet.getRadius();
                     }
-                    long startingAnomaly = psServer.getCurrentTime() + TimeCalc.timeDoubleToLong(20000f);
-                    OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingAnomaly, inclination, 0d, 0d, planet.getMass());
+                    long startingTime = psServer.getCurrentTime() + TimeCalc.timeDoubleToLong(20000f);
+                    OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingTime, inclination, 0d, 0d, planet.getMass());
+                    Vector3d relativePosition = new Vector3d();
+                    Vector3d relativeVelocity = new Vector3d();
+
+                    orbitalElement.ToCartesian(startingTime, relativePosition, relativeVelocity);
 
                     LoadedShip shipMountedTo = VSGameUtilsKt.getShipMountedTo(entity);
 
                     if (shipMountedTo == null) {
                         psServer.playerTeleportToOrbit(planet, (ServerPlayer) entity, orbitalElement);
                     } else {
-                        psServer.shipTeleportToOrbit(planet, (LoadedServerShip) shipMountedTo, orbitalElement, shipMountedTo.getTransform().getRotation(), shipMountedTo.getAngularVelocity());
+                        psServer.shipTeleportToOrbit(planet, (LoadedServerShip) shipMountedTo, orbitalElement,
+                                relativePosition, relativeVelocity, shipMountedTo.getTransform().getRotation(), shipMountedTo.getAngularVelocity());
                     }
                 }
             }

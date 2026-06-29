@@ -18,7 +18,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
-import org.joml.Quaternionfc;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
@@ -100,10 +99,6 @@ public abstract class CelestialBody extends OrbitalBody {
         return serverCelestialData;
     }
 
-    public void setRotation(Quaternionfc rotation) {
-        this.rotation.set(rotation);
-    }
-
     protected void simulate(long TimeElapsed, Vector3dc parentPos) {
         if (orbitalElements != null) {
             this.orbitalElements.ToCartesian(TimeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
@@ -118,9 +113,9 @@ public abstract class CelestialBody extends OrbitalBody {
                 celestialBody.simulatePropagate(TimeElapsed, this.absoluteOrbitalPos, isTimeWarping)));
     }
 
-    public void simulateSpacecraft(long currentTime, boolean timeWarping) {
+    public void simulateSpacecraft(long currentTime, boolean timeWarping, float deltaTime) {
         this.childEntityBodies.values().forEach((entityOrbitBody ->
-                entityOrbitBody.simulate(currentTime, timeWarping)));
+                entityOrbitBody.simulate(currentTime, timeWarping, deltaTime)));
     }
 
     public void addChildPlanet(CelestialBody celestialBody) {
@@ -233,6 +228,6 @@ public abstract class CelestialBody extends OrbitalBody {
 
     @PhysTickOnly
     public void physTick(SolarSystem solarSystem, PhysLevel physLevel) {
-        this.celestialBodyTickers.forEach(ticker -> ticker.onPhysTick(this, solarSystem));
+        this.celestialBodyTickers.forEach(ticker -> ticker.onPhysTick(this, solarSystem, physLevel));
     }
 }

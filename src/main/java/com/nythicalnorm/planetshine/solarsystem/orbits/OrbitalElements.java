@@ -201,6 +201,12 @@ public class OrbitalElements implements OrbitalElementsc {
                 this.periapsisTime = this.periapsisTime + getOrbitalPeriodLong();
             }
             return anomaly;
+        } else if (Eccentricity == 1.0) { // this is not really usefull rn but meh
+            this.MeanAngularMotion = Math.sqrt(Mu / (SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
+            double parabolicAnomaly = Math.tan(trueAnomoly * 0.5d);
+            double timeDiffTerm = parabolicAnomaly + ((parabolicAnomaly * parabolicAnomaly * parabolicAnomaly)/3) / this.MeanAngularMotion;
+            this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
+            return parabolicAnomaly;
         } else {
             double cosTrueAnomoly = Math.cos(trueAnomoly);
             double anomaly = OrbitalCalc.invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
@@ -304,6 +310,9 @@ public class OrbitalElements implements OrbitalElementsc {
             return OptionalLong.of(elapsedTime - (elapsedTime - this.periapsisTime));
         } else {
             long orbitalPeriod = TimeCalc.timeDoubleToLong(this.getOrbitalPeriod());
+            if (orbitalPeriod == 0) {
+                return OptionalLong.empty();
+            }
             long lastCalculatedPeriapsisTime = elapsedTime - this.periapsisTime;
             long lastPeriapsisTime = elapsedTime - (lastCalculatedPeriapsisTime % orbitalPeriod);
             return OptionalLong.of(lastPeriapsisTime + orbitalPeriod);

@@ -150,11 +150,11 @@ public class PSClient extends UniverseStage {
     public void renderTick(float partialTick) {
         this.setCurrentTime(clientTimeHandler.calculateCurrentTime(partialTick));
         this.solarSystem.UpdatePlanets(this.getCurrentTime(), this.isTimeWarping());
-
+        float deltatime = minecraft.getFrameTimeNs()/ 1_000_000_000f;
         if (this.screenManager.isMapScreenOpen()) {
-            this.solarSystem.UpdateSpacecraft(this.getCurrentTime(), this.isTimeWarping());
+            this.solarSystem.UpdateSpacecraft(this.getCurrentTime(), this.isTimeWarping(), deltatime);
         } else if (this.playerOrbit.getParent() != null) {
-            this.playerOrbit.getParent().simulateSpacecraft(this.getCurrentTime(), this.isTimeWarping());
+            this.playerOrbit.getParent().simulateSpacecraft(this.getCurrentTime(), this.isTimeWarping(), deltatime);
         }
 
         if (currentPlanetOn != null) {
@@ -227,6 +227,15 @@ public class PSClient extends UniverseStage {
         EntityOrbitBody<?> entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             entityOrbitBody.setOrbitalElements(orbitalElements);
+            entityOrbitBody.setInAtmosphere(false);
+        }
+    }
+
+    public void stateVectorChange(OrbitId spacecraftID, Vector3d relativePosition, Vector3d relativeVelocity) {
+        EntityOrbitBody<?> entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
+        if (entityOrbitBody != null) {
+            entityOrbitBody.setStateVectors(relativePosition, relativeVelocity, this.getCurrentTime());
+            entityOrbitBody.setInAtmosphere(true);
         }
     }
 

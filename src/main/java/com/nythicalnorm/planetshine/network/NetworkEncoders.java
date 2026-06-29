@@ -137,6 +137,7 @@ public class NetworkEncoders {
         byteBuf.writeInt(atmosphere.getOverlayColorInt());
         byteBuf.writeInt(atmosphere.getAtmoColorInt());
         byteBuf.writeDouble(atmosphere.getAtmosphereHeight());
+        byteBuf.writeDouble(atmosphere.getAtmosphericPressure());
         byteBuf.writeFloat(atmosphere.getAtmosphereAlpha());
         byteBuf.writeFloat(atmosphere.getAlphaNight());
         byteBuf.writeFloat(atmosphere.getAlphaDay());
@@ -147,6 +148,7 @@ public class NetworkEncoders {
                 byteBuf.readBoolean(),
                 byteBuf.readInt(),
                 byteBuf.readInt(),
+                byteBuf.readDouble(),
                 byteBuf.readDouble(),
                 byteBuf.readFloat(),
                 byteBuf.readFloat(),

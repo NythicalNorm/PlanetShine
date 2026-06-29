@@ -68,9 +68,9 @@ public class SolarSystem {
     }
 
     @PhysTickOnly
-    public void UpdateSpacecraft(long currentTime, boolean isTimeWarping) {
+    public void UpdateSpacecraft(long currentTime, boolean isTimeWarping, float deltaTime) {
         this.allSpacecraftBodies.values().forEach((entityOrbitBody ->
-                entityOrbitBody.simulate(currentTime, isTimeWarping)));
+                entityOrbitBody.simulate(currentTime, isTimeWarping, deltaTime)));
     }
 
     @PhysTickOnly // server side only

@@ -119,6 +119,11 @@ public class ClientPacketHandler {
                 psClient.orbitChange(spacecraftID, orbitalElements));
     }
 
+    public static void stateVectorChange(OrbitId spacecraftID, Vector3d relativePosition, Vector3d relativeVelocity) {
+        PSClient.getInstance().ifPresent(psClient ->
+                psClient.stateVectorChange(spacecraftID, relativePosition, relativeVelocity));
+    }
+
     public static void entityBodyList(List<NetworkEncoders.TempEntityOrbitHolder> entityOrbitHolderList) {
         if (PSClient.get() != null) {
             SolarSystem solarSystem = PSClient.get().getSolarSystem();

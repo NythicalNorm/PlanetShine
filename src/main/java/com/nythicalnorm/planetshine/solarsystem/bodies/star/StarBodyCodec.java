@@ -4,7 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.nythicalnorm.planetshine.network.NetworkEncoders;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitCodec;
+import com.nythicalnorm.planetshine.solarsystem.ticker.PlanetAtmosphereTicker;
 import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import com.nythicalnorm.planetshine.storage.PlanetDataResolver;
 import net.minecraft.network.FriendlyByteBuf;
@@ -49,7 +51,11 @@ public class StarBodyCodec extends OrbitCodec<StarBody, StarBody.StarBuilder> {
 
         JsonElement atmosphericData = jsonObj.get("atmospheric_data");
         if (atmosphericData != null) {
-            body.setAtmosphericEffects(PlanetDataResolver.parseAtmosphericData(atmosphericData.getAsJsonObject()));
+            PlanetAtmosphere planetAtmosphere = PlanetDataResolver.parseAtmosphericData(atmosphericData.getAsJsonObject());
+            body.setAtmosphericEffects(planetAtmosphere);
+            if (planetAtmosphere.hasAtmosphere()) {
+                body.addCelestialBodyTicker(new PlanetAtmosphereTicker(planetAtmosphere.getAtmosphereHeight()));
+            }
         }
 
         List<String> childPlanetNames = new ArrayList<>();

@@ -9,7 +9,6 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
-import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.registries.RegistryObject;
@@ -48,7 +47,7 @@ public class StarBody extends CelestialBody {
         private double radius = 1000;
         private double mass = 10E24;
         protected Quaternionf rotation = new Quaternionf();
-        private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
+        private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0,0.0f, 1.0f, 1.0f);
         private final List<CelestialBodyTicker> celestialBodyTickers;
 
         public StarBuilder() {
@@ -76,7 +75,7 @@ public class StarBody extends CelestialBody {
             this.atmosphericEffects = atmosphericEffects;
         }
 
-        public void addCelestialBodyTicker(StarHeaterTicker starHeaterTicker) {
+        public void addCelestialBodyTicker(CelestialBodyTicker starHeaterTicker) {
             this.celestialBodyTickers.add(starHeaterTicker);
         }
 

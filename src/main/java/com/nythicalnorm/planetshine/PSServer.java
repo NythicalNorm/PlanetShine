@@ -111,7 +111,7 @@ public class PSServer extends UniverseStage {
         physTickRunnable.executeAll();
         runningPhysTicks++;
         solarSystem.UpdatePlanets(currentTime, this.isTimeWarping());
-        solarSystem.UpdateSpacecraft(currentTime, this.isTimeWarping());
+        solarSystem.UpdateSpacecraft(currentTime, this.isTimeWarping(), 1.0f / TimeCalc.PhysTickPerSec);
 
         if (!timeWarpManager.isSleepTimeWarping()) {
             setCurrentTime(currentTime + timePassPerTick);
@@ -208,6 +208,7 @@ public class PSServer extends UniverseStage {
 
     // player teleport and this are very similar, but eh can't be bothered to actually make a common method or generic glorp.
     public void shipTeleportToOrbit(CelestialBody planet, LoadedServerShip ship, OrbitalElements elements,
+                                    Vector3d relativePosition, Vector3d relativeVelocity,
                                     Quaterniondc shipNewRotation, Vector3dc shipNewOmega) {
         OrbitId shipID = new OrbitId(ship.getId());
 
@@ -220,6 +221,8 @@ public class PSServer extends UniverseStage {
             builder.setShip(ship);
             builder.setStableOrbit(false);
             builder.setOrbitalElements(elements);
+            builder.setRelativeOrbitalPos(relativePosition);
+            builder.setRelativeVelocity(relativeVelocity);
             builder.setDisplayName(Component.literal(Objects.requireNonNullElse(ship.getSlug(), "Spacecraft-" + ship.getId())));
 
             AbstractSpaceshipBody spaceshipOrbitBody = builder.build();

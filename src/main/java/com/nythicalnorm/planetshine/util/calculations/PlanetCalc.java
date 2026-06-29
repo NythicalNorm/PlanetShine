@@ -2,9 +2,7 @@ package com.nythicalnorm.planetshine.util.calculations;
 
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.joml.*;
-import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 
 import java.lang.Math;
 
@@ -12,10 +10,6 @@ public class PlanetCalc {
 
     public static Vector3d getPlanetRelativePosition(Vector3dc pos, CelestialBody celestialBody) {
         return PlanetCalc.getPlanetRotatedPosition(pos.x(), pos.y(), pos.z(), celestialBody.getRadius(), celestialBody.getRotation(), false);
-    }
-
-    public static Vector3d getPlanetRelativePosition(Vec3 pos, CelestialBody celestialBody, boolean isNormalized) {
-        return getPlanetRotatedPosition(pos.x, pos.y, pos.z, celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
     }
 
     public static Vector3d getPlanetRelativePosition(double posX, double posY, double posZ, CelestialBody celestialBody, boolean isNormalized) {
@@ -240,15 +234,5 @@ public class PlanetCalc {
         finalRot.normalize();
 
         return finalRot;
-    }
-
-    public static Quaterniond getShipPlanetToSpaceRotation(ShipTransform shipTransform, CelestialBody celestialBody) {
-        Quaterniond planetToSpaceRotation = getPlanetToSpaceRotation(shipTransform.getPositionInWorld(), celestialBody);
-
-        return new Quaterniond();
-    }
-
-    public static Quaterniond getShipSpaceToPlanetRotation(Vector3dc planetDimensionPos, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
-        return new Quaterniond();
     }
 }

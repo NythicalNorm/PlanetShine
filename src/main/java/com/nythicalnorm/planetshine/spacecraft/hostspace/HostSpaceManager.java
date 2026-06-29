@@ -166,7 +166,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         activeHostSpaces.forEach((vector2ic, orbitHostSpace) -> orbitHostSpace.OnGameTick());
 
         this.checkShipTeleportToSpace();
-        // checkEntityTeleportToPlanet();
+        this.checkEntityTeleportToPlanet();
         if (spaceLevel.getGameTime() % 20L == 0) {
             this.checkCleanUpVSShips(ValkyrienSkies.api().getShipWorld(spaceLevel));
         }
@@ -248,21 +248,21 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         Vector3d relativeOrbitPos = PlanetCalc.getPlanetRelativePosition(ship.getTransform().getPosition(), celestialBody);
         Vector3d relativeOrbitVelocity = new Vector3d(ship.getVelocity());
 
-        Quaterniond planetToSpace = PlanetCalc.getPlanetToSpaceRotation(ship.getTransform().getPositionInWorld(), celestialBody);
+        Quaterniond planetToSpace = PlanetCalc.getPlanetToSpaceRotation(ship.getTransform().getPositionInWorld(), celestialBody).invert();
         relativeOrbitVelocity.rotate(planetToSpace);
 
-        Quaterniond shipNewRot = ship.getTransform().getRotation().mul(planetToSpace, new Quaterniond());
+        Quaterniond shipNewRot = planetToSpace.mul(ship.getTransform().getRotation(), new Quaterniond());
         // need to take into account the planets rotational velocity that is also transferred to the ship, earth moving at 1000 m/s at the equator etc...
         // though maybe I don't add this.
-        OrbitalElements orbitalElements = new OrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());
 
-        psServer.shipTeleportToOrbit(celestialBody, ship, orbitalElements, shipNewRot, ship.getAngularVelocity());
+        OrbitalElements orbitalElements = new OrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());
+        psServer.shipTeleportToOrbit(celestialBody, ship, orbitalElements, relativeOrbitPos, relativeOrbitVelocity, shipNewRot, ship.getAngularVelocity());
     }
 
 
     private void checkEntityTeleportToPlanet() {
         psServer.getSolarSystem().getAllSpacecraftBodies().values().forEach(entityOrbitBody -> {
-            if (entityOrbitBody.isHostOfItsSpace() &&  entityOrbitBody.getOrbitalElements() != null &&
+            if (entityOrbitBody.isHostOfItsSpace() &&  entityOrbitBody.getOrbitalElements() != null && entityOrbitBody.getParent() != null &&
                     entityOrbitBody.getOrbitalElements().getPeriapsis() <= entityOrbitBody.getParent().getRadius() &&
                     entityOrbitBody.getAltitude() < PlanetShineConfig.getTeleportToGroundHeight()) {
                 ServerLevel planetLevel = entityOrbitBody.getParent().getCelestialServerData().getServerLevel();
@@ -287,8 +287,8 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
             BodyKinematics bodyKinematics = spaceshipBody.getBody().getKinematics();
             Vector3d planetPos = new Vector3d(pos.x, PlanetShineConfig.getTeleportToGroundHeight(), pos.y);
 
-            Quaterniond shipToSpace = PlanetCalc.getShipSpaceToPlanetRotation(planetPos, spaceshipBody.getRelativePos(), spaceshipBody.getParent());
-
+            Quaterniond shipToSpace = PlanetCalc.getPlanetToSpaceRotation(planetPos, spaceshipBody.getParent());
+            shipToSpace.mul(spaceshipBody.getBody().getTransform().getRotation());
             // don't apply this
             // Vector3d velocity = new Vector3d(spaceshipBody.getRelativeVelocity()).rotate(shipNewRot);
 

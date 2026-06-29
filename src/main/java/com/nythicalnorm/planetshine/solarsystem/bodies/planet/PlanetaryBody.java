@@ -6,7 +6,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.solarsystem.ticker.CelestialBodyTicker;
-import com.nythicalnorm.planetshine.solarsystem.ticker.StarHeaterTicker;
+import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
@@ -22,14 +22,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlanetaryBody extends CelestialBody {
-    protected final AxisAngle4f NorthPoleDir;
+    protected final Vector3f NorthPoleDir;
+    protected final float NorthPoleInitialAngle;
     protected final long RotationPeriod;
 
     public PlanetaryBody(PlanetBuilder planetBuilder, boolean isClientSide) {
         super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,
                 planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder,
                 ImmutableList.copyOf(planetBuilder.celestialBodyTickers), isClientSide);
-        this.NorthPoleDir = planetBuilder.NorthPoleDir;
+        this.NorthPoleDir = new Vector3f(planetBuilder.NorthPoleDir.x, planetBuilder.NorthPoleDir.y, planetBuilder.NorthPoleDir.z);
+        this.NorthPoleInitialAngle = planetBuilder.NorthPoleDir.angle;
         this.RotationPeriod = planetBuilder.RotationPeriod;
     }
 
@@ -42,7 +44,7 @@ public class PlanetaryBody extends CelestialBody {
     protected void simulate(long TimeElapsed, Vector3dc parentPos) {
         super.simulate(TimeElapsed, parentPos);
 
-        float rotationAngle = NorthPoleDir.angle + (float)((2*Math.PI/RotationPeriod) * (TimeElapsed % RotationPeriod));
+        float rotationAngle = NorthPoleInitialAngle + (float)((2*Math.PI/RotationPeriod) * (TimeElapsed % RotationPeriod));
         this.rotation.identity().rotationTo(NorthPoleDir.x,NorthPoleDir.y,NorthPoleDir.z, 0f, 1f, 0f);
         Quaternionf rotated = new Quaternionf(new AxisAngle4f(rotationAngle, 0f, 1f, 0f));
         this.rotation.mul(rotated);
@@ -52,8 +54,16 @@ public class PlanetaryBody extends CelestialBody {
         return RotationPeriod;
     }
 
-    public AxisAngle4f getNorthPoleDir() {
-        return new AxisAngle4f(NorthPoleDir);
+    public double getRotationPeriodInSeconds() {
+        return TimeCalc.timeLongToDouble(RotationPeriod);
+    }
+
+    public AxisAngle4f getNorthPoleAxisAngle() {
+        return new AxisAngle4f(NorthPoleInitialAngle, NorthPoleDir);
+    }
+
+    public Vector3fc getNorthPoleDir() {
+        return NorthPoleDir;
     }
 
     public static class PlanetBuilder extends OrbitalBody.Builder<PlanetaryBody> {
@@ -63,7 +73,7 @@ public class PlanetaryBody extends CelestialBody {
         protected Quaternionf rotation = new Quaternionf();
         private AxisAngle4f NorthPoleDir = new AxisAngle4f();
         private long RotationPeriod = 0L;
-        private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0.0f, 1.0f, 1.0f);
+        private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0,0.0f, 1.0f, 1.0f);
         private @Nullable ResourceKey<Level> dimension = null;
         private final List<CelestialBodyTicker> celestialBodyTickers;
 
@@ -114,7 +124,7 @@ public class PlanetaryBody extends CelestialBody {
             this.atmosphericEffects = atmosphericEffects;
         }
 
-        public void addCelestialBodyTicker(StarHeaterTicker starHeaterTicker) {
+        public void addCelestialBodyTicker(CelestialBodyTicker starHeaterTicker) {
             this.celestialBodyTickers.add(starHeaterTicker);
         }
 

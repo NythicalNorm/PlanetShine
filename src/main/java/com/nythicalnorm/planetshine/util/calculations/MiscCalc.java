@@ -30,7 +30,6 @@ public class MiscCalc {
         return angle;
     }
 
-
     public static int getShipVolume(@Nullable Ship ship) {
         if (ship == null){
             return 0;

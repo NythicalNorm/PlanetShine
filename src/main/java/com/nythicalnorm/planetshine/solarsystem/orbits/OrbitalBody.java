@@ -98,6 +98,17 @@ public abstract class OrbitalBody {
         }
     }
 
+    public void setStateVectors(Vector3d relativePosition, Vector3d relativeVelocity, long timeElapsed) {
+        this.relativeOrbitalPos.set(relativePosition);
+        this.relativeVelocity.set(relativeVelocity);
+        if (this.orbitalElements != null) {
+            this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, timeElapsed);
+        }
+        if (this.parent != null) {
+            this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
+        }
+    }
+
     public @Nullable OrbitalElementsc getOrbitalElements() {
         return orbitalElements;
     }

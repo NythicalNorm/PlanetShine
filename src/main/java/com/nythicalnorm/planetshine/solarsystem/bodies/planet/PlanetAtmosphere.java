@@ -7,15 +7,18 @@ public class PlanetAtmosphere {
     protected final int surfaceColor;
     protected final int atmoColor;
     protected final double atmosphereHeight;
+    protected final double atmospherePressure;
     protected final float atmosphereAlpha;
     protected final float alphaNight;
     protected final float alphaDay;
 
-    public PlanetAtmosphere(boolean hasAtmosphere, int surfaceColor, int atmoColor, double atmosphereHeight, float atmosphereAlpha, float alphaNight, float alphaDay) {
+    public PlanetAtmosphere(boolean hasAtmosphere, int surfaceColor, int atmoColor, double atmosphereHeight,
+                            double atmospherePressure, float atmosphereAlpha, float alphaNight, float alphaDay) {
         this.hasAtmosphere = hasAtmosphere;
         this.surfaceColor = surfaceColor;
         this.atmoColor = atmoColor;
         this.atmosphereHeight = atmosphereHeight;
+        this.atmospherePressure = atmospherePressure;
         this.atmosphereAlpha = atmosphereAlpha;
         this.alphaNight = alphaNight;
         this.alphaDay = alphaDay;
@@ -47,6 +50,10 @@ public class PlanetAtmosphere {
         return atmosphereHeight;
     }
 
+    public double getAtmosphericPressure() {
+        return atmospherePressure;
+    }
+
     public float getAlphaNight() {
         return alphaNight;
     }
@@ -58,4 +65,5 @@ public class PlanetAtmosphere {
     public float getAtmosphereAlpha() {
         return atmosphereAlpha;
     }
+
 }

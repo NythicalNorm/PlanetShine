@@ -113,6 +113,11 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody<Player> {
     }
 
     @Override
+    public double getCrossSectionalArea(Vector3d airVelocity) {
+        return 0.648d;
+    }
+
+    @Override
     public void setBody(Player player) {
         super.setBody(player);
         if (player != null) {

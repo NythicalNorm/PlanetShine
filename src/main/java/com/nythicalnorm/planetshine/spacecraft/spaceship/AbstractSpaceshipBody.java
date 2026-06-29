@@ -9,6 +9,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.ShipHostSpace;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -16,6 +17,7 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaterniondc;
 import org.joml.Vector2ic;
+import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.Ship;
 
@@ -79,6 +81,16 @@ public abstract class AbstractSpaceshipBody extends EntityOrbitBody<Ship> {
             return body.getKinematics().getRotation();
         }
         return null;
+    }
+
+    @Override
+    public double getCrossSectionalArea(Vector3d airVelocity) {
+        if (this.isBodyEntityLoaded()) {
+            double sideLength = Math.cbrt(MiscCalc.getShipVolume(this.body));
+            return sideLength * sideLength;
+        } else {
+            return 0.0d;
+        }
     }
 
     public static class ShipOrbitBuilder extends Builder<AbstractSpaceshipBody> {
