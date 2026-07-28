@@ -87,7 +87,7 @@ public class AtmosphereCalc {
         double h0 = H[layer];
         double T0 = T[layer];
         double L0 = L[layer];
-        double P0 = P[layer] * celestialBody.getAtmosphere().getAtmosphericPressure();
+        double P0 = P[layer] * celestialBody.getAtmosphere().getAtmosphericPressureMultiplier();
 
         double temperature;
         double pressure;

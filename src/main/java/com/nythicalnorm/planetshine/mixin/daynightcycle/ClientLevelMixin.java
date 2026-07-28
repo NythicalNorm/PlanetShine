@@ -3,7 +3,7 @@ package com.nythicalnorm.planetshine.mixin.daynightcycle;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.nythicalnorm.planetshine.PSClient;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;

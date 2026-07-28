@@ -1,6 +1,6 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle.isDay;
 
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;

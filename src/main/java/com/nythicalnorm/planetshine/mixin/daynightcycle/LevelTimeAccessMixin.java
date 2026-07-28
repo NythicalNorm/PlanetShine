@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle;
 
 
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.LevelTimeAccess;
 import org.spongepowered.asm.mixin.Mixin;

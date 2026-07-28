@@ -60,7 +60,7 @@ public class ForgeClientEvents {
     @SubscribeEvent
     public static void onPlayerCloned(ClientPlayerNetworkEvent.Clone event) {
         PSClient.getInstance().ifPresent(psClient -> {
-            psClient.getScreenManager().playerChangeDimension();
+            //psClient.getScreenManager().playerChangeDimension();
             psClient.getPlayerOrbit().setBody(event.getNewPlayer());
 
             if (!SpaceUtils.isSpaceLevel(event.getNewPlayer().level())) {

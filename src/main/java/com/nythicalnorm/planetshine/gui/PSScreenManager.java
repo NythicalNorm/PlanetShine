@@ -34,6 +34,10 @@ public class PSScreenManager {
         this.spacecraftScreenState = spacecraftScreenState;
     }
 
+    public PSSpacecraftScreen.SpacecraftScreenState getSpacecraftScreenState() {
+        return spacecraftScreenState;
+    }
+
     public void playerChangeDimension() {
         if (Minecraft.getInstance().screen instanceof MouseLookScreen mouseLookScreen) {
             mouseLookScreen.onClose();
@@ -93,7 +97,7 @@ public class PSScreenManager {
         if (VSGameUtilsKt.getShipMountedTo(Minecraft.getInstance().player) instanceof ClientShip) {
             EntityOrbitBody<?> entityOrbitBody = psClient.getControllingBody();
             if (entityOrbitBody != null) {
-                Minecraft.getInstance().setScreen(new PSSpacecraftScreen(Component.empty(), entityOrbitBody, spacecraftScreenState));
+                Minecraft.getInstance().setScreen(new PSSpacecraftScreen(Component.empty(), entityOrbitBody, this));
                 this.isSpacecraftScreenOpen = true;
             }
         }

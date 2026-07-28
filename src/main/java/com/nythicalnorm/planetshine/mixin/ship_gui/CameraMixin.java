@@ -52,7 +52,7 @@ public class CameraMixin {
     @WrapOperation(method = "setup", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;getMaxZoom(D)D"))
     private double getMaxZoom(Camera instance, double ogZoom, Operation<Double> original) {
         if (Minecraft.getInstance().screen instanceof MouseLookScreen spacecraftScreen && spacecraftScreen.movePlayerCamera() &&
-                spacecraftScreen.isNonRotView() && spacecraftScreen.getMinecraft().level != null) {
+                spacecraftScreen.getViewMode() == MouseLookScreen.ViewMode.NON_ROTATING && spacecraftScreen.getMinecraft().level != null) {
             Minecraft minecraft = Minecraft.getInstance();
             ShipMountedToData shipMountedToData = VSGameUtilsKt.getShipMountedToData(minecraft.player, 0f);
             if (shipMountedToData != null) {

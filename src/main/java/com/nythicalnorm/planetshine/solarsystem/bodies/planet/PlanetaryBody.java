@@ -25,6 +25,7 @@ public class PlanetaryBody extends CelestialBody {
     protected final Vector3f NorthPoleDir;
     protected final float NorthPoleInitialAngle;
     protected final long RotationPeriod;
+    protected final PlanetDimensionProperties dimensionalProperties;
 
     public PlanetaryBody(PlanetBuilder planetBuilder, boolean isClientSide) {
         super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,
@@ -33,6 +34,7 @@ public class PlanetaryBody extends CelestialBody {
         this.NorthPoleDir = new Vector3f(planetBuilder.NorthPoleDir.x, planetBuilder.NorthPoleDir.y, planetBuilder.NorthPoleDir.z);
         this.NorthPoleInitialAngle = planetBuilder.NorthPoleDir.angle;
         this.RotationPeriod = planetBuilder.RotationPeriod;
+        this.dimensionalProperties = planetBuilder.dimensionalProperties;
     }
 
     @Override
@@ -52,6 +54,10 @@ public class PlanetaryBody extends CelestialBody {
 
     public long getRotationPeriod() {
         return RotationPeriod;
+    }
+
+    public PlanetDimensionProperties getDimensionalProperties() {
+        return dimensionalProperties;
     }
 
     public double getRotationPeriodInSeconds() {
@@ -76,6 +82,7 @@ public class PlanetaryBody extends CelestialBody {
         private PlanetAtmosphere atmosphericEffects = new PlanetAtmosphere(false, 0, 0, 0, 0,0.0f, 1.0f, 1.0f);
         private @Nullable ResourceKey<Level> dimension = null;
         private final List<CelestialBodyTicker> celestialBodyTickers;
+        private PlanetDimensionProperties dimensionalProperties = new PlanetDimensionProperties(true, false, 0, false, false);
 
         public PlanetBuilder() {
             this.celestialBodyTickers = new ArrayList<>();
@@ -122,6 +129,10 @@ public class PlanetaryBody extends CelestialBody {
 
         public void setAtmosphericEffects(PlanetAtmosphere atmosphericEffects) {
             this.atmosphericEffects = atmosphericEffects;
+        }
+
+        public void setDimensionalPrperties(PlanetDimensionProperties planetDimensionProperties) {
+            this.dimensionalProperties = planetDimensionProperties;
         }
 
         public void addCelestialBodyTicker(CelestialBodyTicker starHeaterTicker) {

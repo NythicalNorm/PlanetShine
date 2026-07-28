@@ -16,7 +16,7 @@ public abstract class MouseLookScreen extends Screen {
     protected float cameraYrot = 0f;
     protected float cameraXrot = 0f;
     protected float zoomLevel = 2f;
-    protected boolean isNonRotView = true;
+    protected ViewMode viewMode = ViewMode.NON_ROTATING;
     Component currentMessage = Component.empty();
     float messageRemainingTicks;
     public static final int textColor = 0x00ff2b;
@@ -81,8 +81,8 @@ public abstract class MouseLookScreen extends Screen {
         return true;
     }
 
-    public boolean isNonRotView() {
-        return isNonRotView;
+    public ViewMode getViewMode() {
+        return viewMode;
     }
 
     protected void loadRotState(MouseLookScreenState rotState) {
@@ -181,6 +181,23 @@ public abstract class MouseLookScreen extends Screen {
 
         public float getZoomLevel() {
             return zoomLevel;
+        }
+    }
+
+    public enum ViewMode {
+        LOCKED("Locked"),
+        NON_ROTATING("Non Rotating"),
+        SURFACE_DOWN("Surface Down");
+
+        private final String viewName;
+
+        // Constructor
+        ViewMode(String name) {
+            this.viewName = name;
+        }
+
+        public String getViewName() {
+            return viewName;
         }
     }
 }

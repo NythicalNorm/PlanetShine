@@ -4,6 +4,7 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetDimensionProperties;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
@@ -137,7 +138,7 @@ public class NetworkEncoders {
         byteBuf.writeInt(atmosphere.getOverlayColorInt());
         byteBuf.writeInt(atmosphere.getAtmoColorInt());
         byteBuf.writeDouble(atmosphere.getAtmosphereHeight());
-        byteBuf.writeDouble(atmosphere.getAtmosphericPressure());
+        byteBuf.writeDouble(atmosphere.getAtmosphericPressureMultiplier());
         byteBuf.writeFloat(atmosphere.getAtmosphereAlpha());
         byteBuf.writeFloat(atmosphere.getAlphaNight());
         byteBuf.writeFloat(atmosphere.getAlphaDay());
@@ -153,6 +154,24 @@ public class NetworkEncoders {
                 byteBuf.readFloat(),
                 byteBuf.readFloat(),
                 byteBuf.readFloat()
+        );
+    }
+
+    public static void writeDimensionalProperties(FriendlyByteBuf byteBuf, PlanetDimensionProperties dimensionalProperties) {
+        byteBuf.writeBoolean(dimensionalProperties.isRenderCustomSkybox());
+        byteBuf.writeBoolean(dimensionalProperties.isDrawSunriseDisk());
+        byteBuf.writeInt(dimensionalProperties.getDefaultSkyColor());
+        byteBuf.writeBoolean(dimensionalProperties.isAffectEntityGravity());
+        byteBuf.writeBoolean(dimensionalProperties.isAffectVSShipGravity());
+    }
+
+    public static PlanetDimensionProperties readDimensionalProperties(FriendlyByteBuf byteBuf) {
+        return new PlanetDimensionProperties(
+                byteBuf.readBoolean(),
+                byteBuf.readBoolean(),
+                byteBuf.readInt(),
+                byteBuf.readBoolean(),
+                byteBuf.readBoolean()
         );
     }
 

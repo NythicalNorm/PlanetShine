@@ -12,12 +12,17 @@ public class KeplerEquationSolver {
         double y;
 
         boolean flipped = false;
+
+        if (x < 0.0d) {
+            x = (2 * Math.PI) + x;
+        }
+
         if (x > Math.PI) {
             x = (2 * Math.PI) - x;
             flipped = true;
         }
 
-        if (e < 0.99d) {
+        if (e < 0.995d) {
             y = x + e * Math.sin(x);//x + e * Math.sin(x) + 0.5d * e * e * Math.sin(2 * x);
 
             int i = 1;
@@ -53,12 +58,15 @@ public class KeplerEquationSolver {
             double lo = 0.0;
             double hi = Math.PI;
             for (int i = 0; i < 60; ++i) {
-                double mid = 0.5 * (lo + hi);
+                double mid = 0.5d * (lo + hi);
                 double f = mid - e * Math.sin(mid) - x;
-                if (f > 0.0) hi = mid;
-                else         lo = mid;
+                if (f > 0.0d) {
+                    hi = mid;
+                } else {
+                    lo = mid;
+                }
             }
-            eccentricAnomaly = 0.5 * (lo + hi);
+            eccentricAnomaly = 0.5d * (lo + hi);
         }
 
         if (flipped) {

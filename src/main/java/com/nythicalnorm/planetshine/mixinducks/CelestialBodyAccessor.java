@@ -1,4 +1,6 @@
-package com.nythicalnorm.planetshine.solarsystem.bodies;
+package com.nythicalnorm.planetshine.mixinducks;
+
+import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 
 public interface CelestialBodyAccessor {
     boolean ps$isPlanet();

@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.dimensions;
 
 import com.nythicalnorm.planetshine.PSServer;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
@@ -81,12 +81,12 @@ public class SpaceServerLevel extends ServerLevel implements PlanetTimeAccessor 
     }
 
     @Override
-    public boolean isNaturalSpawningAllowed(BlockPos pPos) {
+    public boolean isNaturalSpawningAllowed(@NotNull BlockPos pPos) {
         return false;
     }
 
     @Override
-    public boolean isNaturalSpawningAllowed(ChunkPos pChunkPos) {
+    public boolean isNaturalSpawningAllowed(@NotNull ChunkPos pChunkPos) {
         return false;
     }
 

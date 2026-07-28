@@ -75,9 +75,11 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         mapRenderer.setScreen(this);
         this.addRenderableWidget(new TimeWarpWidget(0,0, Component.empty()));
         if (isSpacecraftScreenOpen) {
-            this.addRenderableWidget(new NavballWidget(width/2, height, width, height, Component.empty()));
+            NavballWidget navballWidget = this.addRenderableWidget(new NavballWidget(width/2, height,Component.empty()));
+            // setting the navball mode from prev screen if it exists
+            navballWidget.setNavBallMode(screenManager.getSpacecraftScreenState().getNavBallMode());
+            this.addRenderableWidget(new AltitudeWidget(width/2, 0, Component.empty()));
             // this.addRenderableWidget(new LeftPanelWidget(0, height, width, height, Component.empty()));
-            this.addRenderableWidget(new AltitudeWidget(width/2, 0, width, height, Component.empty()));
         }
         super.init();
     }

@@ -29,5 +29,8 @@
   "planetshine.planets.earth": "Earth",
   "planetshine.planets.luna": "The Moon",
   "planetshine.planets.mars": "Mars",
-  "planetshine.planets.sun": "Sun"
+  "planetshine.planets.sun": "Sun",
+
+  "planetshine.ui.navball_mode_set": "Navball Mode: %1$s",
+  "planetshine.ui.view_mode_set": "Viewing Mode: %1$s"
 }

@@ -1,4 +1,6 @@
-package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
+package com.nythicalnorm.planetshine.mixinducks;
+
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
 
 public interface PlanetTimeAccessor {
     boolean ps$DaylightDataExists();

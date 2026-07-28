@@ -23,8 +23,8 @@ public class AltitudeWidget extends AbstractWidget {
     ScrollingNumber[] scrollingNumbers;
     private static final int AmountOfNumberDisplays = 9;
 
-    public AltitudeWidget(int pX, int pY, int pWidth, int pHeight, Component pMessage) {
-        super(pX, pY, pWidth, pHeight, pMessage);
+    public AltitudeWidget(int pX, int pY, Component pMessage) {
+        super(pX - 46, pY, 92, 28, pMessage);
         scrollingNumbers = new ScrollingNumber[AmountOfNumberDisplays];
 
         for (int i = 0; i < scrollingNumbers.length; i++) {
@@ -34,7 +34,7 @@ public class AltitudeWidget extends AbstractWidget {
 
     @Override
     protected void renderWidget(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        int x = getX() - 46;
+        int x = getX();
         int y = getY();
 
         pGuiGraphics.blit(Altitude_GUI_TEXTURE, x, y,0,0,92,28);

@@ -11,8 +11,6 @@
 
   "starting_rotation": 3.59537825909,
   "rotation_period": 86400,
-  "dimension_id": "minecraft:overworld",
-
   "child_planets": [
     "luna"
   ],
@@ -36,5 +34,14 @@
     "atmosphere_alpha": 0.25,
     "alpha_night": 1.0,
     "alpha_day": 0.5
+  },
+
+  "dimension_id": "minecraft:overworld",
+  "dimensional_properties": {
+    "render_custom_skybox": true,
+    "draw_sunrise_disk": true,
+    "default_sky_color": "78A7FF",
+    "affect_entity_gravity": false,
+    "affect_vs_ship_gravity": true
   }
 }

@@ -4,8 +4,8 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.commands.PSTeleportCommand;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.storage.PlanetDataResolver;
 import com.nythicalnorm.planetshine.storage.PlanetTextureResolver;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
@@ -29,7 +29,7 @@ public class ForgeServerEvents {
     @SubscribeEvent
     public static void OnTick(TickEvent.ServerTickEvent event) {
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END && PSServer.get() != null) {
-            PSServer.get().OnGameTick();
+            PSServer.get().OnGameTickEnd();
         }
     }
 

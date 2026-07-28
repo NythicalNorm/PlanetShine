@@ -51,16 +51,17 @@ public class NavballWidget extends AbstractWidget {
 
     private static final Quaternionf NAVBALL_INITIAL_ROT = new Quaternionf().rotateYXZ(Mth.HALF_PI, 0f, Mth.HALF_PI);
 
+    private NavBallMode navBallMode;
 
-    public NavballWidget(int pX, int pY, int pWidth, int pHeight, Component pMessage) {
-        super(pX, pY, pWidth, pHeight, pMessage);
+    public NavballWidget(int pX, int pY, Component pMessage) {
+        super(pX - 47, pY - 86, 94, 86, pMessage);
+        this.initNavBallMode();
     }
-
 
     @Override
     protected void renderWidget(@NotNull GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        int xPos = getX() - 47;
-        int yPos = getY() - 86;
+        int xPos = getX();
+        int yPos = getY();
         Screen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
 
         if (spacecraftScreen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
@@ -90,11 +91,18 @@ public class NavballWidget extends AbstractWidget {
         Quaternionf spacecraftRotation = new Quaternionf().rotationX(Mth.HALF_PI);
         spacecraftRotation.mul(invertedSpacecraftRot);
 
+        Vector3dc relativePosition = orbitData.getRelativePosition();
+        boolean isInSpaceDim = PSClient.get().weInSpaceDim();
+
+        if (!isInSpaceDim) {
+            relativePosition = new Vector3d(0.0d, 1.0d, 0.0d);
+        }
+
         // Normal
         Vector3f normalOriginal = new Vector3f().set(orbitData.getRelativeVelocity()).cross(
-                (float) -orbitData.getRelativePosition().x(),
-                (float) -orbitData.getRelativePosition().y(),
-                (float) -orbitData.getRelativePosition().z()
+                (float) -relativePosition.x(),
+                (float) -relativePosition.y(),
+                (float) -relativePosition.z()
                 , new Vector3f());
         normalOriginal.normalize();
         this.vectorToIcon(graphics, new Vector3f(normalOriginal), spacecraftRotation, NORMAL);
@@ -103,11 +111,13 @@ public class NavballWidget extends AbstractWidget {
         Vector3f antiNormal = normalOriginal.negate();
         this.vectorToIcon(graphics, antiNormal, spacecraftRotation, ANTI_NORMAL);
 
-        // Radial OUT
-        this.vectorToIcon(graphics, new Vector3f().set(orbitData.getRelativePosition()), spacecraftRotation, RADIAL_OUT);
+        if (this.navBallMode != NavBallMode.SURFACE) {
+            // Radial OUT
+            this.vectorToIcon(graphics, new Vector3f().set(relativePosition), spacecraftRotation, RADIAL_OUT);
 
-        // Radial IN
-        this.vectorToIcon(graphics, new Vector3f().set(orbitData.getRelativePosition()).negate(), spacecraftRotation, RADIAL_IN);
+            // Radial IN
+            this.vectorToIcon(graphics, new Vector3f().set(relativePosition).negate(), spacecraftRotation, RADIAL_IN);
+        }
 
         // Prograde
         this.vectorToIcon(graphics, new Vector3f().set(orbitData.getRelativeVelocity()), spacecraftRotation, PROGRADE);
@@ -167,6 +177,21 @@ public class NavballWidget extends AbstractWidget {
         if (rotation != null) {
             navballPosestack.mulPose(NAVBALL_INITIAL_ROT);
             navballPosestack.mulPose(invertedSpacecraftRot);
+
+            if (PSClient.get().weInSpaceDim() && this.navBallMode == NavBallMode.SURFACE) {
+//                Vector3d playerRelativePos = new Vector3d(PSClient.get().getPlayerOrbit().getRelativePos());
+//                Vector3f normalOriginal = new Vector3f().set(orbitData.getRelativeVelocity()).cross(
+//                        (float) -playerRelativePos.x(),
+//                        (float) -playerRelativePos.y(),
+//                        (float) -playerRelativePos.z()
+//                        , new Vector3f());
+//                normalOriginal.normalize();
+//
+//                playerRelativePos.normalize();
+//                Quaternionf spaceToSurfaceRot = new Quaternionf().lookAlong(normalOriginal.x(), normalOriginal.y(), normalOriginal.z(),
+//                        (float) playerRelativePos.x, (float) playerRelativePos.y, (float) playerRelativePos.z);
+                navballPosestack.mulPose(new Quaternionf(PSClient.get().getPlayerOrbit().getSurfaceDownRot()));
+            }
         }
 
         QuadSphereModelGenerator.getSphereBuffer().bind();
@@ -212,5 +237,38 @@ public class NavballWidget extends AbstractWidget {
     @Override
     protected void updateWidgetNarration(@NotNull NarrationElementOutput pNarrationElementOutput) {
 
+    }
+
+    @Override
+    public void onClick(double pMouseX, double pMouseY) {
+        if (this.navBallMode == NavBallMode.SURFACE) {
+            this.navBallMode = NavBallMode.ORBIT;
+            Minecraft.getInstance().player.displayClientMessage(Component.translatable("planetshine.ui.navball_mode_set", "ORBIT"), true);
+        } else if (this.navBallMode == NavBallMode.ORBIT) {
+            this.navBallMode = NavBallMode.SURFACE;
+            Minecraft.getInstance().player.displayClientMessage(Component.translatable("planetshine.ui.navball_mode_set", "SURFACE"), true);
+        }
+    }
+
+    private void initNavBallMode() {
+        if (PSClient.get().weInSpaceDim() && !PSClient.get().isInsideAtmosphereInSpaceDim()) {
+            this.navBallMode = NavBallMode.ORBIT;
+        } else {
+            this.navBallMode = NavBallMode.SURFACE;
+        }
+    }
+
+    public NavBallMode getNavBallMode() {
+        return navBallMode;
+    }
+
+    public void setNavBallMode(NavBallMode navBallMode) {
+        this.navBallMode = navBallMode;
+    }
+
+    public enum NavBallMode {
+        SURFACE,
+        ORBIT,
+        TARGET
     }
 }

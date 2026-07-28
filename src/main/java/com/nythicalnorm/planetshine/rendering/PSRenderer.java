@@ -10,7 +10,11 @@ import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
+import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -58,7 +62,7 @@ public class PSRenderer {
         // enable depth clamping shouldn't break stuff i don't think anyway.
     }
 
-    public static void renderSkybox(Minecraft mc, Matrix4f projectionMatrix, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient)
+    public static void renderSkybox(Minecraft mc, Matrix4f projectionMatrix, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient, ClientPlayerOrbitBody playerOrbit)
     {
         FogRenderer.levelFogColor();
         psClient.renderTick(partialTick);
@@ -80,22 +84,13 @@ public class PSRenderer {
 
         RenderSystem.depthMask(false);
 
-        if (psClient.isOnPlanet()) {
-            if (psClient.getCurrentPlanet().get().getAtmosphere().hasAtmosphere()) {
-                latestSkyColor = Minecraft.getInstance().level.getSkyColor(camera.getPosition(), partialTick);
-
-                RenderSystem.setShaderColor((float) latestSkyColor.x, (float) latestSkyColor.y, (float) latestSkyColor.z, 1.0F);
-                ShaderInstance posShad = RenderSystem.getShader();
-                sky_Buffer.bind();
-                sky_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, posShad);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-
-                drawSunriseDisc(poseStack, psClient, Minecraft.getInstance().level);
-            }
-        }
+        drawAtmosphere(psClient, playerOrbit, sky_Buffer, camera, poseStack, projectionMatrix, partialTick);
 
         poseStack.pushPose();
-        poseStack.mulPose(new Quaternionf().set(psClient.getPlayerOrbit().getPlayerOnPlanetRotation()));
+
+        if (!psClient.weInSpaceDim()) {
+            poseStack.mulPose(new Quaternionf().set(playerOrbit.getPlayerRotation()));
+        }
 
         SpaceObjRenderer.renderPlanetaryBodies(poseStack, psClient.getSpaceRenderables(), psClient, camera, projectionMatrix, partialTick);
         RenderSystem.depthMask(true);
@@ -105,6 +100,61 @@ public class PSRenderer {
 
     public static void close() {
         latestSkyColor = null;
+    }
+
+    private static void drawAtmosphere(PSClient psClient, ClientPlayerOrbitBody playerOrbit, VertexBuffer sky_Buffer, Camera camera, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
+        if (psClient.isOnPlanet() && psClient.getCurrentPlanet().get() instanceof PlanetaryBody planetaryBody && planetaryBody.getAtmosphere().hasAtmosphere()) {
+            latestSkyColor = Minecraft.getInstance().level.getSkyColor(camera.getPosition(), partialTick);
+            drawSkyDisc((float) latestSkyColor.x,(float) latestSkyColor.y,(float) latestSkyColor.z, 1.0f, sky_Buffer, poseStack, projectionMatrix);
+
+            if (planetaryBody.getDimensionalProperties().isDrawSunriseDisk()) {
+                drawSunriseDisc(poseStack, psClient, Minecraft.getInstance().level);
+            }
+        } else if (playerOrbit.getParent() instanceof PlanetaryBody planetaryBody && planetaryBody.getAtmosphere().hasAtmosphere() && playerOrbit.getAltitude() <= planetaryBody.getAtmosphere().getAtmosphereHeight()) {
+            double seaLevelDensity = planetaryBody.getAtmosphere().getAtmosphereDensityAtSeaLevel();
+            double currentPlayerDensity = AtmosphereCalc.getAirDensity(planetaryBody, playerOrbit.getAltitude());
+            float atmoPercent = (float) (currentPlayerDensity / seaLevelDensity);
+            atmoPercent = Mth.clamp(atmoPercent * 2.0f, 0.0f, 1.0f);
+
+            float timeOfDay = psClient.getDaylightRegion().getSunAngle();
+            float[] skyColor = getSkyColorForTime(planetaryBody.getDimensionalProperties().getDefaultSkyColor(), atmoPercent, timeOfDay);
+            latestSkyColor = new Vec3(skyColor[0], skyColor[1], skyColor[2]);
+            RenderSystem.enableBlend();
+            renderSpaceSky(poseStack, projectionMatrix);
+            renderSpaceSky(skyColor[0], skyColor[1], skyColor[2], skyColor[3], poseStack, projectionMatrix);
+            RenderSystem.disableBlend();
+        } else {
+            renderSpaceSky(poseStack, projectionMatrix);
+        }
+    }
+
+    private static void drawSkyDisc(float r, float g, float b, float a, VertexBuffer sky_Buffer, PoseStack poseStack, Matrix4f projectionMatrix) {
+        RenderSystem.setShaderColor(r, g, b, a);
+        ShaderInstance posShad = RenderSystem.getShader();
+        sky_Buffer.bind();
+        sky_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, posShad);
+        VertexBuffer.unbind();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    public static void renderSpaceSky(float r, float g, float b, float a,PoseStack poseStack, Matrix4f projectionMatrix) {
+        RenderSystem.setShaderColor(r, g, b, a);
+        poseStack.pushPose();
+        Skybox_Buffer.bind();
+        Skybox_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
+        VertexBuffer.unbind();
+        poseStack.popPose();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    public static void renderSpaceSky(PoseStack poseStack, Matrix4f projectionMatrix) {
+        RenderSystem.setShaderColor(0.039f, 0.043f, 0.078f, 1.0F);
+        poseStack.pushPose();
+        Skybox_Buffer.bind();
+        Skybox_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
+        VertexBuffer.unbind();
+        poseStack.popPose();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     public static void drawStarBuffer(PoseStack poseStack, Matrix4f projectionMatrix, float alpha) {
@@ -122,7 +172,8 @@ public class PSRenderer {
         pBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         for (Vector3f vertex : cubeVertecies) {
-            pBuilder.vertex(vertex.x, vertex.y, vertex.z).color(10, 11, 20, 255).endVertex();
+            //pBuilder.vertex(vertex.x, vertex.y, vertex.z).color(10, 11, 20, 255).endVertex();
+            pBuilder.vertex(vertex.x, vertex.y, vertex.z).color(1.0f,1.0f,1.0f,1.0f).endVertex();
         }
 
         return pBuilder.end();
@@ -132,7 +183,7 @@ public class PSRenderer {
         RandomSource randomsource = RandomSource.create(1000L);
         pBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        for(int i = 0; i < 700; ++i) {
+        for(int i = 0; i < 1500; ++i) {
             double d0 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
             double d1 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
             double d2 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
@@ -187,6 +238,18 @@ public class PSRenderer {
         return pBuilder.end();
     }
 
+    public static float[] getSkyColorForTime(int color, float alpha, float time) {
+        float[] skyColor = MiscCalc.getRGBAFloats(color, alpha);
+
+        float shade = Mth.cos(time * ((float)Math.PI * 2F)) * 2.0F + 0.5F;
+        shade = Mth.clamp(shade, 0.0F, 1.0F);
+        skyColor[0] = skyColor[0] * shade;
+        skyColor[1] = skyColor[1] * shade;
+        skyColor[2] = skyColor[2] * shade;
+
+        return skyColor;
+    }
+
     public static Vec3 getLatestSkyColor() {
         return latestSkyColor;
     }
@@ -197,7 +260,7 @@ public class PSRenderer {
             PSClient css = PSClient.get();
             if (css.isOnPlanet() && clientLevel.dimension() == Level.OVERWORLD) {
                 Vector3d sunPosD = new Vector3d(css.getPlayerOrbit().getAbsolutePos()).normalize();
-                return sunPosD.rotate(css.getPlayerOrbit().getPlayerOnPlanetRotation());
+                return sunPosD.rotate(css.getPlayerOrbit().getPlayerRotation());
             }
         }
         return null;

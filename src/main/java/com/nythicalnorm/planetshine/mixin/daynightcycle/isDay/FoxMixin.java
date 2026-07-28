@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle.isDay;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.world.entity.animal.Fox;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

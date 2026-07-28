@@ -117,7 +117,7 @@ public class OrbitalElements implements OrbitalElementsc {
 
     public static double getModulusCurrentTime(long timeElapsed, long periapsisTime, double eccentricity, double meanAngularMotion) {
         long diff = timeElapsed - periapsisTime;
-        if (eccentricity < 1) {
+        if (eccentricity < 1.0d) {
             long orbitalPeriod = TimeCalc.timeDoubleToLong((2*Math.PI) / meanAngularMotion);
             diff = diff % orbitalPeriod;
         }
@@ -167,6 +167,8 @@ public class OrbitalElements implements OrbitalElementsc {
         double trueAnomoly = Math.acos(Mth.clamp(trueAnomalyAcosVar, -1, 1));
         // This is flipped from the paper because of Minecraft's x-z coordinate system where the z is upside down relative to the x
         trueAnomoly = position.dot(velocity) < 0 ? twoPI - trueAnomoly : trueAnomoly;
+        trueAnomoly = Mth.clamp(trueAnomoly, 0, 2.0d * Math.PI);
+
         // All the acos functions are clamped because of imprecision, even though they're doubles they have values >1 & <-1 in a few cases which gives a NaN value.
         this.Inclination = twoPI - Math.acos(Mth.clamp(-momentumVectorH.y/momentumVectorH.length(), -1, 1));
 
@@ -191,23 +193,17 @@ public class OrbitalElements implements OrbitalElementsc {
         // vis viva equation
         this.SemiMajorAxis = 1 / ((2 / PosMagnitude) - (VelMagnitude * VelMagnitude) / Mu);
 
-        if (Eccentricity < 1) {
+        if (Eccentricity <= 1.0d) {
+            this.MeanAngularMotion = Math.sqrt(Mu / (SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
             double anomaly = 2 * Math.atan2(Math.tan(trueAnomoly * 0.5d), Math.sqrt((1 + Eccentricity) / (1 - Eccentricity)));
 
-            this.MeanAngularMotion = Math.sqrt(Mu / (SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
             double timeDiffTerm = (anomaly - Eccentricity * Math.sin(anomaly)) / this.MeanAngularMotion;
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
-            if (this.periapsisTime > TimeElapsed) {
+            if (this.periapsisTime < TimeElapsed) {
                 this.periapsisTime = this.periapsisTime + getOrbitalPeriodLong();
             }
             return anomaly;
-        } else if (Eccentricity == 1.0) { // this is not really usefull rn but meh
-            this.MeanAngularMotion = Math.sqrt(Mu / (SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
-            double parabolicAnomaly = Math.tan(trueAnomoly * 0.5d);
-            double timeDiffTerm = parabolicAnomaly + ((parabolicAnomaly * parabolicAnomaly * parabolicAnomaly)/3) / this.MeanAngularMotion;
-            this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
-            return parabolicAnomaly;
-        } else {
+        }  else {
             double cosTrueAnomoly = Math.cos(trueAnomoly);
             double anomaly = OrbitalCalc.invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
             anomaly = (trueAnomoly > Math.PI) ? -anomaly : anomaly;
@@ -217,6 +213,13 @@ public class OrbitalElements implements OrbitalElementsc {
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
             return anomaly;
         }
+//        else if (Eccentricity == 1.0d) { // this is not really usefull rn but meh
+//            this.MeanAngularMotion = Math.sqrt(Mu / (SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
+//            double parabolicAnomaly = Math.tan(trueAnomoly * 0.5d);
+//            double timeDiffTerm = parabolicAnomaly + ((parabolicAnomaly * parabolicAnomaly * parabolicAnomaly)/3) / this.MeanAngularMotion;
+//            this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
+//            return parabolicAnomaly;
+//        }
     }
 
     private void setOrbitalPeriod(double parentMass) {
@@ -282,7 +285,7 @@ public class OrbitalElements implements OrbitalElementsc {
 
     @Override
     public double getOrbitalPeriod() {
-        return (2*Math.PI)/this.MeanAngularMotion;
+        return (2.0d*Math.PI)/this.MeanAngularMotion;
     }
 
     @Override
@@ -321,7 +324,7 @@ public class OrbitalElements implements OrbitalElementsc {
 
     @Override
     public boolean isHyperbolic() {
-        return this.Eccentricity >= 1;
+        return this.Eccentricity > 1.0d;
     }
 
     @Override

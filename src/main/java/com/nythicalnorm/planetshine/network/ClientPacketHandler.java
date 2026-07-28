@@ -7,7 +7,6 @@ import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
@@ -20,6 +19,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 import java.util.List;
 import java.util.Map;
@@ -114,12 +114,12 @@ public class ClientPacketHandler {
                 psClient.setHostOrbit(spaceHostOrbitId, originPos));
     }
 
-    public static void orbitChange(OrbitId spacecraftID, OrbitalElements orbitalElements) {
+    public static void orbitChange(OrbitId spacecraftID, OrbitalElementsc orbitalElements) {
         PSClient.getInstance().ifPresent(psClient ->
                 psClient.orbitChange(spacecraftID, orbitalElements));
     }
 
-    public static void stateVectorChange(OrbitId spacecraftID, Vector3d relativePosition, Vector3d relativeVelocity) {
+    public static void stateVectorChange(OrbitId spacecraftID, Vector3dc relativePosition, Vector3dc relativeVelocity) {
         PSClient.getInstance().ifPresent(psClient ->
                 psClient.stateVectorChange(spacecraftID, relativePosition, relativeVelocity));
     }

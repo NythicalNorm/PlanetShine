@@ -20,6 +20,7 @@ import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
+import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
 import com.nythicalnorm.planetshine.storage.SpacecraftDataStorage;
 import com.nythicalnorm.planetshine.storage.PSCommonSaveData;
 import com.nythicalnorm.planetshine.storage.PSDataPackManager;
@@ -57,6 +58,7 @@ public class PSServer extends UniverseStage {
     private final SpacecraftDataStorage spacecraftDataStorage;
     private long runningPhysTicks; // in VSPhysTicks
     private final RunnableExecutor physTickRunnable;
+    private final OrbitalBodyUpdater orbitalBodyUpdater;
 
     // Called on the server starting event
     public PSServer(MinecraftServer server, SolarSystem solarSystem) {
@@ -67,6 +69,7 @@ public class PSServer extends UniverseStage {
         this.runningPhysTicks = 0;
         this.spacecraftDataStorage = new SpacecraftDataStorage(server, solarSystem);
         this.physTickRunnable = new RunnableExecutor();
+        this.orbitalBodyUpdater = new OrbitalBodyUpdater();
         this.initPlanets();
     }
 
@@ -129,8 +132,9 @@ public class PSServer extends UniverseStage {
         this.solarSystem.OnPhysTick(physLevel);
     }
 
-    public void OnGameTick() {
+    public void OnGameTickEnd() {
         this.hostSpaceManager.onGameTick();
+        this.orbitalBodyUpdater.sendUpdates();
         this.solarSystem.onServerTick(this.getSpaceLevel());
     }
 
@@ -138,6 +142,36 @@ public class PSServer extends UniverseStage {
         if (instance != null) {
             PSServer.get().server.execute(runnable);
         }
+    }
+
+    public static void sendOrbitUpdateToRelevantPlayers(EntityOrbitBody<?> entityOrbitBody) {
+        if (PlanetShineConfig.doFastShipPosUpdates()) {
+            PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(
+                    new ClientboundOrbitChange(entityOrbitBody.getOrbitId(), entityOrbitBody.getOrbitalElements()
+                    )));
+        } else {
+            getOrbitalBodyUpdater().addOrbitalUpdate(entityOrbitBody.getOrbitId(), entityOrbitBody.getOrbitalElements());
+        }
+    }
+
+    public static void sendStateUpdateToRelevantPlayers(EntityOrbitBody<?> entityOrbitBody) {
+        if (PlanetShineConfig.doFastShipPosUpdates()) {
+            PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(
+                    new ClientboundStateVectorChange(entityOrbitBody.getOrbitId(),
+                            entityOrbitBody.getRelativePos(), entityOrbitBody.getRelativeVelocity()
+                    )));
+        } else {
+            getOrbitalBodyUpdater().addStateVectorUpdate(entityOrbitBody.getOrbitId(),
+                    entityOrbitBody.getRelativePos(), entityOrbitBody.getRelativeVelocity());
+
+        }
+    }
+
+    public static OrbitalBodyUpdater getOrbitalBodyUpdater() {
+        if (instance != null) {
+            return PSServer.get().orbitalBodyUpdater;
+        }
+        return new OrbitalBodyUpdater();
     }
 
     public void saveSolarSys() {

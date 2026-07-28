@@ -8,7 +8,6 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
@@ -87,12 +86,4 @@ public class AtmosphereRenderer {
 //            }
 //        }
 //    }
-
-    public static void renderSpaceSky(PoseStack poseStack, Matrix4f projectionMatrix) {
-        poseStack.pushPose();
-        skyboxBuffer.bind();
-        skyboxBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
-        VertexBuffer.unbind();
-        poseStack.popPose();
-    }
 }

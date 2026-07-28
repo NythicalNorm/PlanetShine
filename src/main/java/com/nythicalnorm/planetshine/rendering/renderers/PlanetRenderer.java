@@ -55,7 +55,9 @@ public class PlanetRenderer {
             PlanetAtmosphere bodyAtmos = planet.getAtmosphere();
             opacityEasing = (currentAlbedo * (bodyAtmos.getAlphaNight() - bodyAtmos.getAlphaDay())) + bodyAtmos.getAlphaDay();
             Vec3 skyColor = PSRenderer.getLatestSkyColor();
-            AtmoFilterColorUniform.set((float) skyColor.x,(float) skyColor.y,(float) skyColor.z, 1.0f);
+            if (skyColor != null) {
+                AtmoFilterColorUniform.set((float) skyColor.x, (float) skyColor.y, (float) skyColor.z, 1.0f);
+            }
         } else {
             AtmoFilterColorUniform.set(0f,0f, 0f, 1.0f);
         }

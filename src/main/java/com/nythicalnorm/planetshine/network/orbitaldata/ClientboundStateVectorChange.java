@@ -8,16 +8,16 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
-import org.joml.Vector3d;
+import org.joml.Vector3dc;
 
 import java.util.function.Supplier;
 
 public class ClientboundStateVectorChange {
     private final OrbitId spacecraftID;
-    private final Vector3d relativePosition;
-    private final Vector3d relativeVelocity;
+    private final Vector3dc relativePosition;
+    private final Vector3dc relativeVelocity;
 
-    public ClientboundStateVectorChange(OrbitId spacecraftID, Vector3d relativePosition, Vector3d relativeVelocity) {
+    public ClientboundStateVectorChange(OrbitId spacecraftID, Vector3dc relativePosition, Vector3dc relativeVelocity) {
         this.spacecraftID = spacecraftID;
         this.relativePosition = relativePosition;
         this.relativeVelocity = relativeVelocity;

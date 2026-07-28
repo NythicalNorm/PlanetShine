@@ -25,14 +25,14 @@ import org.joml.*;
 @OnlyIn(Dist.CLIENT)
 public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements MapIconRenderable {
     private final Vector3d clientDeltaVelLast;
-    private final Quaterniond playerOnPlanetRotation;
+    private final Quaterniond playerRotation;
     private PlayerInfo playerInfo;
     private Vector2i mapPos;
 
     public ClientPlayerOrbitBody(PlayerOrbitBuilder playerSpacecraftBuilder) {
         super(playerSpacecraftBuilder, true);
         this.clientDeltaVelLast = new Vector3d();
-        this.playerOnPlanetRotation = new Quaterniond();
+        this.playerRotation = new Quaterniond();
     }
 
     @Override
@@ -47,7 +47,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements Ma
     }
 
     private void updatePlanetRot(CelestialBody currentPlanet) {
-        this.playerOnPlanetRotation.set(PlanetCalc.getPlanetToSpaceRotation(this.getMcPosition(), currentPlanet));
+        this.playerRotation.set(PlanetCalc.getPlanetToSpaceRotation(this.getMcPosition(), currentPlanet));
     }
 
     private void updatePlanetPos(Level level, Vec3 position, CelestialBody currentPlanetOn) {
@@ -59,8 +59,44 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements Ma
         this.absoluteOrbitalPos.set(currentPlanetOn.getAbsolutePos()).add(relativeOrbitalPos);
     }
 
-    public Quaterniondc getPlayerOnPlanetRotation() {
-        return playerOnPlanetRotation;
+    public void updateSurfaceDownRotation() {
+        Vector3d down = new Vector3d(this.relativeOrbitalPos.x, this.relativeOrbitalPos.y, this.relativeOrbitalPos.z)
+                .negate()
+                .normalize();
+
+        Vector3d forward = new Vector3d(0, 1.0f, 0);
+
+        // If forward is nearly parallel to down, choose another vector.
+//        if (Math.abs(down.dot(forward)) > 0.999f)
+//            forward.set(-1.0f, 0, 0);
+
+        Vector3d right = forward.cross(down, new Vector3d()).normalize();
+        forward = down.cross(right, new Vector3d()).normalize();
+
+        // Negate because local down is -Y
+        Matrix3d m = new Matrix3d(
+                right.x, -down.x, forward.x,
+                right.y, -down.y, forward.y,
+                right.z, -down.z, forward.z
+        );
+
+        this.playerRotation.setFromNormalized(m).invert().normalize();
+    }
+
+    public Quaterniondc getPlayerRotation() {
+        if (PSClient.get().weInSpaceDim()) {
+            return new Quaterniond();
+        } else {
+            return playerRotation;
+        }
+    }
+
+    public Quaterniondc getSurfaceDownRot() {
+        if (PSClient.get().weInSpaceDim()) {
+            return this.playerRotation;
+        } else {
+            return new Quaterniond();
+        }
     }
 
     @Override
@@ -69,7 +105,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements Ma
     }
 
     public void clearRotation() {
-        this.playerOnPlanetRotation.identity();
+        this.playerRotation.identity();
     }
 
     public void processHostMove(Vec3 deltaMovement) {

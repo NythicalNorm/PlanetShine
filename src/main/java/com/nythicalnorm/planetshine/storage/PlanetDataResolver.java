@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetDimensionProperties;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
@@ -108,6 +109,32 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
         alphaDay = jsonObj.get("alpha_day").getAsFloat();
 
         return new PlanetAtmosphere(hasAtmosphere, surfaceColor, atmosphereColor, atmosphereHeight, atmospherePressure, atmosphereAlpha, alphaNight, alphaDay);
+    }
+
+    public static PlanetDimensionProperties parseDimensionalProperties(JsonObject jsonObj) {
+        boolean renderCustomSkybox = true;
+        boolean drawOverworldSunriseDisk = false;
+        int default_sky_color = 0;
+        boolean affectEntityGravity = false;
+        boolean affectVsShipGravity = false;
+
+        if (jsonObj.has("render_custom_skybox")) {
+            renderCustomSkybox = jsonObj.get("render_custom_skybox").getAsBoolean();
+        }
+        if (jsonObj.has("draw_sunrise_disk")) {
+            drawOverworldSunriseDisk = jsonObj.get("draw_sunrise_disk").getAsBoolean();
+        }
+        if (jsonObj.has("default_sky_color")) {
+            default_sky_color = Integer.parseInt(jsonObj.get("default_sky_color").getAsString(), 16);
+        }
+        if (jsonObj.has("affect_entity_gravity")) {
+            affectEntityGravity = jsonObj.get("affect_entity_gravity").getAsBoolean();
+        }
+        if (jsonObj.has("affect_vs_ship_gravity")) {
+            affectVsShipGravity = jsonObj.get("affect_vs_ship_gravity").getAsBoolean();
+        }
+
+        return new PlanetDimensionProperties(renderCustomSkybox, drawOverworldSunriseDisk, default_sky_color, affectEntityGravity, affectVsShipGravity);
     }
 
     public record PlanetLoadedData(StarBody rootStar, Map<String, CelestialBody> tempPlanetaryBodyMap, Map<String, String[]> tempChildPlanetsMap) {

@@ -8,6 +8,7 @@ public class PlanetShineConfig {
     private static ForgeConfigSpec.ConfigValue<Double> TeleportToSpaceHeight;
     private static ForgeConfigSpec.ConfigValue<Double> PlanetTextureResolution;
     private static ForgeConfigSpec.ConfigValue<Boolean> OverrideVanillaWorldBorder;
+    private static ForgeConfigSpec.ConfigValue<Boolean> DoFastShipPosUpdates;
 
     public static double getTeleportToGroundHeight() {
         try {
@@ -41,12 +42,21 @@ public class PlanetShineConfig {
         }
     }
 
+    public static boolean doFastShipPosUpdates() {
+        try {
+            return DoFastShipPosUpdates.get();
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private static ForgeConfigSpec buildConfig() {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         TeleportToGroundHeight = builder.define("TeleportToGroundHeight", 500.0d);
         TeleportToSpaceHeight = builder.define("TeleportToSpaceHeight", 1000.0d);
         PlanetTextureResolution = builder.define("PlanetTextureResolution", 2048.0d);
         OverrideVanillaWorldBorder = builder.define("OverrideVanillaWorldBorder", true);
+        DoFastShipPosUpdates = builder.define("DoFastShipPosUpdates", true);
         return builder.build();
     }
 }

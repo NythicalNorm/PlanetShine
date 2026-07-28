@@ -4,7 +4,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -66,7 +67,11 @@ public class EntityEvents {
 
             //Optional<Double> levelGravity = PlanetDimensions.getAccelerationDueToGravityAt(entity.level());
             double tempGravity = 0;
-            boolean applyGravityModifier = planetAccessor.ps$isPlanet();
+            boolean applyGravityModifier = false;
+
+            if (planetAccessor.ps$getCelestialBody() instanceof PlanetaryBody planetaryBody) {
+                applyGravityModifier = planetaryBody.getDimensionalProperties().isAffectEntityGravity();
+            }
 
             if (applyGravityModifier) {
                 tempGravity = planetAccessor.ps$getCelestialBody().getEntityAccelerationDueToGravity();

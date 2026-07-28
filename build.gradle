@@ -206,6 +206,14 @@ dependencies {
         jarJar.ranged(it, "[0.3.7-beta.1,)")
     }
 
+    // ad astra
+    implementation(fg.deobf("maven.modrinth:3ufwT9JF:Qf7QFXk2"))
+    // ad astra dependencies
+    implementation(fg.deobf("maven.modrinth:2u6LRnMa:O7D6FTfW")) // Botarium
+    implementation(fg.deobf("maven.modrinth:M1953qlQ:DERs8u7v")) // Resourceful Config
+    implementation(fg.deobf("maven.modrinth:G1hIVOrD:OhsHaCcW")) // Resourceful Lib
+
+
     // comment out below to build without unnecessary dependencies.
     implementation(fg.deobf("dev.architectury:architectury-forge:9.1.12"))
 

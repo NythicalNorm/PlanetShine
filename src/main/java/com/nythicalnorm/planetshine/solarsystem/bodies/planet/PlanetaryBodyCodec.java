@@ -36,6 +36,7 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
 
         byteBuf.writeLong(planetBody.getRotationPeriod());
         NetworkEncoders.writePlanetAtmosphere(byteBuf, planetBody.getAtmosphere());
+        NetworkEncoders.writeDimensionalProperties(byteBuf, planetBody.getDimensionalProperties());
 
         if (planetBody.getDimension() == null) {
             byteBuf.writeBoolean(false);
@@ -61,6 +62,7 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
 
         planetBuilder.setRotationPeriod(byteBuf.readLong());
         planetBuilder.setAtmosphericEffects(NetworkEncoders.readPlanetAtmosphere(byteBuf));
+        planetBuilder.setDimensionalPrperties(NetworkEncoders.readDimensionalProperties(byteBuf));
 
         if (byteBuf.readBoolean()) {
             planetBuilder.setDimension(byteBuf.readResourceKey(Registries.DIMENSION));
@@ -108,6 +110,12 @@ public class PlanetaryBodyCodec extends OrbitCodec<PlanetaryBody, PlanetaryBody.
             if (planetAtmosphere.hasAtmosphere()) {
                 body.addCelestialBodyTicker(new PlanetAtmosphereTicker(planetAtmosphere.getAtmosphereHeight()));
             }
+        }
+
+        JsonElement dimensionalProperties = jsonObj.get("dimensional_properties");
+        if (dimensionalProperties != null) {
+            PlanetDimensionProperties planetDimensionProperties = PlanetDataResolver.parseDimensionalProperties(dimensionalProperties.getAsJsonObject());
+            body.setDimensionalPrperties(planetDimensionProperties);
         }
 
         List<String> childPlanetNames = new ArrayList<>();

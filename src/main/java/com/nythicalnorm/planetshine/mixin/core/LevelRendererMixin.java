@@ -44,7 +44,7 @@ public abstract class LevelRendererMixin {
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();
                 if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !this.doesMobEffectBlockSky(pCamera)) {
-                    PSRenderer.renderSkybox(mc, pProjectionMatrix, pPoseStack, pPartialTick, pCamera, skyBuffer, css);
+                    PSRenderer.renderSkybox(mc, pProjectionMatrix, pPoseStack, pPartialTick, pCamera, skyBuffer, css, css.getPlayerOrbit());
                 }
             }
             ci.cancel();

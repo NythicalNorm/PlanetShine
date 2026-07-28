@@ -65,6 +65,7 @@ public abstract class CelestialBody extends OrbitalBody {
         this.dimension = dimension;
         this.childEntityBodies = new ConcurrentHashMap<>();
         this.childCelestialBodies = new Object2ObjectOpenHashMap<>();
+        this.atmosphericEffects.init(this);
 
         if (!isClientSide) {
             this.serverCelestialData = new ServerCelestialData();
@@ -190,6 +191,10 @@ public abstract class CelestialBody extends OrbitalBody {
 
     public double getMass() {
         return this.mass;
+    }
+
+    public double getEscapeVelocity() {
+        return Math.sqrt((2.0d * OrbitalElements.UniversalGravitationalConstant * this.mass) / this.radius);
     }
 
     public double getMinInterceptDistance() {

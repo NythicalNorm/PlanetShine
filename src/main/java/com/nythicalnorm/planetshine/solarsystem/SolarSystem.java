@@ -121,6 +121,7 @@ public class SolarSystem {
         spacecraftBody.setOrbitalElements(orbitalElementsNew);
         // resetting the pre-calculated intercepts and also resetting the periapsisTime
         if (!spacecraftBody.isClientSide()) {
+            spacecraftBody.setStateVecControlled(false);
             spacecraftBody.resetIntercepts(this.universeStage.getCurrentTime());
         }
     }

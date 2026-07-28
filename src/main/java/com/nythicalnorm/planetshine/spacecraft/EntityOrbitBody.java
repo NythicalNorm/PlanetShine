@@ -2,9 +2,6 @@ package com.nythicalnorm.planetshine.spacecraft;
 
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.network.PacketHandler;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitChange;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundStateVectorChange;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
@@ -30,7 +27,7 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
     protected @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept;
     protected double lastCalculatedEccentricAnomaly;
     protected T body;
-    protected boolean inAtmosphere;
+    protected boolean isStateVecControlled;
 
     // server side only
     protected boolean isInterceptsCalculated; // basically whether the next planet intercept of escape or intersection is calculated yet.
@@ -44,7 +41,7 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         this.hostSpaceID.set(hostSpaceID);
         this.isInterceptsCalculated = false;
         this.nextOrbitIntercept = soiIntercept;
-        this.inAtmosphere = false;
+        this.isStateVecControlled = false;
     }
 
     @GameTickOnly
@@ -62,26 +59,30 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         }
 
         // updating if its in atmosphere
-        if (!this.isClientSide) {
-            boolean isNowInAtmo = this.getAltitude() <= this.parent.getAtmosphere().getAtmosphereHeight();
-            if (inAtmosphere && !isNowInAtmo) {
+        if (!this.isClientSide && this.isHostOfItsSpace() && this.isBodyEntityLoaded()) {
+            boolean isNowInStateVec =
+                    (this.getAltitude() <= this.parent.getAtmosphere().getAtmosphereHeight() && this.parent.getAtmosphere().hasAtmosphere());// ||
+//                    (this.relativeVelocity.length() < (this.parent.getEscapeVelocity()) / 250.0d);
+
+            if (isStateVecControlled && !isNowInStateVec) {
                 // exiting atmosphere
                 this.resetIntercepts(TimeElapsed);
-                this.nextPeriapsisTime = this.orbitalElements.getNextPeriapsisTime(TimeElapsed);
-                this.sendOrbitUpdateToRelevantPlayers();
+                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+                if (this.orbitalElements.getEccentricity() > 0.9999d && !this.orbitalElements.isHyperbolic()) {
+                    isNowInStateVec = true;
+                }
             }
-            else if (isNowInAtmo && !inAtmosphere) {
+            else if (isNowInStateVec && !isStateVecControlled) {
                 // entering atmosphere
-                this.sendStateUpdateToRelevantPlayers();
             }
-            this.inAtmosphere = isNowInAtmo;
+            this.isStateVecControlled = isNowInStateVec;
         }
-        if (!inAtmosphere && !isClientSide && this.nextPeriapsisTime.isPresent() && TimeElapsed > this.nextPeriapsisTime.getAsLong()) {
+        if (!isStateVecControlled && !isClientSide && this.nextPeriapsisTime.isPresent() && TimeElapsed > this.nextPeriapsisTime.getAsLong()) {
             this.completedOneOrbit(TimeElapsed);
         }
 
         // checking if it's time for the predicted SOI change and doing it
-        if (!inAtmosphere && this.nextOrbitIntercept != null && this.nextOrbitIntercept.timeElapsed() <= TimeElapsed && this.isHostOfItsSpace() && !this.isClientSide) {
+        if (!isStateVecControlled && this.nextOrbitIntercept != null && this.nextOrbitIntercept.timeElapsed() <= TimeElapsed && this.isHostOfItsSpace() && !this.isClientSide) {
             CelestialBody newParent = OrbitalCalc.calculateSOIChange(this.nextOrbitIntercept, this.parent, this.orbitalElements, this.orbitalElements);
             this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
 
@@ -99,22 +100,23 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
             this.setStateVectorsFromHostBody(this.getHostSpaceAccess(), TimeElapsed);
         } else { // if its not accelerating do the normal simulation
             if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
-                if (!inAtmosphere) {
-                    this.simulateFromKeplerian(TimeElapsed);
-                } else {
+                if (this.isStateVecControlled) {
                     this.simulateNonTimeWarp(deltaTime);
+                    PSServer.sendStateUpdateToRelevantPlayers(this);
+                } else {
+                    this.simulateFromKeplerian(TimeElapsed);
                 }
             } else if (!isClientSide) { // if it is accelerating do the special calc for this tick
                 this.simulateNonTimeWarp(deltaTime);
+
                 this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
 
-                if (this.inAtmosphere) {
-                    this.sendStateUpdateToRelevantPlayers();
+                if (this.isStateVecControlled) {
+                    PSServer.sendStateUpdateToRelevantPlayers(this);
                 } else {
-                    this.sendOrbitUpdateToRelevantPlayers();
+                    PSServer.sendOrbitUpdateToRelevantPlayers(this);
                 }
                 this.resetIntercepts(TimeElapsed);
-                this.nextPeriapsisTime = this.orbitalElements.getNextPeriapsisTime(TimeElapsed);
             }
         }
 
@@ -163,24 +165,20 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
             this.relativeVelocity.set(hostBody.getRelativeVelocity());
             this.orbitalElements.set(hostBody.getOrbitalElements());
             this.lastCalculatedEccentricAnomaly = hostBody.getEccentricAnomaly();
+            this.isStateVecControlled = hostBody.isStateVecControlled;
         } else {
             this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
             this.relativeVelocity.set(relativeVel.add(hostBody.getRelativeVelocity()));
+            this.isStateVecControlled = hostBody.isStateVecControlled;
             this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
         }
     }
 
-    public void setInAtmosphere(boolean isAtmo) {
-        this.inAtmosphere = isAtmo;
+    public void setStateVecControlled(boolean isAtmo) {
+        this.isStateVecControlled = isAtmo;
     }
 
-    protected void sendOrbitUpdateToRelevantPlayers() {
-        PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundOrbitChange(this.id, this.orbitalElements)));
-    }
 
-    protected void sendStateUpdateToRelevantPlayers() {
-        PSServer.addGameTickRunnable(() -> PacketHandler.sendToAllClients(new ClientboundStateVectorChange(this.id, this.relativeOrbitalPos, this.relativeVelocity)));
-    }
 
     private void applyQueuedVelocity() {
         Vector3dc impulse;

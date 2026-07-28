@@ -1,5 +1,7 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
+import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 
 public class PlanetAtmosphere {
@@ -7,21 +9,26 @@ public class PlanetAtmosphere {
     protected final int surfaceColor;
     protected final int atmoColor;
     protected final double atmosphereHeight;
-    protected final double atmospherePressure;
+    protected final double atmospherePressureMultiplier;
+    protected double atmosphereDensityAtSeaLevel;
     protected final float atmosphereAlpha;
     protected final float alphaNight;
     protected final float alphaDay;
 
     public PlanetAtmosphere(boolean hasAtmosphere, int surfaceColor, int atmoColor, double atmosphereHeight,
-                            double atmospherePressure, float atmosphereAlpha, float alphaNight, float alphaDay) {
+                            double atmospherePressureMultiplier, float atmosphereAlpha, float alphaNight, float alphaDay) {
         this.hasAtmosphere = hasAtmosphere;
         this.surfaceColor = surfaceColor;
         this.atmoColor = atmoColor;
         this.atmosphereHeight = atmosphereHeight;
-        this.atmospherePressure = atmospherePressure;
+        this.atmospherePressureMultiplier = atmospherePressureMultiplier;
         this.atmosphereAlpha = atmosphereAlpha;
         this.alphaNight = alphaNight;
         this.alphaDay = alphaDay;
+    }
+
+    public void init(CelestialBody celestialBody) {
+        this.atmosphereDensityAtSeaLevel = AtmosphereCalc.getAirDensity(celestialBody, 0.0d);
     }
 
     public boolean hasAtmosphere() {
@@ -50,8 +57,12 @@ public class PlanetAtmosphere {
         return atmosphereHeight;
     }
 
-    public double getAtmosphericPressure() {
-        return atmospherePressure;
+    public double getAtmosphericPressureMultiplier() {
+        return atmospherePressureMultiplier;
+    }
+
+    public double getAtmosphereDensityAtSeaLevel() {
+        return atmosphereDensityAtSeaLevel;
     }
 
     public float getAlphaNight() {
@@ -65,5 +76,4 @@ public class PlanetAtmosphere {
     public float getAtmosphereAlpha() {
         return atmosphereAlpha;
     }
-
 }

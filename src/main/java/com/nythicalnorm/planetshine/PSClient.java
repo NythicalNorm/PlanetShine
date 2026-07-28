@@ -8,9 +8,8 @@ import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import com.nythicalnorm.planetshine.rendering.map.MapRenderer;
 import com.nythicalnorm.planetshine.rendering.renderTypes.SpaceRenderable;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.rendering.networking.ClientTimeHandler;
 import com.nythicalnorm.planetshine.rendering.textures.ClientTexManager;
@@ -33,6 +32,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
@@ -162,6 +162,7 @@ public class PSClient extends UniverseStage {
             BlockPos playerPos = playerOrbit.getBody().blockPosition();
             this.daylightRegion.calculate(playerPos.getX(), playerPos.getZ(), currentPlanetOn, playerOrbit.getBody().level());
         } else if (weInSpaceDim()) {
+            this.playerOrbit.updateSurfaceDownRotation();
             this.daylightRegion.calculateForSpacecraft(this.playerOrbit);
         }
     }
@@ -223,19 +224,19 @@ public class PSClient extends UniverseStage {
         }
     }
 
-    public void orbitChange(OrbitId spacecraftID, OrbitalElements orbitalElements) {
+    public void orbitChange(OrbitId spacecraftID, OrbitalElementsc orbitalElements) {
         EntityOrbitBody<?> entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             entityOrbitBody.setOrbitalElements(orbitalElements);
-            entityOrbitBody.setInAtmosphere(false);
+            entityOrbitBody.setStateVecControlled(false);
         }
     }
 
-    public void stateVectorChange(OrbitId spacecraftID, Vector3d relativePosition, Vector3d relativeVelocity) {
+    public void stateVectorChange(OrbitId spacecraftID, Vector3dc relativePosition, Vector3dc relativeVelocity) {
         EntityOrbitBody<?> entityOrbitBody = this.solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             entityOrbitBody.setStateVectors(relativePosition, relativeVelocity, this.getCurrentTime());
-            entityOrbitBody.setInAtmosphere(true);
+            entityOrbitBody.setStateVecControlled(true);
         }
     }
 
@@ -261,6 +262,11 @@ public class PSClient extends UniverseStage {
         else  {
             return Optional.empty();
         }
+    }
+
+    public boolean isInsideAtmosphereInSpaceDim() {
+        return this.weInSpaceDim() && this.getPlayerOrbit().getParent() != null && this.getPlayerOrbit().getParent().getAtmosphere().hasAtmosphere() &&
+                this.getPlayerOrbit().getAltitude() <= this.getPlayerOrbit().getParent().getAtmosphere().getAtmosphereHeight();
     }
 
     public @Nullable EntityOrbitBody<?> getControllingBody() {

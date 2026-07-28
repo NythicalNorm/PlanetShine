@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.gui.screen;
 
 import com.nythicalnorm.planetshine.PSClient;
+import com.nythicalnorm.planetshine.gui.PSScreenManager;
 import com.nythicalnorm.planetshine.gui.widgets.AltitudeWidget;
 import com.nythicalnorm.planetshine.gui.widgets.NavballWidget;
 import com.nythicalnorm.planetshine.gui.widgets.TimeWarpWidget;
@@ -18,14 +19,16 @@ import org.joml.Vector3dc;
 import java.util.Objects;
 
 public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOrbitDataDisplay {
+    private final PSScreenManager screenManager;
     private final EntityOrbitBody<?> controllingBody;
     private final Options minecraftOptions;
+    private NavballWidget navballWidget;
 
-    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody<?> controllingBody, SpacecraftScreenState spacecraftScreenState) {
+    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody<?> controllingBody, PSScreenManager screenManager) {
         super(pTitle);
         this.controllingBody = controllingBody;
         this.minecraftOptions = Minecraft.getInstance().options;
-        this.loadState(spacecraftScreenState);
+        this.screenManager = screenManager;
     }
 
     @Override
@@ -35,8 +38,10 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         minecraftOptions.hideGui = true;
 
         this.addRenderableWidget(new TimeWarpWidget(0,0, Component.empty()));
-        this.addRenderableWidget(new NavballWidget(width/2, height, width, height, Component.empty()));
-        this.addRenderableWidget(new AltitudeWidget(width/2, 0, width, height, Component.empty()));
+        this.navballWidget = this.addRenderableWidget(new NavballWidget(width/2, height, Component.empty()));
+        this.addRenderableWidget(new AltitudeWidget(width/2, 0, Component.empty()));
+
+        this.loadState(screenManager.getSpacecraftScreenState());
     }
 
     @Override
@@ -48,12 +53,12 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
             keyPressed = true;
         } else if (PSKeyBinds.OPEN_SOLAR_SYSTEM_MAP_KEY.matches(pKeyCode, pScanCode)) {
             PSClient.get().getScreenManager().setSpacecraftScreenState(new SpacecraftScreenState(
-                    this.cameraYrot, this.cameraXrot, this.zoomLevel, this.isNonRotView));
+                    this.cameraYrot, this.cameraXrot, this.zoomLevel, this.viewMode, this.navballWidget.getNavBallMode()));
 
             PSClient.get().getScreenManager().openMapScreen();
             keyPressed = true;
         } else if (PSKeyBinds.CHANGE_SPACECRAFT_VIEW_KEY.matches(pKeyCode, pScanCode)) {
-            this.isNonRotView = !this.isNonRotView;
+            toggleViewMode();
             keyPressed = true;
         }
 
@@ -62,6 +67,33 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         } else {
             return super.keyPressed(pKeyCode, pScanCode, pModifiers);
         }
+    }
+
+    private void toggleViewMode() {
+        if (PSClient.get().weInSpaceDim()) {
+            switch (this.viewMode) {
+                case LOCKED -> this.viewMode = ViewMode.NON_ROTATING;
+                case NON_ROTATING -> this.viewMode = ViewMode.SURFACE_DOWN;
+                case SURFACE_DOWN -> this.viewMode = ViewMode.LOCKED;
+            }
+            showViewModeMessage(this.viewMode);
+        } else {
+            switch (this.viewMode) {
+                case SURFACE_DOWN, NON_ROTATING -> {
+                    this.viewMode = ViewMode.LOCKED;
+                    showViewModeMessage(ViewMode.LOCKED);
+                }
+                case LOCKED -> {
+                    this.viewMode = ViewMode.NON_ROTATING;
+                    showViewModeMessage(ViewMode.SURFACE_DOWN);
+                }
+            }
+        }
+    }
+
+    private void showViewModeMessage(ViewMode mode) {
+        Minecraft.getInstance().getChatListener().handleSystemMessage(Component.translatable("planetshine.ui.view_mode_set",
+                mode.getViewName()), true);
     }
 
     @Override
@@ -110,16 +142,21 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     @Override
     public void onClose() {
         super.onClose();
-        PSClient.get().getScreenManager().setSpacecraftScreenState(new SpacecraftScreenState(this.cameraYrot, this.cameraXrot, this.zoomLevel, this.isNonRotView));
+        PSClient.get().getScreenManager().setSpacecraftScreenState(new SpacecraftScreenState(this.cameraYrot, this.cameraXrot, this.zoomLevel, this.viewMode,  this.navballWidget.getNavBallMode()));
         PSClient.get().getScreenManager().closeSpacecraftScreen();
-        super.onClose();
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
     }
 
     private void loadState(SpacecraftScreenState spacecraftScreenState) {
         if (spacecraftScreenState != null) {
             super.loadRotState(spacecraftScreenState);
-            this.isNonRotView = spacecraftScreenState.isNonRotView();
-        } else {
+            this.viewMode = spacecraftScreenState.getViewMode();
+            this.navballWidget.setNavBallMode(spacecraftScreenState.getNavBallMode());
+        } else if (Minecraft.getInstance().player != null) {
             this.zoomLevel = 1.1f;
             this.cameraYrot = (float) -Math.toRadians(Minecraft.getInstance().player.getYRot());
             this.cameraXrot = (float) -Math.toRadians(Minecraft.getInstance().player.getXRot());
@@ -127,15 +164,21 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     }
 
     public static class SpacecraftScreenState extends MouseLookScreen.MouseLookScreenState {
-        private final boolean isNonRotView;
+        private final ViewMode viewMode;
+        private final NavballWidget.NavBallMode navBallMode;
 
-        public SpacecraftScreenState(float cameraYrot, float cameraXrot, float zoomLevel, boolean isNonRotView) {
+        public SpacecraftScreenState(float cameraYrot, float cameraXrot, float zoomLevel, ViewMode viewMode, NavballWidget.NavBallMode navBallMode) {
             super(cameraYrot, cameraXrot, zoomLevel);
-            this.isNonRotView = isNonRotView;
+            this.viewMode = viewMode;
+            this.navBallMode = navBallMode;
         }
 
-        public boolean isNonRotView() {
-            return isNonRotView;
+        public ViewMode getViewMode() {
+            return viewMode;
+        }
+
+        public NavballWidget.NavBallMode getNavBallMode() {
+            return navBallMode;
         }
     }
 }

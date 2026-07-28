@@ -9,7 +9,6 @@ import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.renderTypes.*;
-import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
@@ -28,7 +27,7 @@ public class MapRenderer {
     private final Map<OrbitId, MapRenderable> mapRenderables = new Object2ObjectOpenHashMap<>(); // probably need change the renderTree to use this instead.
 
     public void renderSkybox(PoseStack mapPosestack, Matrix4f projectionMatrix) {
-        AtmosphereRenderer.renderSpaceSky(mapPosestack, projectionMatrix);
+        PSRenderer.renderSpaceSky(mapPosestack, projectionMatrix);
         PSRenderer.drawStarBuffer(mapPosestack, projectionMatrix, 1.0f);
     }
 

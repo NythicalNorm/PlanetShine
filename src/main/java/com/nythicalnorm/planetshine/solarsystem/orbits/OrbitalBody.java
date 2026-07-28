@@ -98,7 +98,7 @@ public abstract class OrbitalBody {
         }
     }
 
-    public void setStateVectors(Vector3d relativePosition, Vector3d relativeVelocity, long timeElapsed) {
+    public void setStateVectors(Vector3dc relativePosition, Vector3dc relativeVelocity, long timeElapsed) {
         this.relativeOrbitalPos.set(relativePosition);
         this.relativeVelocity.set(relativeVelocity);
         if (this.orbitalElements != null) {

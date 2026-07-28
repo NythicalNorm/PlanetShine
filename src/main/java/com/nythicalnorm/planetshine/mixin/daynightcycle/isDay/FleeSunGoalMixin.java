@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle.isDay;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.world.entity.ai.goal.FleeSunGoal;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Final;

@@ -106,8 +106,8 @@ public class DayNightCycleCalc {
         Vector3d bodyARelativePos = new Vector3d(bodyA.getAbsolutePos()).sub(perspectivePos);
         Vector3d bodyBRelativePos = new Vector3d(bodyB.getAbsolutePos()).sub(perspectivePos);
 
-        double angularSizeA = Math.asin(bodyA.getRadius() / bodyARelativePos.length());
-        double angularSizeB = Math.asin(bodyB.getRadius() / bodyBRelativePos.length());
+        double angularSizeA = Math.asin(Mth.clamp(bodyA.getRadius() / bodyARelativePos.length(), -1.0d, 1.0d));
+        double angularSizeB = Math.asin(Mth.clamp(bodyB.getRadius() / bodyBRelativePos.length(), -1.0d, 1.0d));
 
         bodyARelativePos.normalize();
         bodyBRelativePos.normalize();

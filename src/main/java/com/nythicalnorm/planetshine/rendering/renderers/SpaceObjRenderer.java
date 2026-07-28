@@ -48,8 +48,8 @@ public class SpaceObjRenderer {
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    public static void renderPlanets(SpaceRenderable[] renderPlanets, PSClient css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
-        Optional<CelestialBody> planetOn = css.getCurrentPlanet();
+    public static void renderPlanets(SpaceRenderable[] renderPlanets, PSClient psClient, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
+        Optional<CelestialBody> planetOn = psClient.getCurrentPlanet();
         float currentAlbedo = 1.0f;
         CelestialBody currentPlanetIn = null;
         Optional<PlanetAtmosphere> atmosphere = Optional.empty();
@@ -61,8 +61,9 @@ public class SpaceObjRenderer {
                 currentAlbedo = PSRenderer.getSunAngleOpacity();
                 atmosphere = Optional.of(planetOn.get().getAtmosphere());
             }
-        } else {
-            AtmosphereRenderer.renderSpaceSky(poseStack, projectionMatrix);
+        } else if (psClient.isInsideAtmosphereInSpaceDim()) {
+            currentAlbedo = PSRenderer.getSunAngleOpacity();
+            atmosphere = Optional.of(psClient.getPlayerOrbit().getParent().getAtmosphere());
         }
 
         PSRenderer.drawStarBuffer(poseStack, projectionMatrix, currentAlbedo);
@@ -83,8 +84,8 @@ public class SpaceObjRenderer {
                 plnt.render(atmosphere, poseStack, projectionMatrix, currentAlbedo, isCurrentPlanetOn, opacityEasing);
 
                 if (isCurrentPlanetOn) {
-                    LodTexRenderer.renderLODs(poseStack, projectionMatrix, css.getPlanetTexManager().getLodTexAtlasID(),
-                            opacityEasing, css.getPlanetTexManager().getLodTexBuffer());
+                    LodTexRenderer.renderLODs(poseStack, projectionMatrix, psClient.getPlanetTexManager().getLodTexAtlasID(),
+                            opacityEasing, psClient.getPlanetTexManager().getLodTexBuffer());
                 }
 
                 RenderSystem.disableBlend();
