@@ -57,6 +57,14 @@ public class PlanetAtmosphere {
         return atmosphereHeight;
     }
 
+    public double getSafeAltitude() {
+        if (this.hasAtmosphere()) {
+            return atmosphereHeight + 1000d;
+        } else {
+            return 1000d;
+        }
+    }
+
     public double getAtmosphericPressureMultiplier() {
         return atmospherePressureMultiplier;
     }

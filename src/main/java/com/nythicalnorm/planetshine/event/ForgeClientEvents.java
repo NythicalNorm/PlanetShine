@@ -34,7 +34,7 @@ public class ForgeClientEvents {
         }
         else if (PSKeyBinds.OPEN_SPACECRAFT_HUD_KEY.consumeClick()) {
             PSClient.getInstance().ifPresent(psClient ->
-                    psClient.getScreenManager().openSpaceHUDScreen(psClient));
+                    psClient.getScreenManager().openPSSpacecraftScreen());
         }
     }
 

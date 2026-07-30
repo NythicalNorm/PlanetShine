@@ -148,11 +148,11 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     }
 
     @Override
-    public Screen getSpacecraftScreen() {
-        if (prevScreen == null) {
-            return super.getSpacecraftScreen();
+    public @Nullable PSSpacecraftScreen getSpacecraftScreen() {
+        if (prevScreen instanceof PSSpacecraftScreen psSpacecraftScreen) {
+            return psSpacecraftScreen;
         } else {
-            return prevScreen;
+            return null;
         }
     }
 
@@ -268,13 +268,18 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     public void onClose() {
         super.onClose();
         if (isSpacecraftScreenOpen) {
-            screenManager.openSpaceHUDScreen(PSClient.get());
+            screenManager.openPSSpacecraftScreen();
         }
+        this.saveScreenState();
+        screenManager.closeMapScreen();
+    }
+
+    @Override
+    public void saveScreenState() {
         OrbitalBody currentFocusedBody = focusableBodies[currentFocusedBodyIndex];
         if (currentFocusedBody != null) {
-            screenManager.setMapState(new MapState(this.cameraYrot, this.cameraXrot, this.zoomLevel, currentFocusedBody.getOrbitId()));
+            PSClient.get().getScreenManager().setMapState(new MapState(this.cameraYrot, this.cameraXrot, this.zoomLevel, currentFocusedBody.getOrbitId()));
         }
-        screenManager.closeMapScreen();
     }
 
     protected void setFocusBody(OrbitalBody body) {

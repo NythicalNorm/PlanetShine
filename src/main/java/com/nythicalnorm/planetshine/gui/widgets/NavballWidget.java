@@ -8,12 +8,12 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.gui.screen.ISpacecraftControlStateDisplay;
 import com.nythicalnorm.planetshine.gui.screen.ISpacecraftOrbitDataDisplay;
+import com.nythicalnorm.planetshine.gui.screen.PSSpacecraftScreen;
 import com.nythicalnorm.planetshine.rendering.generators.QuadSphereModelGenerator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
@@ -62,17 +62,17 @@ public class NavballWidget extends AbstractWidget {
     protected void renderWidget(@NotNull GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
         int xPos = getX();
         int yPos = getY();
-        Screen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
+        PSSpacecraftScreen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
 
-        if (spacecraftScreen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
-            Quaternionf invertedSpacecraftRot = new Quaternionf().set(orbitDataDisplay.getSpacecraftRotation()).invert();
+        if (spacecraftScreen != null) {
+            Quaternionf invertedSpacecraftRot = new Quaternionf().set(spacecraftScreen.getSpacecraftRotation()).invert();
 
-            this.renderNavBall(orbitDataDisplay, pGuiGraphics, invertedSpacecraftRot);
+            this.renderNavBall(spacecraftScreen, pGuiGraphics, invertedSpacecraftRot);
 
             pGuiGraphics.blit(NAVBALL_GUI_TEXTURE, xPos, yPos, 0, 0, 94, 86);
-            this.renderNavballIcons(pGuiGraphics, orbitDataDisplay, xPos, yPos, invertedSpacecraftRot);
+            this.renderNavballIcons(pGuiGraphics, spacecraftScreen, xPos, yPos, invertedSpacecraftRot);
 
-            this.renderRelativeVelocity(pGuiGraphics, xPos, yPos,(int) orbitDataDisplay.getRelativeVelocity().length());
+            this.renderRelativeVelocity(pGuiGraphics, xPos, yPos,(int) spacecraftScreen.getRelativeVelocity().length());
             this.renderGForceBar(pGuiGraphics, xPos, yPos);
         }
 

@@ -6,15 +6,21 @@ import com.nythicalnorm.planetshine.planettexgen.PlanetGradient;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
+import org.valkyrienskies.core.internal.world.VsiShipWorld;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -82,5 +88,28 @@ public class PSDataPackManager {
         }
 
         planetLoadedData = null;
+    }
+
+    public static void applyVSDimensionalData(Collection<CelestialBody> celestialBodies, MinecraftServer server) {
+        VsiShipWorld shipWorld = VSGameUtilsKt.getShipObjectWorld(server);
+        for (CelestialBody celestialBody : celestialBodies) {
+            if (celestialBody instanceof PlanetaryBody planetaryBody) {
+                ServerLevel planetLevel = planetaryBody.getCelestialServerData().getServerLevel();
+
+                if (planetaryBody.getDimensionalProperties().isAffectVSShipGravity() && planetLevel != null) {
+                    String dimensionID = VSGameUtilsKt.getDimensionId(planetLevel);
+                    double maxYpos = -1.0d;
+                    double seaLevel = 0.0d;
+                    double accelerationDueToGravity = planetaryBody.getAccelerationDueToGravity();
+
+                    if (planetaryBody.getAtmosphere().hasAtmosphere()) {
+                        seaLevel = planetLevel.getSeaLevel();
+                        maxYpos = 1000.0d * planetaryBody.getAtmosphere().getAtmosphericPressureMultiplier();
+                    }
+
+                    shipWorld.updateDimension(dimensionID, new Vector3d(0.0d, -accelerationDueToGravity, 0.0d), maxYpos, seaLevel);
+                }
+            }
+        }
     }
 }

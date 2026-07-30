@@ -62,16 +62,17 @@ public class PSClient extends UniverseStage {
         this.renderTickRunnables = new RunnableExecutor();
         minecraft = Minecraft.getInstance();
         this.playerOrbit = playerDataFromServer;
-        this.screenManager = new PSScreenManager();
         this.planetTexManager = new ClientTexManager(this);
         this.initPlanets();
 
         this.clientTimeHandler = new ClientTimeHandler();
         this.daylightRegion = new DaylightRegion();
         this.mapRenderer = new MapRenderer();
+        this.screenManager = new PSScreenManager(this);
         if (minecraft.level != null) {
             onClientLevelLoad(minecraft.level);
         }
+
         instance = this;
     }
 
@@ -132,12 +133,15 @@ public class PSClient extends UniverseStage {
 
         if (!SpaceUtils.isSpaceLevel(clientLevel)) {
             this.solarSystem.entityRemoveOrbital(this.playerOrbit, true);
+        } else {
+            this.screenManager.prepareForDimensionChange();
         }
 
         if (celestialBody != null) {
             ((CelestialBodyAccessor) clientLevel).ps$setCelestialBody(celestialBody);
             this.currentPlanetOn = celestialBody;
             this.currentPlanetOn.addChildBody(this.playerOrbit); // I don't know how i feel about this, should client players be a child of a planet when they are on the planet itself?
+            this.screenManager.prepareForDimensionChange();
         } else {
             this.playerOrbit.clearRotation();
             this.currentPlanetOn = null;

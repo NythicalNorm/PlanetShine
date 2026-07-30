@@ -1,8 +1,8 @@
 package com.nythicalnorm.planetshine.gui.widgets;
 
-import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.gui.screen.ISpacecraftControlStateDisplay;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -28,7 +28,7 @@ public class LeftPanelWidget extends AbstractWidget {
 
         pGuiGraphics.blit(LEFTPANEL_GUI_TEXTURE, x, y,0,0,66,35);
 
-        if (PSClient.get().getScreenManager().getSpacecraftScreen() instanceof ISpacecraftControlStateDisplay spacecraftDataDisplay) {
+        if (Minecraft.getInstance().screen instanceof ISpacecraftControlStateDisplay spacecraftDataDisplay) {
            if (spacecraftDataDisplay.isDockingMode()) {
                drawDockingMode(spacecraftDataDisplay, pGuiGraphics, x, y);
            } else {

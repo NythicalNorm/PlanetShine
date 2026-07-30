@@ -8,10 +8,12 @@ import com.nythicalnorm.planetshine.gui.widgets.TimeWarpWidget;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniondc;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -130,6 +132,15 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     }
 
     @Override
+    public double getAirDensityAtAltitude() {
+        if (this.controllingBody.getParent() != null) {
+            return AtmosphereCalc.getAirDensity(this.controllingBody.getParent(), this.getAltitude());
+        } else {
+            return 0.0d;
+        }
+    }
+
+    @Override
     public OrbitalElementsc getOrbitalElements() {
         return this.controllingBody.getOrbitalElements();
     }
@@ -140,10 +151,20 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     }
 
     @Override
+    public @Nullable PSSpacecraftScreen getSpacecraftScreen() {
+        return this;
+    }
+
+    @Override
     public void onClose() {
         super.onClose();
-        PSClient.get().getScreenManager().setSpacecraftScreenState(new SpacecraftScreenState(this.cameraYrot, this.cameraXrot, this.zoomLevel, this.viewMode,  this.navballWidget.getNavBallMode()));
+        this.saveScreenState();
         PSClient.get().getScreenManager().closeSpacecraftScreen();
+    }
+
+    @Override
+    public void saveScreenState() {
+        PSClient.get().getScreenManager().setSpacecraftScreenState(new SpacecraftScreenState(this.cameraYrot, this.cameraXrot, this.zoomLevel, this.viewMode,  this.navballWidget.getNavBallMode()));
     }
 
     @Override
@@ -161,6 +182,31 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
             this.cameraYrot = (float) -Math.toRadians(Minecraft.getInstance().player.getYRot());
             this.cameraXrot = (float) -Math.toRadians(Minecraft.getInstance().player.getXRot());
         }
+    }
+
+    public void orbitModeChanged(PSScreenManager.SpacecraftOrbitalState currentOrbitalState, PSScreenManager.SpacecraftOrbitalState newOrbitState) {
+        ViewMode oldViewMode = this.viewMode;
+
+        switch (newOrbitState) {
+            case ON_PLANET -> {
+                this.viewMode = ViewMode.NON_ROTATING;
+                this.navballWidget.setNavBallMode(NavballWidget.NavBallMode.SURFACE);
+            }
+            case SUB_ORBITAL -> {
+                this.viewMode = ViewMode.SURFACE_DOWN;
+                this.navballWidget.setNavBallMode(NavballWidget.NavBallMode.SURFACE);
+            }
+            case IN_ORBIT -> {
+                this.viewMode = ViewMode.NON_ROTATING;
+                this.navballWidget.setNavBallMode(NavballWidget.NavBallMode.ORBIT);
+            }
+        }
+
+        if (oldViewMode == ViewMode.LOCKED) {
+            this.viewMode = ViewMode.LOCKED;
+        }
+
+        this.saveScreenState();
     }
 
     public static class SpacecraftScreenState extends MouseLookScreen.MouseLookScreenState {

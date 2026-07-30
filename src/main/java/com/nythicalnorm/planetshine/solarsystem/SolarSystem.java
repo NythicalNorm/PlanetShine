@@ -123,6 +123,7 @@ public class SolarSystem {
         if (!spacecraftBody.isClientSide()) {
             spacecraftBody.setStateVecControlled(false);
             spacecraftBody.resetIntercepts(this.universeStage.getCurrentTime());
+            spacecraftBody.simulateFromKeplerian(this.universeStage.getCurrentTime());
         }
     }
 

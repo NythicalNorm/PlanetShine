@@ -85,6 +85,7 @@ public class PSServer extends UniverseStage {
 
     public void serverStarted() {
         this.hostSpaceManager.serverStarted();
+        PSDataPackManager.applyVSDimensionalData(solarSystem.getAllPlanetaryBodies().values(), this.server);
         server.execute(() -> planetTexHandler.loadOrCreatePlanetTex(server, this.solarSystem, spacecraftDataStorage.getModSaveFolder()));
     }
 

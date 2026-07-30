@@ -255,8 +255,11 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         // need to take into account the planets rotational velocity that is also transferred to the ship, earth moving at 1000 m/s at the equator etc...
         // though maybe I don't add this.
 
-        OrbitalElements orbitalElements = new OrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());
-        psServer.shipTeleportToOrbit(celestialBody, ship, orbitalElements, relativeOrbitPos, relativeOrbitVelocity, shipNewRot, ship.getAngularVelocity());
+        OrbitalElements orbitalElements = OrbitalElements.tryParseNonNaNOrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());
+
+        if (orbitalElements != null) {
+            psServer.shipTeleportToOrbit(celestialBody, ship, orbitalElements, relativeOrbitPos, relativeOrbitVelocity, shipNewRot, ship.getAngularVelocity());
+        }
     }
 
 

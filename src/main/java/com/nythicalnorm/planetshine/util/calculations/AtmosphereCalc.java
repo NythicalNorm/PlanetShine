@@ -87,7 +87,7 @@ public class AtmosphereCalc {
         double h0 = H[layer];
         double T0 = T[layer];
         double L0 = L[layer];
-        double P0 = P[layer] * celestialBody.getAtmosphere().getAtmosphericPressureMultiplier();
+        double P0 = P[layer];
 
         double temperature;
         double pressure;
@@ -105,7 +105,7 @@ public class AtmosphereCalc {
         }
 
         // Ideal gas law
-        return pressure / (R * temperature);
+        return celestialBody.getAtmosphere().getAtmosphericPressureMultiplier() * (pressure / (R * temperature));
     }
 
     public static Vector3d getPlanetGroundSpeedAt(PlanetaryBody planetBody,Vector3dc position, Vector3fc northPoleDir) {

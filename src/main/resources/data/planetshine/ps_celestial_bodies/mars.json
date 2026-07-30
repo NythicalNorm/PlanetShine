@@ -26,7 +26,7 @@
     "has_atmosphere": true,
     "surface_color": "ff8860",
     "atmosphere_color": "bdb5ab",
-    "atmosphere_height": 50000,
+    "atmosphere_height": 80000,
     "atmosphere_pressure": 0.05,
     "atmosphere_alpha": 0.08,
     "alpha_night": 1.0,

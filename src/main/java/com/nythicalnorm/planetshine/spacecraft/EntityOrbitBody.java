@@ -2,6 +2,8 @@ package com.nythicalnorm.planetshine.spacecraft;
 
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundSetOrbitIntercept;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
@@ -238,6 +240,9 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
     protected void completedOneOrbit(long TimeElapsed) {
         this.resetIntercepts(TimeElapsed);
         this.calculateIntercepts(TimeElapsed);
+        PSServer.addGameTickRunnable(() ->
+                PacketHandler.sendToAllClients(new ClientboundSetOrbitIntercept(this.getOrbitId(), this.nextOrbitIntercept))
+        );
     }
 
     @PhysTickOnly

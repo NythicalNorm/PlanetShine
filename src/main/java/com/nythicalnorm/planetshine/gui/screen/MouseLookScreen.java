@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class MouseLookScreen extends Screen {
@@ -85,6 +86,10 @@ public abstract class MouseLookScreen extends Screen {
         return viewMode;
     }
 
+    public void setViewMode(ViewMode viewMode) {
+        this.viewMode = viewMode;
+    }
+
     protected void loadRotState(MouseLookScreenState rotState) {
         this.cameraYrot = rotState.getCameraYrot();
         this.cameraXrot = rotState.getCameraXrot();
@@ -122,8 +127,8 @@ public abstract class MouseLookScreen extends Screen {
         return (float) Math.min(zoomLevel * shipCameraMinDist, maxRenderDist);
     }
 
-    public Screen getSpacecraftScreen () {
-        return this;
+    public @Nullable PSSpacecraftScreen getSpacecraftScreen() {
+        return null;
     }
 
     public float getViewYrot() {
@@ -136,6 +141,9 @@ public abstract class MouseLookScreen extends Screen {
 
     public boolean resetKeysOnScreenOpen() {
         return false;
+    }
+
+    public void saveScreenState() {
     }
 
     @Override

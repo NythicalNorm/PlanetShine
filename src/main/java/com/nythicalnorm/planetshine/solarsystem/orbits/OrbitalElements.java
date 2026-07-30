@@ -12,6 +12,7 @@ import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 import java.util.OptionalLong;
+import java.util.Random;
 
 public class OrbitalElements implements OrbitalElementsc {
     public static final double UniversalGravitationalConstant = 6.6743E-11d;
@@ -199,7 +200,7 @@ public class OrbitalElements implements OrbitalElementsc {
 
             double timeDiffTerm = (anomaly - Eccentricity * Math.sin(anomaly)) / this.MeanAngularMotion;
             this.periapsisTime = TimeElapsed - TimeCalc.timeDoubleToLong(timeDiffTerm);
-            if (this.periapsisTime < TimeElapsed) {
+            if (this.periapsisTime > TimeElapsed) {
                 this.periapsisTime = this.periapsisTime + getOrbitalPeriodLong();
             }
             return anomaly;
@@ -236,6 +237,42 @@ public class OrbitalElements implements OrbitalElementsc {
     @Override
     public void initCalcs(double parentMass) {
         setOrbitalPeriod(parentMass);
+    }
+
+    public static OrbitalElements tryParseNonNaNOrbitalElements(Vector3d relativeOrbitPos, Vector3d relativeOrbitVelocity,
+                                                                long currentTime, double mass) {
+        OrbitalElements newOrbitalElement;
+        Vector3d newVelocity = new Vector3d(relativeOrbitVelocity);
+
+        for(int i = 0; i < 10; i++) {
+            newOrbitalElement = new OrbitalElements(relativeOrbitPos, newVelocity, currentTime, mass);
+            if (!newOrbitalElement.isNaN()) {
+                return newOrbitalElement;
+            } else {
+                java.util.Random random = new Random();
+                double randX = (random.nextDouble() - 0.5d) * 10.0d;
+                double randY = (random.nextDouble() - 0.5d) * 10.0d;
+                double randZ = (random.nextDouble() - 0.5d) * 10.0d;
+                newVelocity.set(relativeOrbitVelocity).add(randX, randY, randZ);
+            }
+        }
+
+        return null;
+    }
+
+    public boolean isNaN() {
+        boolean isQuaternionNan;
+
+        if (orbitRotation != null) {
+            isQuaternionNan = Double.isNaN(orbitRotation.x()) || Double.isNaN(orbitRotation.y()) ||
+                    Double.isNaN(orbitRotation.z()) || Double.isNaN(orbitRotation.w());
+        } else {
+            isQuaternionNan = true;
+        }
+
+        return Double.isNaN(SemiMajorAxis) || Double.isNaN(Eccentricity) || Double.isNaN(Inclination) ||
+                Double.isNaN(ArgumentOfPeriapsis) || Double.isNaN(LongitudeOfAscendingNode) || Double.isNaN(Mu) ||
+                Double.isNaN(MeanAngularMotion) || isQuaternionNan;
     }
 
     @Override

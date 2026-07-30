@@ -9,6 +9,7 @@ public interface ISpacecraftOrbitDataDisplay {
     float getGForce();
     Vector3dc getRelativeVelocity();
     double getAltitude();
+    double getAirDensityAtAltitude();
     OrbitalElementsc getOrbitalElements();
     Vector3dc getRelativePosition();
 }

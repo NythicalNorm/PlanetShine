@@ -62,8 +62,8 @@ public class SpaceObjRenderer {
                 atmosphere = Optional.of(planetOn.get().getAtmosphere());
             }
         } else if (psClient.isInsideAtmosphereInSpaceDim()) {
-            currentAlbedo = PSRenderer.getSunAngleOpacity();
-            atmosphere = Optional.of(psClient.getPlayerOrbit().getParent().getAtmosphere());
+            // currentAlbedo = 1.0f - psClient.getDaylightRegion().getSunOcclusion();
+            // atmosphere = Optional.of(psClient.getPlayerOrbit().getParent().getAtmosphere());
         }
 
         PSRenderer.drawStarBuffer(poseStack, projectionMatrix, currentAlbedo);

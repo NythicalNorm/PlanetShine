@@ -64,7 +64,7 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements Ma
                 .negate()
                 .normalize();
 
-        Vector3d forward = new Vector3d(0, 1.0f, 0);
+        Vector3d forward = new Vector3d(0, -1.0f, 0);
 
         // If forward is nearly parallel to down, choose another vector.
 //        if (Math.abs(down.dot(forward)) > 0.999f)
