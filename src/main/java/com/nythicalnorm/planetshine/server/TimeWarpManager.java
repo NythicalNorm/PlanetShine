@@ -3,11 +3,14 @@ package com.nythicalnorm.planetshine.server;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.time.ClientboundTimeWarpUpdate;
-import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
+import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
+import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.monster.Monster;
@@ -15,17 +18,16 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TimeWarpManager {
     private final PSServer psServer;
-    private final SolarSystem solarSystem;
     private volatile boolean sleepTimeWarping = false;
 
 
     public TimeWarpManager(PSServer psServer) {
         this.psServer = psServer;
-        this.solarSystem = psServer.getSolarSystem();
     }
 
     public boolean isSleepTimeWarping() {
@@ -66,30 +68,73 @@ public class TimeWarpManager {
         return new TimeWarpAllowanceReason(null, true);
     }
 
-    private TimeWarpAllowanceReason checkIfTimeWarpIsPossible() {
-//        for (EntityOrbitBody<?> entityOrbitBody : solarSystem.getAllEntitiesOrbitsList()) {
-//
-//        }
-
-        return new TimeWarpAllowanceReason(null, true);
-    }
-
     private boolean isStartingTimeWarp(long proposedSetTimeWarpSpeed) {
         return proposedSetTimeWarpSpeed > UniverseStage.timeWarpSettings.get(0) && psServer.getCurrentTimeWarpSetting() == 0;
     }
 
     private TimeWarpAllowanceReason isPlayerAllowedToTimeWarp(ServerPlayer player, boolean allowOnPlanet) {
-        if (player.getAbilities().instabuild) {
+        if (player.getAbilities().instabuild || SpaceUtils.isSpaceLevel(player.level())) {
             return new TimeWarpAllowanceReason(null, true);
-        }
-        if (SpaceUtils.isSpaceLevel(player.level())) {
-            return new TimeWarpAllowanceReason(null, true);
-        } else if (allowOnPlanet) {
-            return monstersNearbyCheck(player);
+        } else if (PlanetShineConfig.doAllowTimeWarpOnPlanets()) {
+            if (allowOnPlanet) {
+                return monstersNearbyCheck(player);
+            } else {
+                return new TimeWarpAllowanceReason(Component.translatable("planetshine.timewarp.not_in_space"), false);
+            }
         } else {
-            return new TimeWarpAllowanceReason(Component.translatable("planetshine.timewarp.not_in_space"), false);
+            return new TimeWarpAllowanceReason(Component.translatable("planetshine.timewarp.not_allowed_on_planets"), false);
+        }
+    }
+
+    public void onGameTick(boolean timeWarping) {
+        if (timeWarping) {
+            TimeWarpAllowanceReason reason = checkIfTimeWarpIsPossible();
+            if (!reason.isAllowed()) {
+                long timePassPerTick = TimeCalc.TimePerTickToTimePerMilliTick(UniverseStage.timeWarpSettings.get(0));
+                psServer.setTimePassPerTick(timePassPerTick);
+                PacketHandler.sendToAllClients(new ClientboundTimeWarpUpdate(true, timePassPerTick));
+                psServer.getMCServer().getPlayerList().broadcastSystemMessage(reason.text(), true);
+            }
+        }
+    }
+
+    public TimeWarpAllowanceReason checkIfTimeWarpIsPossible() {
+        List<Component> inAtmosphereNames = new ArrayList<>();
+
+        for (ServerPlayer player : psServer.getMCServer().getPlayerList().getPlayers()) {
+            if (player instanceof PlayerOrbitAccessor playerOrbitAccessor && playerOrbitAccessor.getOrbitalBody() != null &&
+                    playerOrbitAccessor.getOrbitalBody().isBodyEntityLoaded() && playerOrbitAccessor.getOrbitalBody().getParent() != null) {
+                AbstractPlayerOrbitBody playerOrbitBody = playerOrbitAccessor.getOrbitalBody();
+                double playerAltitude = playerOrbitBody.getAltitude();
+                if (playerAltitude <= playerOrbitBody.getParent().getAtmosphere().getAtmosphereHeight() || playerAltitude <= 10000.0d) {
+                    inAtmosphereNames.add(player.getName());
+                }
+            }
         }
 
+        Component allowanceResult = null;
+
+        if (!inAtmosphereNames.isEmpty()) {
+            if (inAtmosphereNames.size() == 1) {
+                allowanceResult = Component.translatable("planetshine.timewarp.not_possible").append(inAtmosphereNames.get(0))
+                        .append(Component.translatable("planetshine.timewarp.player_reasons_singular"));
+            } else {
+                MutableComponent combinedNames = Component.empty();
+                for (int i = 0; i < (inAtmosphereNames.size() - 1); i++) {
+                    combinedNames.append(inAtmosphereNames.get(i)).append(Component.literal(", "));
+                }
+                combinedNames.append(inAtmosphereNames.get(inAtmosphereNames.size() - 1));
+
+                allowanceResult = Component.translatable("planetshine.timewarp.not_possible").append(combinedNames)
+                        .append(Component.translatable("planetshine.timewarp.player_reasons_plural"));
+            }
+        }
+
+        if (allowanceResult == null) {
+            return new TimeWarpAllowanceReason(null, true);
+        } else {
+            return new TimeWarpAllowanceReason(allowanceResult, false);
+        }
     }
 
     private TimeWarpAllowanceReason monstersNearbyCheck(ServerPlayer serverPlayer) {

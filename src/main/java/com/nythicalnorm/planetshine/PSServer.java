@@ -135,6 +135,7 @@ public class PSServer extends UniverseStage {
 
     public void OnGameTickEnd() {
         this.hostSpaceManager.onGameTick();
+        this.timeWarpManager.onGameTick(this.isTimeWarping());
         this.orbitalBodyUpdater.sendUpdates();
         this.solarSystem.onServerTick(this.getSpaceLevel());
     }

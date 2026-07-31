@@ -20,6 +20,7 @@ import com.nythicalnorm.planetshine.storage.IDataSavable;
 import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,6 +54,7 @@ import java.util.concurrent.ConcurrentMap;
 public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     private final PSServer psServer;
     private ShipTeleporter shipTeleporter;
+    private final ShipCrashHandler shipCrashHandler;
     private final ConcurrentMap<Vector2ic, OrbitHostSpace> activeHostSpaces;
     private final Map<OrbitId, Vector2ic> allRegisteredHostSpaces;
     private SpaceServerLevel spaceLevel;
@@ -66,6 +68,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         this.psServer = psServer;
         this.allRegisteredHostSpaces = allRegisteredHostSpaces;
         this.activeHostSpaces = new ConcurrentHashMap<>();
+        this.shipCrashHandler = new ShipCrashHandler(psServer);
         entityOrbitBodies.forEach(entityOrbitBody -> {
             if (entityOrbitBody.isHostOfItsSpace()) {
                 this.getOrCreateHostSpace(entityOrbitBody);
@@ -165,6 +168,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     public void onGameTick() {
         activeHostSpaces.forEach((vector2ic, orbitHostSpace) -> orbitHostSpace.OnGameTick());
 
+        this.shipCrashHandler.onGameTick();
         this.checkShipTeleportToSpace();
         this.checkEntityTeleportToPlanet();
         if (spaceLevel.getGameTime() % 20L == 0) {
@@ -268,11 +272,26 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
             if (entityOrbitBody.isHostOfItsSpace() &&  entityOrbitBody.getOrbitalElements() != null && entityOrbitBody.getParent() != null &&
                     entityOrbitBody.getOrbitalElements().getPeriapsis() <= entityOrbitBody.getParent().getRadius() &&
                     entityOrbitBody.getAltitude() < PlanetShineConfig.getTeleportToGroundHeight()) {
+
                 ServerLevel planetLevel = entityOrbitBody.getParent().getCelestialServerData().getServerLevel();
+
                 if (planetLevel != null && entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.isBodyEntityLoaded()) {
                     Vector2d pos = PlanetCalc.getDimensionPosition(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent());
+
                     if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody) {
                         teleportEntity(playerOrbitBody.getBody(), planetLevel, pos.x, PlanetShineConfig.getTeleportToGroundHeight(), pos.y);
+
+                        double impactVelocity = new Vector3d(playerOrbitBody.getRelativeVelocity()).length();
+                        if (impactVelocity >= PlanetShineConfig.getSpeedForShipCrash()) {
+                            this.shipCrashHandler.doEntityCrashDamage(planetLevel.getEntity(playerOrbitBody.getBody().getId()), impactVelocity);
+                            psServer.getMCServer().getPlayerList().broadcastSystemMessage(
+                                    Component.translatable("planetshine.ui.player_crash_message",
+                                    playerOrbitBody.getBody().getName(),
+                                    entityOrbitBody.getParent().getName()),
+                                    false
+                            );
+                        }
+
                         psServer.getSolarSystem().entityRemoveOrbital(entityOrbitBody, true);
                         PacketHandler.sendToAllClients(new ClientboundOrbitRemove(playerOrbitBody.getOrbitId()));
                     } else if (entityOrbitBody instanceof ServerSpaceshipBody spaceshipBody) {
@@ -286,20 +305,33 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     }
 
     private void teleportShipToGround(ServerSpaceshipBody spaceshipBody, Vector2d pos, SpaceServerLevel spaceLevel, ServerLevel planetLevel) {
-        if (spaceshipBody.getBody() != null) {
+        if (spaceshipBody.getBody() == null) {
+            return;
+        }
+        if (spaceshipBody.isChunkLoaded()) {
             BodyKinematics bodyKinematics = spaceshipBody.getBody().getKinematics();
             Vector3d planetPos = new Vector3d(pos.x, PlanetShineConfig.getTeleportToGroundHeight(), pos.y);
 
             Quaterniond shipToSpace = PlanetCalc.getPlanetToSpaceRotation(planetPos, spaceshipBody.getParent());
+            Vector3d velocity = new Vector3d(spaceshipBody.getRelativeVelocity()).rotate(shipToSpace);
+            this.shipCrashHandler.handleUpcomingCrash(spaceshipBody.getBody(), planetLevel, velocity);
+
+            if (velocity.length() >= PlanetShineConfig.getSpeedForShipCrash()) {
+                planetPos.set(this.shipCrashHandler.getCrashTeleportPos(planetLevel, planetPos));
+            }
+
             shipToSpace.mul(spaceshipBody.getBody().getTransform().getRotation());
-            // don't apply this
-            // Vector3d velocity = new Vector3d(spaceshipBody.getRelativeVelocity()).rotate(shipNewRot);
 
             ShipTeleportData shipTeleportData = new ShipTeleportDataImpl(planetPos, shipToSpace, new Vector3d(),
                     bodyKinematics.getAngularVelocity(), VSGameUtilsKt.getDimensionId(planetLevel), null, null);
 
             this.getShipTeleporter().teleportShipsWithEntities((LoadedServerShip) spaceshipBody.getBody(),
                     shipTeleportData, spaceLevel, planetLevel);
+        } else {
+            VSGameUtilsKt.getShipObjectWorld(spaceLevel).deleteShip((ServerShip) spaceshipBody.getBody());
+            if (spaceshipBody.getBody().getSlug() != null) {
+                this.shipCrashHandler.sendShipCrashMessage(Component.literal(spaceshipBody.getBody().getSlug()), planetLevel);
+            }
         }
     }
 

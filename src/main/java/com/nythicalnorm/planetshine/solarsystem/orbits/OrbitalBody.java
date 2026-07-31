@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.solarsystem.orbits;
 
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -162,6 +163,13 @@ public abstract class OrbitalBody {
 
         public void setOrbitalElements(@Nullable OrbitalElementsc orbitalElements) {
             this.orbitalElements = new OrbitalElements(orbitalElements);
+            Vector3d relativeVelocity = new Vector3d();
+            Vector3d relativePosition = new Vector3d();
+            if (UniverseStage.get() != null) {
+                this.orbitalElements.ToCartesian(UniverseStage.get().getCurrentTime(), relativePosition, relativeVelocity);
+            }
+            this.setRelativeOrbitalPos(relativePosition);
+            this.setRelativeVelocity(relativeVelocity);
         }
 
         public void setParent(@Nullable OrbitalBody parent) {

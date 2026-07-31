@@ -48,13 +48,15 @@ public class PSTeleportCommand {
                                 double semiMajorAxisInput, double eccentricity, double inclination) {
         PSServer.getInstance().ifPresent(psServer -> {
             CelestialBody planet = psServer.getSolarSystem().getPlanet(body);
+            long startingTime = psServer.getCurrentTime() + TimeCalc.timeDoubleToLong(0.0f);
+
             for(Entity entity : pTargets) {
                 if (entity instanceof ServerPlayer && planet != null) {
+                    startingTime = startingTime + TimeCalc.timeDoubleToLong(10000.0f);
                     double semiMajorAxis = (semiMajorAxisInput*1000d) + planet.getRadius();
                     if (semiMajorAxisInput < 0) {
                         semiMajorAxis = (semiMajorAxisInput*1000d) - planet.getRadius();
                     }
-                    long startingTime = psServer.getCurrentTime() + TimeCalc.timeDoubleToLong(20000f);
                     OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingTime, inclination, 0d, 0d, planet.getMass());
                     Vector3d relativePosition = new Vector3d();
                     Vector3d relativeVelocity = new Vector3d();

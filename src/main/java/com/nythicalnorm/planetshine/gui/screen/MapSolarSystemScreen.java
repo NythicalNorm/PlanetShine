@@ -21,6 +21,7 @@ import com.nythicalnorm.planetshine.util.ProjectionUtils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -299,7 +300,8 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         if (focusableBodies[currentFocusedBodyIndex] instanceof CelestialBody celestialBody) {
             radiusZoomLevel = celestialBody.getRadius();
         } else if (focusableBodies[currentFocusedBodyIndex] instanceof EntityOrbitBody) {
-            radiusZoomLevel = 1000000;
+            double minRadius = focusableBodies[currentFocusedBodyIndex].getAltitude() / 50;
+            radiusZoomLevel = Mth.clamp(minRadius, 10_000, 1_000_000);
         }
         updateMapRenderables();
     }

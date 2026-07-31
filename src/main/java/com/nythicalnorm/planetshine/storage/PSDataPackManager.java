@@ -104,7 +104,7 @@ public class PSDataPackManager {
 
                     if (planetaryBody.getAtmosphere().hasAtmosphere()) {
                         seaLevel = planetLevel.getSeaLevel();
-                        maxYpos = 1000.0d * planetaryBody.getAtmosphere().getAtmosphericPressureMultiplier();
+                        maxYpos = 2000.0d * planetaryBody.getAtmosphere().getAtmosphericPressureMultiplier();
                     }
 
                     shipWorld.updateDimension(dimensionID, new Vector3d(0.0d, -accelerationDueToGravity, 0.0d), maxYpos, seaLevel);

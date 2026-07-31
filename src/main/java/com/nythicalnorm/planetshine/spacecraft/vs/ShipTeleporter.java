@@ -96,7 +96,8 @@ public class ShipTeleporter {
             Quaterniond rotNew = transformRot(new Quaterniond(childShip.getTransform().getRotation()),
                     oldParentTransform.getRotation(), parentTeleportData.getNewRot());
 
-            ShipTeleportDataImpl childShipData = new ShipTeleportDataImpl(posNew, rotNew, new Vector3d(), childShip.getAngularVelocity(),
+            ShipTeleportDataImpl childShipData = new ShipTeleportDataImpl(posNew, rotNew, new Vector3d(childShip.getVelocity()).add(parentTeleportData.getNewVel()),
+                    childShip.getAngularVelocity(),
                     parentTeleportData.getNewDimension(), null, null);
             shipTeleportDataQueue.add(new ShipToTeleport(childShip, childShipData));
             alreadyTeleported.add(childShip.getId());

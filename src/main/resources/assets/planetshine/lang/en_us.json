@@ -10,6 +10,11 @@
   "planetshine.timewarp.set": "Setting Time Warp to: %1$sx",
   "planetshine.timewarp.not_in_space": "Can't time warp on planets. Shift click a bed, or go to space to time warp",
   "planetshine.timewarp.mobs_nearby": "Can't time warp now, there are monsters nearby ;)",
+  "planetshine.timewarp.not_allowed_on_planets": "not allowed to time warp while on planets, go to space to time warp",
+  "planetshine.timewarp.not_possible": "Cannot Time-Warp because ",
+  "planetshine.timewarp.player_reasons_singular": " is currently in an atmosphere or too close to a planet",
+  "planetshine.timewarp.player_reasons_plural": " are currently in an atmosphere or too close to a planet",
+
   "planetshine.state.planetgen_start": "Starting Planet texture generation...",
   "planetshine.state.planetgen_end": "planet %1$s's texture generation complete",
 
@@ -29,8 +34,12 @@
   "planetshine.planets.earth": "Earth",
   "planetshine.planets.luna": "The Moon",
   "planetshine.planets.mars": "Mars",
+  "planetshine.planets.mercury": "Mercury",
+  "planetshine.planets.venus": "Venus",
   "planetshine.planets.sun": "Sun",
 
   "planetshine.ui.navball_mode_set": "Navball Mode: %1$s",
+  "planetshine.ui.ship_crash_message": "Ship %1$s has crashed into %2$s",
+  "planetshine.ui.player_crash_message": "Player %1$s has crashed into %2$s",
   "planetshine.ui.view_mode_set": "Viewing Mode: %1$s"
 }

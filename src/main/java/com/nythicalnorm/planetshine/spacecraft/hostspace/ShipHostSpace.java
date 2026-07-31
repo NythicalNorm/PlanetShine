@@ -74,6 +74,15 @@ public class ShipHostSpace extends OrbitHostSpace {
     }
 
     @Override
+    protected double getMaxDistToHostCenter() {
+        double shipSize = 0.0d;
+        if (this.getHostBody().isBodyEntityLoaded()) {
+            shipSize = MiscCalc.getShipMaxLength((Ship)this.hostBody.getBody());
+        }
+        return super.getMaxDistToHostCenter() + shipSize;
+    }
+
+    @Override
     public @Nullable EntityOrbitBody<?> findNewHost() {
         if (!this.nonHostShips.isEmpty()) {
             EntityOrbitBody<?> newHost = null;

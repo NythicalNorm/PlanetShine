@@ -124,6 +124,7 @@ public class SolarSystem {
             spacecraftBody.setStateVecControlled(false);
             spacecraftBody.resetIntercepts(this.universeStage.getCurrentTime());
             spacecraftBody.simulateFromKeplerian(this.universeStage.getCurrentTime());
+            PSServer.sendOrbitUpdateToRelevantPlayers(spacecraftBody);
         }
     }
 

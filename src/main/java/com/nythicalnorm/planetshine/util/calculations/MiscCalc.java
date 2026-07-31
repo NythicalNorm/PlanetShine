@@ -42,6 +42,22 @@ public class MiscCalc {
         return (aabb.maxX() - aabb.minX()) * (aabb.maxY() - aabb.minY()) * (aabb.maxZ() - aabb.minZ());
     }
 
+    public static int getShipMaxLength(@Nullable Ship ship) {
+        if (ship == null){
+            return 0;
+        }
+        AABBic aabb = ship.getShipAABB();
+        if (aabb == null) {
+            return 0;
+        }
+
+        int xSpan = aabb.maxX() - aabb.minX();
+        int ySpan = aabb.maxY() - aabb.minY();
+        int zSpan = aabb.maxZ() - aabb.minZ();
+
+        return Math.max(xSpan, Math.max(ySpan, zSpan));
+    }
+
     public static float[] getRGBAFloats(int val, float alpha) {
         float[] rgbaColor = new float[4];
 

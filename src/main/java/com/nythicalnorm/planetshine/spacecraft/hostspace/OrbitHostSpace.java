@@ -14,6 +14,8 @@ import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -24,6 +26,7 @@ import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 import org.valkyrienskies.core.api.world.PhysLevel;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -73,24 +76,50 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     public void OnGameTick() {
         this.sunOcclusion = DayNightCycleCalc.getSunOcclusionForSpacecraft(this.hostBody);
         Vector3d velocity = MiscCalc.pollVectorQueue(velocityForLastGameTick);
-
-        if (velocity.x() == 0.0d && velocity.y() == 0.0d && velocity.z() == 0.0d) {
-            return;
-        }
+        boolean applyVelocity = velocity.x() != 0.0d || velocity.y() != 0.0d || velocity.z() != 0.0d;
 
         Iterator<Entity> entityIterator = this.nonHostEntities.iterator();
+        double maxDistToCenter = this.getMaxDistToHostCenter();
 
         while (entityIterator.hasNext()) {
             Entity entity = entityIterator.next();
-            if (PSServer.get().getHostSpaceManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y())
-                    && !entity.isPassenger()) {
-                Vec3 ogVel = entity.getDeltaMovement();
-                entity.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
-                        ogVel.z - velocity.z());
-            } else {
-                removeEntityFromHostSpace(entity);
+            if (PSServer.get().getHostSpaceManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y()))
+            {
+                if (!entity.isPassenger() && applyVelocity) {
+                    Vec3 ogVel = entity.getDeltaMovement();
+                    entity.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
+                            ogVel.z - velocity.z());
+                }
+                if (!VSGameUtilsKt.isBlockInShipyard(entity.level(), entity.blockPosition()) &&
+                        this.originPos.distance(entity.blockPosition().getX(), entity.blockPosition().getZ()) > maxDistToCenter) {
+                    removeEntityFromHostSpace(entity);
+                }
             }
         }
+
+        Iterator<ServerPlayerOrbitBody> playerIterator = this.playerOrbitBodies.iterator();
+
+        while (playerIterator.hasNext()) {
+            ServerPlayerOrbitBody playerOrbitBody = playerIterator.next();
+            ServerPlayer player = (ServerPlayer) playerOrbitBody.getBody();
+            if (PSServer.get().getHostSpaceManager().getHostSpacePos(player.position()).equals(this.originPos.x(), this.originPos.y()))
+            {
+                if (!player.isPassenger() && applyVelocity) {
+                    Vec3 ogVel = player.getDeltaMovement();
+                    player.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
+                            ogVel.z - velocity.z());
+                    player.connection.send(new ClientboundSetEntityMotionPacket(player));
+                }
+                if (!VSGameUtilsKt.isBlockInShipyard(player.level(), player.blockPosition()) &&
+                        this.originPos.distance(player.blockPosition().getX(), player.blockPosition().getZ()) > maxDistToCenter) {
+                    this.playerOrbitBodyLeft(playerOrbitBody);
+                }
+            }
+        }
+    }
+
+    protected double getMaxDistToHostCenter() {
+        return PSServer.get().getMCServer().getPlayerList().getViewDistance() * 16;
     }
 
     @PhysTickOnly
@@ -172,6 +201,20 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         return originOffset.add(entityBodyOffset);
     }
 
+    public void playerOrbitBodyLeft(ServerPlayerOrbitBody playerOrbitBody) {
+        OrbitHostSpace newPlayerHost = PSServer.get().getHostSpaceManager().getOrCreateHostSpace(playerOrbitBody);
+        Vector3dc originDifference = getHostPosDifference(this, newPlayerHost, playerOrbitBody);
+        Player player = playerOrbitBody.getBody();
+
+        if (playerOrbitBody.isBodyEntityLoaded() && !player.isPassenger()) {
+
+            playerOrbitBody.getBody().teleportTo(player.position().x() + originDifference.x(),
+                    player.position().y() + originDifference.y(),
+                    player.position().z() + originDifference.z());
+        }
+        this.playerOrbitBodies.removeIf(playerBody -> playerBody.getOrbitId() == playerOrbitBody.getOrbitId());
+    }
+
     public void handleHostSpaceHandover(EntityOrbitBody<?> orbitBody, OrbitHostSpace newHost) {
         Vector3dc originDifference = getHostPosDifference(this, newHost, orbitBody);
 
@@ -188,7 +231,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
             Player player = playerOrbitBody.getBody();
 
             if (playerOrbitBody.isBodyEntityLoaded() && !player.isPassenger()) {
-                playerOrbitBody.getBody().teleportTo(player.position().x() + originDifference.x(),
+                player.teleportTo(player.position().x() + originDifference.x(),
                         player.position().y() + originDifference.y(),
                         player.position().z() + originDifference.z());
             }
@@ -217,6 +260,10 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                 orbitBodyConsumer.accept(playerOrbitBody.getBody());
             }
         }
+    }
+
+    public boolean hasPlayers() {
+        return !this.playerOrbitBodies.isEmpty();
     }
 
     @Override

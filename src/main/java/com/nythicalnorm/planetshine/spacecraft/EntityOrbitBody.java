@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundSetOrbitInter
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
@@ -60,25 +61,6 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
             return;
         }
 
-        // updating if its in atmosphere
-        if (!this.isClientSide && this.isHostOfItsSpace() && this.isBodyEntityLoaded()) {
-            boolean isNowInStateVec =
-                    (this.getAltitude() <= this.parent.getAtmosphere().getAtmosphereHeight() && this.parent.getAtmosphere().hasAtmosphere());// ||
-//                    (this.relativeVelocity.length() < (this.parent.getEscapeVelocity()) / 250.0d);
-
-            if (isStateVecControlled && !isNowInStateVec) {
-                // exiting atmosphere
-                this.resetIntercepts(TimeElapsed);
-                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
-                if (this.orbitalElements.getEccentricity() > 0.9999d && !this.orbitalElements.isHyperbolic()) {
-                    isNowInStateVec = true;
-                }
-            }
-            else if (isNowInStateVec && !isStateVecControlled) {
-                // entering atmosphere
-            }
-            this.isStateVecControlled = isNowInStateVec;
-        }
         if (!isStateVecControlled && !isClientSide && this.nextPeriapsisTime.isPresent() && TimeElapsed > this.nextPeriapsisTime.getAsLong()) {
             this.completedOneOrbit(TimeElapsed);
         }
@@ -111,7 +93,15 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
             } else if (!isClientSide) { // if it is accelerating do the special calc for this tick
                 this.simulateNonTimeWarp(deltaTime);
 
-                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity,
+                        TimeElapsed);
+                if (this.orbitalElements.isNaN()) {
+                    this.orbitalElements = OrbitalElements.tryParseNonNaNOrbitalElements(this.relativeOrbitalPos, this.relativeVelocity,
+                            TimeElapsed, this.parent.getMass());
+                    if (this.orbitalElements == null) {
+                        PlanetShine.logError("Entity Orbit of " + this.getDisplayName().getString() + " is invalid, no other calculations will occur.");
+                    }
+                }
 
                 if (this.isStateVecControlled) {
                     PSServer.sendStateUpdateToRelevantPlayers(this);
@@ -123,6 +113,26 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         }
 
         this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
+
+        // updating if its in atmosphere
+        if (!this.isClientSide && this.isHostOfItsSpace() && this.isBodyEntityLoaded()) {
+            boolean isNowInStateVec =
+                    (this.getAltitude() <= this.parent.getAtmosphere().getAtmosphereHeight() && this.parent.getAtmosphere().hasAtmosphere());// ||
+//                    (this.relativeVelocity.length() < (this.parent.getEscapeVelocity()) / 250.0d);
+
+            if (isStateVecControlled && !isNowInStateVec) {
+                // exiting atmosphere
+                this.resetIntercepts(TimeElapsed);
+                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+                if (this.orbitalElements.getEccentricity() > 0.9999d && !this.orbitalElements.isHyperbolic()) {
+                    isNowInStateVec = true;
+                }
+            }
+            else if (isNowInStateVec && !isStateVecControlled) {
+                // entering atmosphere
+            }
+            this.isStateVecControlled = isNowInStateVec;
+        }
     }
 
     public void simulateFromKeplerian(long timeElapsed) {
@@ -292,6 +302,10 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         } else {
             return hostSpace.equals(this.id);
         }
+    }
+
+    public boolean isChunkLoaded() {
+        return this.orbitHostSpace.get() != null && this.orbitHostSpace.get().hasPlayers();
     }
 
     // Thread safe, don't call this while time warping
