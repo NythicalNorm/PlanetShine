@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
-import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -16,7 +15,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @OnlyIn(Dist.CLIENT)
@@ -51,15 +49,15 @@ public abstract class LevelRendererMixin {
         }
     }
 
-    @ModifyVariable(method = "renderClouds", at = @At("LOAD"), ordinal = 0, argsOnly = true)
-    private double changeCloudSpeed(double value) {
-        PSClient psClient = PSClient.get();
-        if (psClient != null) {
-            if (psClient.doRender()) {
-                return TimeCalc.TimePerMilliTickToTick(psClient.getCurrentTime()) * 0.03F;
-            }
-        }
-
-        return value;
-    }
+//    @ModifyVariable(method = "renderClouds", at = @At("LOAD"), ordinal = 0, argsOnly = true)
+//    private double changeCloudSpeed(double value) {
+//        PSClient psClient = PSClient.get();
+//        if (psClient != null) {
+//            if (psClient.doRender()) {
+//                return TimeCalc.TimePerMilliTickToTick(psClient.getCurrentTime()) * 0.03F;
+//            }
+//        }
+//
+//        return value;
+//    }
 }

@@ -195,7 +195,7 @@ public class SolarSystem {
         return rootStar;
     }
 
-    public CelestialBody getDimensionOfPlanet(ResourceKey<Level> dim) {
+    public CelestialBody getPlanetOfDimension(ResourceKey<Level> dim) {
         return planetDimensions.get(dim);
     }
 

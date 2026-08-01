@@ -49,7 +49,7 @@ public class ForgeServerEvents {
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!event.getLevel().isClientSide() && event.getLevel() instanceof ServerLevel serverLevel) {
             if (PSServer.get() != null) {
-                CelestialBody planetaryBody = PSServer.get().getSolarSystem().getDimensionOfPlanet(serverLevel.dimension());
+                CelestialBody planetaryBody = PSServer.get().getSolarSystem().getPlanetOfDimension(serverLevel.dimension());
                 if (planetaryBody != null && serverLevel instanceof CelestialBodyAccessor celestialBodyAccessor) {
                     celestialBodyAccessor.ps$setCelestialBody(planetaryBody);
                     planetaryBody.getCelestialServerData().setServerLevel(serverLevel);

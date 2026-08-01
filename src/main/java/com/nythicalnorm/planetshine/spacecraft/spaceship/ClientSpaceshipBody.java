@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.rendering.map.MapIconRenderable;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2i;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.world.ClientShipWorld;
@@ -31,8 +32,12 @@ public class ClientSpaceshipBody extends AbstractSpaceshipBody implements MapIco
     }
 
     @Override
-    public OrbitHostAccessor getHostSpaceAccess() {
-        return PSClient.get().getCurrentHostSpace();
+    public @Nullable OrbitHostAccessor getHostSpaceAccess() {
+        if (this.getHostSpaceID().isPresent() && this.getHostSpaceID().get().equals(PSClient.get().getPlayerOrbit().getOrbitId())) {
+            return PSClient.get().getCurrentHostSpace();
+        } else {
+            return null;
+        }
     }
 
     @Override

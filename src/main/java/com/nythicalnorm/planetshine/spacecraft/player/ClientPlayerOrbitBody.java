@@ -101,7 +101,11 @@ public class ClientPlayerOrbitBody extends AbstractPlayerOrbitBody implements Ma
 
     @Override
     public OrbitHostAccessor getHostSpaceAccess() {
-        return PSClient.get().getCurrentHostSpace();
+        if (this.equals(PSClient.get().getPlayerOrbit())) {
+            return PSClient.get().getCurrentHostSpace();
+        } else {
+            return null;
+        }
     }
 
     public void clearRotation() {

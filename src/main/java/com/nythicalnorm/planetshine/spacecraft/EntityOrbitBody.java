@@ -81,9 +81,14 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         }
 
         // if this isn't the host of its space set the orbit based on the host.
-        if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null &&
-                this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
-            this.setStateVectorsFromHostBody(this.getHostSpaceAccess(), TimeElapsed);
+        if (this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
+            OrbitId hostOrbitId = hostSpaceID.get();
+
+            if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null) {
+                this.setStateVectorsFromHostBody(this.getHostSpaceAccess(), TimeElapsed);
+            } else if (hostOrbitId != null) {
+                this.copyOrbitFromHostBody(this.parent.getSolarSystem().getSpacecraftOrbit(hostOrbitId));
+            }
         } else { // if its not accelerating do the normal simulation
             if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
                 if (this.isStateVecControlled) {
@@ -171,28 +176,36 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         EntityOrbitBody<?> hostBody = orbitHostAccessor.isUnloadedHostSpace() ? this.parent.getSolarSystem().getSpacecraftOrbit(this.hostSpaceID.get())
                 : orbitHostAccessor.getHostBody();
 
-        this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
-
         // need to change this so this isn't as janky.
         if ((relativePos.lengthSquared() < 1 && relativeVel.lengthSquared() < 1) || orbitHostAccessor.isUnloadedHostSpace()) {
-            this.relativeOrbitalPos.set(hostBody.getRelativePos());
-            this.relativeVelocity.set(hostBody.getRelativeVelocity());
-            this.orbitalElements.set(hostBody.getOrbitalElements());
-            this.lastCalculatedEccentricAnomaly = hostBody.getEccentricAnomaly();
-            this.isStateVecControlled = hostBody.isStateVecControlled;
+            this.copyOrbitFromHostBody(hostBody);
         } else {
             this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
             this.relativeVelocity.set(relativeVel.add(hostBody.getRelativeVelocity()));
             this.isStateVecControlled = hostBody.isStateVecControlled;
             this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+            this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
         }
+    }
+
+    private void copyOrbitFromHostBody(EntityOrbitBody<?> hostBody) {
+        if (hostBody == null) {
+            return;
+        }
+
+        this.relativeOrbitalPos.set(hostBody.getRelativePos());
+        this.relativeVelocity.set(hostBody.getRelativeVelocity());
+        if (hostBody.getOrbitalElements() != null) {
+            this.orbitalElements.set(hostBody.getOrbitalElements());
+        }
+        this.lastCalculatedEccentricAnomaly = hostBody.getEccentricAnomaly();
+        this.isStateVecControlled = hostBody.isStateVecControlled;
+        this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
     }
 
     public void setStateVecControlled(boolean isAtmo) {
         this.isStateVecControlled = isAtmo;
     }
-
-
 
     private void applyQueuedVelocity() {
         Vector3dc impulse;

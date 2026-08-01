@@ -197,7 +197,7 @@ public class PSServer extends UniverseStage {
         PacketHandler.sendToPlayer(new ClientboundLoginPSClientStart(playerSpacecraftBody, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick()), player);
         PacketHandler.sendToPlayer(new ClientboundLoginEntityBodiesList(this.solarSystem.getAllEntitiesOrbitsList()), player);
 
-        if (playerSpacecraftBody != null) {
+        if (playerSpacecraftBody != null && playerSpacecraftBody.getHostSpaceAccess() != null) {
             PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(playerSpacecraftBody.getHostSpaceAccess().getOrbitIdOfHost(),
                     playerSpacecraftBody.getHostSpaceAccess().getOriginPos()), player);
         }

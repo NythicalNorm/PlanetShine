@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundEntityBodyJoinOrbital;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostOrbitSet;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostSpaceOrbitIDSet;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitRemove;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -45,9 +46,7 @@ import org.valkyrienskies.mod.common.VSGameUtilsKt;
 import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 import java.lang.Math;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -61,6 +60,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     private static final int HOST_SPACE_GAP_SIZE = 16000;
     private static final int HOST_SPACE_DIAMETER = HOST_SPACE_GAP_SIZE / 2;
+    private final List<LoadedServerShip> toTeleportList = new ArrayList<>();
 
     private boolean isDirty = false;
 
@@ -237,18 +237,27 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public void checkShipTeleportToSpace() {
         this.shipTeleporter.teleportEntitiesFromLastTick();
-        ValkyrienSkies.api().getServerShipWorld(psServer.getMCServer()).getLoadedShips().forEach(loadedServerShip -> {
+        Iterator<LoadedServerShip> serverShipIterator = ValkyrienSkies.api().getServerShipWorld(this.psServer.getMCServer())
+                .getLoadedShips().iterator();
+
+        while (serverShipIterator.hasNext()) {
+            LoadedServerShip loadedServerShip = serverShipIterator.next();
             Vector3dc currentPos = loadedServerShip.getTransform().getPositionInWorld();
 
             if (currentPos.y() >= PlanetShineConfig.getTeleportToSpaceHeight() && !shipTeleporter.isTeleported(loadedServerShip)) {
-                ResourceKey<Level> shipDimension = VSGameUtilsKt.getResourceKey(loadedServerShip.getChunkClaimDimension());
-                CelestialBody celestialBody = psServer.getSolarSystem().getDimensionOfPlanet(shipDimension);
-
-                if (celestialBody != null) {
-                    teleportShipToSpace(loadedServerShip, celestialBody);
-                }
+                toTeleportList.add(loadedServerShip);
             }
-        });
+        }
+
+        for (LoadedServerShip ship : toTeleportList) {
+            ResourceKey<Level> shipDimension = VSGameUtilsKt.getResourceKey(ship.getChunkClaimDimension());
+            CelestialBody celestialBody = psServer.getSolarSystem().getPlanetOfDimension(shipDimension);
+
+            if (celestialBody != null) {
+                teleportShipToSpace(ship, celestialBody);
+            }
+        }
+        this.toTeleportList.clear();
         this.shipTeleporter.resetTeleports();
     }
 
@@ -261,7 +270,6 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
         Quaterniond shipNewRot = planetToSpace.mul(ship.getTransform().getRotation(), new Quaterniond());
         // need to take into account the planets rotational velocity that is also transferred to the ship, earth moving at 1000 m/s at the equator etc...
-        // though maybe I don't add this.
 
         OrbitalElements orbitalElements = OrbitalElements.tryParseNonNaNOrbitalElements(relativeOrbitPos, relativeOrbitVelocity, psServer.getCurrentTime(), celestialBody.getMass());
 
@@ -269,7 +277,6 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
             psServer.shipTeleportToOrbit(celestialBody, ship, orbitalElements, relativeOrbitPos, relativeOrbitVelocity, shipNewRot, ship.getAngularVelocity());
         }
     }
-
 
     private void checkEntityTeleportToPlanet() {
         psServer.getSolarSystem().getAllSpacecraftBodies().values().forEach(entityOrbitBody -> {
@@ -282,7 +289,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                 if (planetLevel != null && entityOrbitBody.isHostOfItsSpace() && entityOrbitBody.isBodyEntityLoaded()) {
                     Vector2d pos = PlanetCalc.getDimensionPosition(entityOrbitBody.getRelativePos(), entityOrbitBody.getParent().getRadius(), entityOrbitBody.getParent());
 
-                    if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody) {
+                    if (entityOrbitBody instanceof ServerPlayerOrbitBody playerOrbitBody && playerOrbitBody.getBody() != null) {
                         teleportEntity(playerOrbitBody.getBody(), planetLevel, pos.x, PlanetShineConfig.getTeleportToGroundHeight(), pos.y);
 
                         double impactVelocity = new Vector3d(playerOrbitBody.getRelativeVelocity()).length();
@@ -309,7 +316,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     }
 
     private void teleportShipToGround(ServerSpaceshipBody spaceshipBody, Vector2d pos, SpaceServerLevel spaceLevel, ServerLevel planetLevel) {
-        if (spaceshipBody.getBody() == null) {
+        if (spaceshipBody.getBody() == null || spaceshipBody.getParent() == null) {
             return;
         }
         if (spaceshipBody.isChunkLoaded()) {
@@ -368,6 +375,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
                 psServer.getSolarSystem().entityJoinedOrbital(hostSpace.getHostBody().getParent(), playerOrbitBody);
                 psServer.sendPacketsPlayerJoinOrbital(player, playerOrbitBody);
+                PacketHandler.sendToAllClients(new ClientboundHostSpaceOrbitIDSet(playerOrbitBody.getOrbitId(), hostSpace.getOrbitIdOfHost()));
             }
         }
     }

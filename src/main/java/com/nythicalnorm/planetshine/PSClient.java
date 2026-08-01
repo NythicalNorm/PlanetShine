@@ -120,7 +120,7 @@ public class PSClient extends UniverseStage {
     }
 
     public void onClientLevelLoad(ClientLevel clientLevel) {
-        CelestialBody celestialBody = solarSystem.getDimensionOfPlanet(clientLevel.dimension());
+        CelestialBody celestialBody = solarSystem.getPlanetOfDimension(clientLevel.dimension());
 
         if (!SpaceUtils.isSpaceLevel(clientLevel)) {
             this.solarSystem.entityRemoveOrbital(this.playerOrbit, true);
