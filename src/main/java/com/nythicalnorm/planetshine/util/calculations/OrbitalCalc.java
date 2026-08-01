@@ -17,7 +17,6 @@ import java.util.OptionalLong;
 
 public class OrbitalCalc {
     public static final double ACCELERATION_DUE_TO_GRAVITY_EARTH = 9.80665d;
-    public static long tickTime = 0L;
 
     // what the orbits are is divided into for intercept calculations stepping through them to find future.
     private static final int INTERCEPT_ORBIT_SEGMENTS = 52;
@@ -33,7 +32,7 @@ public class OrbitalCalc {
     // copy of part of a method in Orbital Elements, this is more suited for SOI calcs.
     public static long getTimeStampFromTrueAnomaly(double meanAngularMotion, double trueAnomaly, double eccentricity,
                                                     long lastPeriapsisTime) {
-        trueAnomaly = MiscCalc.wrapDegrees(trueAnomaly);
+        trueAnomaly = MiscCalc.wrapRadians(trueAnomaly);
         if (eccentricity < 1) {
             double E = 2 * Math.atan2(Math.tan(trueAnomaly * 0.5d), Math.sqrt((1 + eccentricity) / (1 - eccentricity)));
 

@@ -122,7 +122,7 @@ public class PSServer extends UniverseStage {
         } else {
             setCurrentTime(currentTime + TimeCalc.TimePerTickToTimePerMilliTick(timeWarpSettings.get(4)));
         }
-        hostSpaceManager.onPhysTick(physLevel);
+        this.hostSpaceManager.onPhysTick(physLevel);
 
         if (runningPhysTicks % 30 == 0) {
             this.getSolarSystem().calculateSpacecraftIntercepts(this.getCurrentTime());
@@ -270,7 +270,7 @@ public class PSServer extends UniverseStage {
             new Vector3d(), shipNewOmega, VSGameUtilsKt.getDimensionId(this.getSpaceLevel()),null, null);
 
             this.solarSystem.entityJoinedOrbital(planet, spaceshipOrbitBody);
-            this.hostSpaceManager.getShipTeleporter().teleportShipsWithEntities(ship, shipTeleportData, levelOld, this.getSpaceLevel());
+            this.hostSpaceManager.getShipTeleporter().teleportShipsWithEntities(ship, shipTeleportData, levelOld, this.getSpaceLevel(), true);
 
             PacketHandler.sendToAllClients(new ClientboundEntityBodyJoinOrbital(spaceshipOrbitBody));
         }

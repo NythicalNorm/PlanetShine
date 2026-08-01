@@ -83,7 +83,8 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
 
         while (entityIterator.hasNext()) {
             Entity entity = entityIterator.next();
-            if (PSServer.get().getHostSpaceManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y()))
+            if (PSServer.get().getHostSpaceManager().getHostSpacePos(entity.position().x(), entity.position().z())
+                    .equals(this.originPos.x(), this.originPos.y()))
             {
                 if (!entity.isPassenger() && applyVelocity) {
                     Vec3 ogVel = entity.getDeltaMovement();
@@ -91,7 +92,9 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                             ogVel.z - velocity.z());
                 }
                 if (!VSGameUtilsKt.isBlockInShipyard(entity.level(), entity.blockPosition()) &&
-                        this.originPos.distance(entity.blockPosition().getX(), entity.blockPosition().getZ()) > maxDistToCenter) {
+                        this.getOriginPos().distance(entity.position().x(),
+                                entity.position().y(), entity.position().x()) > maxDistToCenter)
+                {
                     removeEntityFromHostSpace(entity);
                 }
             }
@@ -102,7 +105,8 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         while (playerIterator.hasNext()) {
             ServerPlayerOrbitBody playerOrbitBody = playerIterator.next();
             ServerPlayer player = (ServerPlayer) playerOrbitBody.getBody();
-            if (PSServer.get().getHostSpaceManager().getHostSpacePos(player.position()).equals(this.originPos.x(), this.originPos.y()))
+            if (player != null && PSServer.get().getHostSpaceManager().getHostSpacePos(player.position().x(), player.position().z())
+                    .equals(this.originPos.x(), this.originPos.y()))
             {
                 if (!player.isPassenger() && applyVelocity) {
                     Vec3 ogVel = player.getDeltaMovement();
@@ -111,7 +115,10 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                     player.connection.send(new ClientboundSetEntityMotionPacket(player));
                 }
                 if (!VSGameUtilsKt.isBlockInShipyard(player.level(), player.blockPosition()) &&
-                        this.originPos.distance(player.blockPosition().getX(), player.blockPosition().getZ()) > maxDistToCenter) {
+                        this.getOriginPos().distance(playerOrbitBody.getMcPosition()) > maxDistToCenter &&
+                        !VSGameUtilsKt.getShipsIntersecting(player.level(),
+                                player.getBoundingBox().inflate(5.0)).iterator().hasNext()
+                ) {
                     this.playerOrbitBodyLeft(playerOrbitBody);
                 }
             }

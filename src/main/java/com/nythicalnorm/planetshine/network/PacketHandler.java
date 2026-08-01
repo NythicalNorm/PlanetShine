@@ -88,6 +88,12 @@ public class PacketHandler {
                 .consumerMainThread(ClientboundHostOrbitSet::handle)
                 .add();
 
+        INSTANCE.messageBuilder(ClientboundHostSpaceOrbitIDSet.class, id++)
+                .encoder(ClientboundHostSpaceOrbitIDSet::encode)
+                .decoder(ClientboundHostSpaceOrbitIDSet::new)
+                .consumerMainThread(ClientboundHostSpaceOrbitIDSet::handle)
+                .add();
+
         INSTANCE.messageBuilder(ClientboundSetOrbitIntercept.class, id++)
                 .encoder(ClientboundSetOrbitIntercept::encode)
                 .decoder(ClientboundSetOrbitIntercept::new)

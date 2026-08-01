@@ -21,13 +21,21 @@ public class MiscCalc {
     }
 
     // wraps degrees from - pi to positive pi
-    public static double wrapDegrees(double angle) {
+    public static double wrapRadians(double angle) {
         double pi = Math.PI;
         while (angle > pi)
             angle -= 2 * pi;
         while (angle < -pi)
             angle += 2 * pi;
         return angle;
+    }
+
+    public static double wrapDegrees(double degrees) {
+        degrees = (degrees + 180.0) % 360.0;
+        if (degrees < 0) {
+            degrees += 360.0;
+        }
+        return degrees - 180.0;
     }
 
     public static int getShipVolume(@Nullable Ship ship) {

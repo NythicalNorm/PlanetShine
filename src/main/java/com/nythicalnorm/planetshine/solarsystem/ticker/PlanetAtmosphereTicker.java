@@ -47,7 +47,7 @@ public class PlanetAtmosphereTicker implements CelestialBodyTicker {
                     Vector3d dragForce = AtmosphereCalc.getDragForce(planetaryBody, entityOrbitBody);
                     PhysShip physShip = physLevel.getShipById(loadedServerShip.getId());
                     if (physShip != null) {
-                        physShip.applyWorldForce(dragForce, new Vector3d());
+                        physShip.applyWorldForce(dragForce, loadedServerShip.getKinematics().getPosition());
                     }
                 }
             });

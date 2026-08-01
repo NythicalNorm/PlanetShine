@@ -31,7 +31,7 @@ public class PlanetaryBody extends CelestialBody {
         super(planetBuilder.name, planetBuilder.radius, planetBuilder.mass, planetBuilder.rotation,
                 planetBuilder.atmosphericEffects, planetBuilder.dimension, planetBuilder,
                 ImmutableList.copyOf(planetBuilder.celestialBodyTickers), isClientSide);
-        this.NorthPoleDir = new Vector3f(planetBuilder.NorthPoleDir.x, planetBuilder.NorthPoleDir.y, planetBuilder.NorthPoleDir.z);
+        this.NorthPoleDir = new Vector3f(planetBuilder.NorthPoleDir.x, planetBuilder.NorthPoleDir.y, planetBuilder.NorthPoleDir.z).normalize();
         this.NorthPoleInitialAngle = planetBuilder.NorthPoleDir.angle;
         this.RotationPeriod = planetBuilder.RotationPeriod;
         this.dimensionalProperties = planetBuilder.dimensionalProperties;

@@ -9,6 +9,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.util.PSKeyBinds;
 import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
@@ -25,12 +26,14 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
     private final EntityOrbitBody<?> controllingBody;
     private final Options minecraftOptions;
     private NavballWidget navballWidget;
+    private final FacingDirection facingDirection;
 
-    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody<?> controllingBody, PSScreenManager screenManager) {
+    public PSSpacecraftScreen(Component pTitle, EntityOrbitBody<?> controllingBody, PSScreenManager screenManager, FacingDirection facingDirection) {
         super(pTitle);
         this.controllingBody = controllingBody;
         this.minecraftOptions = Minecraft.getInstance().options;
         this.screenManager = screenManager;
+        this.facingDirection = facingDirection;
     }
 
     @Override
@@ -113,6 +116,10 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         return controllingBody.getMCRotation();
     }
 
+    public FacingDirection getFacingDirection() {
+        return facingDirection;
+    }
+
     @Override
     public float getGForce() {
         return 0f; //Oof this will be rather hard to calculate on the client side wouldn't it.
@@ -184,7 +191,7 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
         }
     }
 
-    public void orbitModeChanged(PSScreenManager.SpacecraftOrbitalState currentOrbitalState, PSScreenManager.SpacecraftOrbitalState newOrbitState) {
+    public void orbitModeChanged(PSScreenManager.SpacecraftOrbitalState newOrbitState) {
         ViewMode oldViewMode = this.viewMode;
 
         switch (newOrbitState) {
@@ -225,6 +232,37 @@ public class PSSpacecraftScreen extends MouseLookScreen implements ISpacecraftOr
 
         public NavballWidget.NavBallMode getNavBallMode() {
             return navBallMode;
+        }
+    }
+
+    public enum FacingDirection {
+        North(180.0f),
+        South(0.0f),
+        East(-90.0f),
+        West(90.0f);
+
+
+        private final float dirAngle;
+        FacingDirection(float angle) {
+            this.dirAngle = angle;
+        }
+
+        public static FacingDirection fromYaw(float yaw) {
+            yaw = (float) MiscCalc.wrapDegrees(yaw);
+
+            if (yaw > -45.0f && yaw < 45.0f) {
+                return South;
+            } else if (yaw > 45.0f && yaw < 135.0f) {
+                return West;
+            } else if (yaw < -45.0f && yaw > -135.0f) {
+                return East;
+            } else {
+                return North;
+            }
+        }
+
+        public float getAngle() {
+            return this.dirAngle;
         }
     }
 }

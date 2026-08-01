@@ -101,15 +101,6 @@ public class PSClient extends UniverseStage {
         return mapRenderer;
     }
 
-    public void setHostOrbit(OrbitId orbitId, Vector3d originPos) {
-        this.getPlayerOrbit().setHostSpaceId(orbitId);
-        if (orbitId != null) {
-            this.clientHostSpace = new ClientHostSpace(orbitId, originPos, this.solarSystem.getSpacecraftOrbit(orbitId));
-        } else {
-            this.clientHostSpace = null;
-        }
-    }
-
     public static void close() {
         if (instance != null) {
             instance.getPlanetTexManager().close();
@@ -248,6 +239,22 @@ public class PSClient extends UniverseStage {
         EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(spacecraftID);
         if (entityOrbitBody != null) {
             solarSystem.entityRemoveOrbital(entityOrbitBody, false);
+        }
+    }
+
+    public void setHostOrbit(OrbitId orbitId, Vector3d originPos) {
+        this.getPlayerOrbit().setHostSpaceId(orbitId);
+        if (orbitId != null) {
+            this.clientHostSpace = new ClientHostSpace(orbitId, originPos, this.solarSystem.getSpacecraftOrbit(orbitId));
+        } else {
+            this.clientHostSpace = null;
+        }
+    }
+
+    public void setHostSpaceOrbitID(OrbitId entityID, @Nullable OrbitId hostOrbitId) {
+        EntityOrbitBody<?> entityOrbitBody = solarSystem.getSpacecraftOrbit(entityID);
+        if (entityOrbitBody != null) {
+            entityOrbitBody.setHostSpaceId(hostOrbitId);
         }
     }
 

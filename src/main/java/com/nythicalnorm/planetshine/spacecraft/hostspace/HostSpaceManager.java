@@ -84,6 +84,10 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         this.spaceLevel = spaceLevel;
     }
 
+    public SpaceServerLevel getSpaceLevel() {
+        return spaceLevel;
+    }
+
     //Creates a new orbit space if absent and also sets the host's orbit space to be the new one.
     public OrbitHostSpace getOrCreateHostSpace(EntityOrbitBody<?> entityOrbitBody){
         if (entityOrbitBody == null) {
@@ -147,9 +151,9 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
         return activeHostSpaces.get(pos);
     }
 
-    public Vector2ic getHostSpacePos(Vec3 spaceDimPos) {
-        int x = (int) (Math.round(spaceDimPos.x / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
-        int z = (int) (Math.round(spaceDimPos.z / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+    public Vector2ic getHostSpacePos(double spaceDimPosX, double spaceDimPosZ) {
+        int x = (int) (Math.round(spaceDimPosX / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
+        int z = (int) (Math.round(spaceDimPosZ / HOST_SPACE_GAP_SIZE) * HOST_SPACE_GAP_SIZE);
         return new Vector2i(x,z);
     }
 
@@ -326,7 +330,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
                     bodyKinematics.getAngularVelocity(), VSGameUtilsKt.getDimensionId(planetLevel), null, null);
 
             this.getShipTeleporter().teleportShipsWithEntities((LoadedServerShip) spaceshipBody.getBody(),
-                    shipTeleportData, spaceLevel, planetLevel);
+                    shipTeleportData, spaceLevel, planetLevel, true);
         } else {
             VSGameUtilsKt.getShipObjectWorld(spaceLevel).deleteShip((ServerShip) spaceshipBody.getBody());
             if (spaceshipBody.getBody().getSlug() != null) {

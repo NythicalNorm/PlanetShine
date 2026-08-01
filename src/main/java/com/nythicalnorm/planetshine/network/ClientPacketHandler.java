@@ -153,4 +153,10 @@ public class ClientPacketHandler {
             }
         }
     }
+
+    public static void hostSpaceOrbitIDSet(OrbitId entityID, @Nullable OrbitId hostOrbitId) {
+        if (PSClient.get() != null) {
+            PSClient.get().setHostSpaceOrbitID(entityID, hostOrbitId);
+        }
+    }
 }

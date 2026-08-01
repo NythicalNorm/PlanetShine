@@ -66,8 +66,6 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody<Player> {
         if (this.body != null && !this.isClientSide) {
             PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(hostSpace.getOrbitIdOfHost(),
                     hostSpace.getOriginPos()), (ServerPlayer) body);
-        } else {
-            PlanetShine.log("no players to set host space to");
         }
     }
 

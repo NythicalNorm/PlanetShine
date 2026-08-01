@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -26,6 +27,7 @@ public class PSScreenManager {
     private boolean waitingForReopening = false;
     private final PSClient psClient;
     private SpacecraftOrbitalState currentOrbitalState = SpacecraftOrbitalState.ON_PLANET;
+    private PSSpacecraftScreen.FacingDirection prevDimensionFacingDirection = null;
 
     public PSScreenManager(PSClient psClient) {
         this.psClient = psClient;
@@ -50,6 +52,7 @@ public class PSScreenManager {
     public void prepareForDimensionChange() {
         PSSpacecraftScreen spacecraftScreen = this.getSpacecraftScreen();
         if (spacecraftScreen != null) {
+            this.prevDimensionFacingDirection = spacecraftScreen.getFacingDirection();
             spacecraftScreen.saveScreenState();
             this.waitingForReopening = true;
         }
@@ -104,7 +107,7 @@ public class PSScreenManager {
         if (currentOrbitalState != newOrbitState) {
              PSSpacecraftScreen spacecraftScreen = this.getSpacecraftScreen();
             if (spacecraftScreen != null) {
-                spacecraftScreen.orbitModeChanged(this.currentOrbitalState, newOrbitState);
+                spacecraftScreen.orbitModeChanged(newOrbitState);
                 this.currentOrbitalState = newOrbitState;
             }
         }
@@ -141,10 +144,23 @@ public class PSScreenManager {
     }
 
     public void openPSSpacecraftScreen() {
-        if (VSGameUtilsKt.getShipMountedTo(Minecraft.getInstance().player) instanceof ClientShip) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (VSGameUtilsKt.getShipMountedTo(player) instanceof ClientShip) {
             EntityOrbitBody<?> entityOrbitBody = psClient.getControllingBody();
+            float yaw = player.getViewYRot(0.0f);
             if (entityOrbitBody != null) {
-                PSSpacecraftScreen spacecraftScreen = new PSSpacecraftScreen(Component.empty(), entityOrbitBody, this);
+                PSSpacecraftScreen.FacingDirection facingDirection;
+                if (this.prevDimensionFacingDirection != null) {
+                    facingDirection = this.prevDimensionFacingDirection;
+                    player.setYRot(facingDirection.getAngle());
+                    player.setXRot(0.0f);
+                    this.prevDimensionFacingDirection = null;
+                } else {
+                    facingDirection = PSSpacecraftScreen.FacingDirection.fromYaw(yaw);
+                }
+
+                PSSpacecraftScreen spacecraftScreen = new PSSpacecraftScreen(Component.empty(), entityOrbitBody, this,
+                        facingDirection);
                 Minecraft.getInstance().setScreen(spacecraftScreen);
                 this.isSpacecraftScreenOpen = true;
             }

@@ -114,7 +114,7 @@ public class AtmosphereCalc {
                 (float) (position.y()/entityDistance), (float) (position.z()/entityDistance));
 
         double bodyAngularVelocity = 2 * Math.PI / planetBody.getRotationPeriodInSeconds();
-        double speedAtPoint = bodyAngularVelocity * entityDistance * angleToNorth; // cos of acos cancels out for angleToNorth
+        double speedAtPoint = bodyAngularVelocity * entityDistance * Math.cos(angleToNorth);
         Vector3d rotateDirection = new Vector3d(northPoleDir).cross(position).normalize();
 
         return rotateDirection.mul(speedAtPoint);
@@ -127,9 +127,10 @@ public class AtmosphereCalc {
         return airDir.mul(dragForce);
     }
 
+    // server side only for now
     public static Vector3d getDragForce(PlanetaryBody planetaryBody, EntityOrbitBody<?> entityOrbitBody) {
-        //Vector3d airVelocity = getPlanetGroundSpeedAt(planetaryBody, entityOrbitBody.getRelativePos(), planetaryBody.getNorthPoleDir());
         Vector3d airVelocity = entityOrbitBody.getRelativeVelocity().negate(new Vector3d());
+        //airVelocity.add(getPlanetGroundSpeedAt(planetaryBody, entityOrbitBody.getRelativePos(), planetaryBody.getNorthPoleDir()));
         double airDensity = getAirDensity(planetaryBody, entityOrbitBody.getAltitude());
         double crossSectionalArea = entityOrbitBody.getCrossSectionalArea(airVelocity);
         return getDragForce(airDensity, airVelocity, 1.0d, crossSectionalArea);

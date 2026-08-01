@@ -3,6 +3,7 @@ package com.nythicalnorm.planetshine.spacecraft;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.network.PacketHandler;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostSpaceOrbitIDSet;
 import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundSetOrbitIntercept;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
@@ -80,7 +81,8 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         }
 
         // if this isn't the host of its space set the orbit based on the host.
-        if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null && this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
+        if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null &&
+                this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
             this.setStateVectorsFromHostBody(this.getHostSpaceAccess(), TimeElapsed);
         } else { // if its not accelerating do the normal simulation
             if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
@@ -228,13 +230,16 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
         return nextOrbitIntercept;
     }
 
+    // server only
     public void setHostOrbitSpace(OrbitHostSpace hostSpace) {
         if (hostSpace != null) {
             this.hostSpaceID.set(hostSpace.getOrbitIdOfHost());
             this.orbitHostSpace.set(hostSpace);
+            PacketHandler.sendToAllClients(new ClientboundHostSpaceOrbitIDSet(this.id, hostSpace.getOrbitIdOfHost()));
         } else {
             this.hostSpaceID.set(null);
             this.orbitHostSpace.set(null);
+            PacketHandler.sendToAllClients(new ClientboundHostSpaceOrbitIDSet(this.id, null));
         }
     }
 
