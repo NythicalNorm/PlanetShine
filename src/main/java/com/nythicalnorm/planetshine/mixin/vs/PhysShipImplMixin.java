@@ -4,15 +4,16 @@ import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
 import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
-import org.joml.Vector3d;
-import org.joml.Vector3dc;
+import org.joml.*;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
 import org.valkyrienskies.core.impl.game.ships.PhysShipImpl;
+import org.valkyrienskies.core.impl.shadow.Em;
 
 import java.util.ArrayDeque;
 
@@ -43,6 +44,15 @@ public abstract class PhysShipImplMixin {
     @Shadow
     public abstract long getId();
 
+    @Shadow
+    private Em inertia;
+
+    @Shadow
+    private BodyKinematics kinematics;
+
+    @Shadow
+    public abstract void applyWorldTorque(Vector3dc torqueInWorld);
+
     @Inject(method = "applyQueuedForces", at = @At(value = "HEAD"), remap = false)
     public void applyForces(CallbackInfo ci) {
         if (PSServer.get() != null) {
@@ -66,8 +76,17 @@ public abstract class PhysShipImplMixin {
                 }
 
                 while(!invPosForces.isEmpty()) {
-                    Vector3dc invPosPosition = invPosPositions.removeFirst(); // need to figure out the moment of inertia rotation shit
+                    Vector3dc invPosPosition = invPosPositions.removeFirst();
                     Vector3dc invPosForce = invPosForces.removeFirst();
+
+                    if (invPosPosition.length() > 0.1d) {
+                        Matrix3d rotationMatrix = new Matrix3d().set(kinematics.getRotation());
+                        Matrix3d worldInertia = rotationMatrix.mul(inertia.getInertiaTensor(), new Matrix3d()).mul(rotationMatrix.transpose());
+                        Vector3d angularImpulse = new Vector3d(invPosPosition).rotate(kinematics.getRotation()).cross(invPosForce);
+                        Vector3d deltaOmega = worldInertia.invert().transform(angularImpulse);
+                        applyWorldTorque(deltaOmega.mul(getMass()));
+                    }
+
                     if (invPosForce.lengthSquared() > forceThresholdSquared) {
                         serverSpaceshipBody.addVelocityForUpdate(new Vector3d(invPosForce).div(getMass() * TimeCalc.PhysTickPerSec));
                     }

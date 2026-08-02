@@ -231,6 +231,9 @@ dependencies {
     //implementation(fg.deobf("com.tterrag.registrate:Registrate:${registrate_version}")) { transitive = false }
 
     implementation fg.deobf("curse.maven:createaddition-439890:6901922")
+    implementation fg.deobf("maven.modrinth:fmudhH0S:RkH3hYwo") // create: propulsion
+
+
     implementation(fg.deobf("maven.modrinth:qS1ot7R2:xuf6SajY")) // vmod
 
 //    runtimeOnly fg.deobf("org.valkyrienskies.kelvin:kelvin-forge:${minecraft_version}-${kelvin_version}")
