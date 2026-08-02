@@ -20,10 +20,7 @@ import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
 import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
-import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
-import com.nythicalnorm.planetshine.storage.SpacecraftDataStorage;
-import com.nythicalnorm.planetshine.storage.PSCommonSaveData;
-import com.nythicalnorm.planetshine.storage.PSDataPackManager;
+import com.nythicalnorm.planetshine.storage.*;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.UniverseStage;
@@ -62,7 +59,7 @@ public class PSServer extends UniverseStage {
 
     // Called on the server starting event
     public PSServer(MinecraftServer server, SolarSystem solarSystem) {
-        super(solarSystem);
+        super(solarSystem, PSCommonConfig.fromServerConfig());
         instance = this;
         this.server = server;
         BiomeColorHolder.init(server.registryAccess());
@@ -194,7 +191,9 @@ public class PSServer extends UniverseStage {
             hostSpaceManager.teleportEntity(player, server.overworld(), spawnPosition.x, spawnPosition.y, spawnPosition.z);
         }
 
-        PacketHandler.sendToPlayer(new ClientboundLoginPSClientStart(playerSpacecraftBody, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick()), player);
+        PacketHandler.sendToPlayer(new ClientboundLoginPSClientStart(
+                playerSpacecraftBody, allPlanetaryBodies, getCurrentTime(), getTimePassPerTick(), this.getPsCommonConfig()
+        ), player);
         PacketHandler.sendToPlayer(new ClientboundLoginEntityBodiesList(this.solarSystem.getAllEntitiesOrbitsList()), player);
 
         if (playerSpacecraftBody != null && playerSpacecraftBody.getHostSpaceAccess() != null) {

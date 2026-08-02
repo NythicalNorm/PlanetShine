@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.util;
 
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
+import com.nythicalnorm.planetshine.storage.PSCommonConfig;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 
 import java.util.List;
@@ -15,10 +16,12 @@ public abstract class UniverseStage {
     protected volatile long timePassPerTick = TimeCalc.TickToMilliTick;
     protected volatile int currentTimeWarpSetting = 0;
     protected final SolarSystem solarSystem;
+    protected final PSCommonConfig psCommonConfig;
 
-    protected UniverseStage(SolarSystem solarSystem) {
+    protected UniverseStage(SolarSystem solarSystem, PSCommonConfig psCommonConfig) {
         this.solarSystem = solarSystem;
         this.solarSystem.setStage(this);
+        this.psCommonConfig = psCommonConfig;
         instance = this;
         if (anySolarSystem == null) {
             anySolarSystem = solarSystem;
@@ -27,6 +30,10 @@ public abstract class UniverseStage {
 
     public static UniverseStage get() {
         return instance;
+    }
+
+    public PSCommonConfig getPsCommonConfig() {
+        return psCommonConfig;
     }
 
     protected void initPlanets() {

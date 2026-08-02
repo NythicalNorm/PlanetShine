@@ -20,6 +20,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.ClientHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
+import com.nythicalnorm.planetshine.storage.PSCommonConfig;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.UniverseStage;
@@ -57,8 +58,8 @@ public class PSClient extends UniverseStage {
     private final MapRenderer mapRenderer;
     private SpaceRenderable[] renderPlanets;
 
-    public PSClient(@NotNull ClientPlayerOrbitBody playerDataFromServer, SolarSystem solarSystem) {
-        super(solarSystem);
+    public PSClient(@NotNull ClientPlayerOrbitBody playerDataFromServer, SolarSystem solarSystem, PSCommonConfig psCommonConfig) {
+        super(solarSystem, psCommonConfig);
         this.renderTickRunnables = new RunnableExecutor();
         minecraft = Minecraft.getInstance();
         this.playerOrbit = playerDataFromServer;

@@ -5,7 +5,6 @@ import com.nythicalnorm.planetshine.network.PacketHandler;
 import com.nythicalnorm.planetshine.network.time.ClientboundTimeWarpUpdate;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.PlayerOrbitAccessor;
-import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
@@ -75,7 +74,7 @@ public class TimeWarpManager {
     private TimeWarpAllowanceReason isPlayerAllowedToTimeWarp(ServerPlayer player, boolean allowOnPlanet) {
         if (player.getAbilities().instabuild || SpaceUtils.isSpaceLevel(player.level())) {
             return new TimeWarpAllowanceReason(null, true);
-        } else if (PlanetShineConfig.doAllowTimeWarpOnPlanets()) {
+        } else if (psServer.getPsCommonConfig().doAllowTimeWarpOnPlanets()) {
             if (allowOnPlanet) {
                 return monstersNearbyCheck(player);
             } else {

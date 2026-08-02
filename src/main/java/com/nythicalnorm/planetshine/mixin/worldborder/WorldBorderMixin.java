@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.nythicalnorm.planetshine.mixinducks.PlanetWorldBorder;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
@@ -37,7 +37,7 @@ public class WorldBorderMixin implements PlanetWorldBorder {
 
     @Unique
     private boolean ps$isPlanetWorldBorder() {
-        return ps$planetBorderShape != null && PlanetShineConfig.isOverrideVanillaWorldBorder();
+        return ps$planetBorderShape != null && UniverseStage.get().getPsCommonConfig().isOverrideVanillaWorldBorder();
     }
 
     @Override

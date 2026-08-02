@@ -10,8 +10,8 @@ public class PlanetShineConfig {
     private static ForgeConfigSpec.ConfigValue<Double> PlanetTextureResolution;
 
     private static ForgeConfigSpec.ConfigValue<Boolean> OverrideVanillaWorldBorder;
-    private static ForgeConfigSpec.ConfigValue<Boolean> DoFastShipPosUpdates;
     private static ForgeConfigSpec.ConfigValue<Boolean> allowTimeWarpOnPlanets;
+    private static ForgeConfigSpec.ConfigValue<Boolean> DoFastShipPosUpdates;
 
     public static double getTeleportToGroundHeight() {
         try {

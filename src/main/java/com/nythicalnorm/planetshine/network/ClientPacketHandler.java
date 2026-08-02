@@ -11,6 +11,7 @@ import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.storage.PSCommonConfig;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -27,7 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class ClientPacketHandler {
-    public static void StartClientPacket(long currentTime, long timeWarp, EntityOrbitBody<?> playerData, OrbitId playerParentOrbit,List<CelestialBody> planetaryBodyList) {
+    public static void StartClientPacket(long currentTime, long timeWarp, EntityOrbitBody<?> playerData, OrbitId playerParentOrbit,
+                                         List<CelestialBody> planetaryBodyList, PSCommonConfig psCommonConfig) {
         Map<OrbitId, CelestialBody> AllPlanetaryBodies = new Object2ObjectOpenHashMap<>();
         ConcurrentMap<OrbitId, EntityOrbitBody<?>> AllSpacecraftBodies = new ConcurrentHashMap<>();
         Map<ResourceKey<Level>, CelestialBody> PlanetDimensions = new Object2ObjectOpenHashMap<>();
@@ -63,7 +65,7 @@ public class ClientPacketHandler {
             playerSpacecraftBuilder.setPlayer(localPlayer);
             clientPlayerSpacecraftBody = (ClientPlayerOrbitBody) playerSpacecraftBuilder.buildClientSide();
         }
-        PSClient css =  new PSClient(clientPlayerSpacecraftBody, solarSystem);
+        PSClient css =  new PSClient(clientPlayerSpacecraftBody, solarSystem, psCommonConfig);
         css.setCurrentTime(currentTime);
         css.setTimePassPerTick(timeWarp);
 
@@ -148,7 +150,7 @@ public class ClientPacketHandler {
     public static void openTimeWarpMapScreen() {
         PSClient psClient = PSClient.get();
         if (psClient != null) {
-            if (psClient.doRender()) {
+            if (psClient.doRender() && psClient.getPsCommonConfig().doAllowTimeWarpOnPlanets()) {
                 psClient.addRunnableToRenderTick(() -> Minecraft.getInstance().setScreen(new BlockEntityMapScreen()));
             }
         }
