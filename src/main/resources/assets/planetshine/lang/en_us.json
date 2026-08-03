@@ -17,7 +17,7 @@
 
   "planetshine.state.planetgen_start": "Starting Planet texture generation...",
   "planetshine.state.planetgen_end": "planet %1$s's texture generation complete",
-  "planetshine.state.no_planet_datapack": "WARNING: NO PLANET DATAPACK DETECTED!, the mod has no effect without planet datapacks that connect dimensions to planetary bodies",
+  "planetshine.state.no_planet_datapack": "WARNING: NO PLANET DATAPACK DETECTED! PlanetShine has no effect without planet datapacks that define planetary bodies and connect them to dimensions.",
 
   "key.category.planetshine.main": "Planet Shine",
   "key.planetshine.increase_time_warp": "Increase Time Warp Speed",

@@ -180,7 +180,7 @@ public class ShipCrashHandler {
             crashLevel.getServer().getPlayerList().broadcastSystemMessage(Component.translatable(
                     "planetshine.ui.ship_crash_message",
                     shipName,
-                    celestialBodyAccessor.ps$getCelestialBody().getName()),
+                    celestialBodyAccessor.ps$getCelestialBody().getDisplayName()),
                     false
             );
         }

@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -61,7 +62,8 @@ public class PSDataPackManager {
             rootStar = planetLoadedData.rootStar();
             loadPlanetData(AllPlanetaryBodies, PlanetDimensions);
         } else {
-            throw new IllegalStateException("Can't start Solar System server because no planet data is loaded");
+            rootStar = new StarBody(new StarBody.StarBuilder(), true);
+            pServer.sendSystemMessage(Component.literal("Can't start Solar System server because no planet data is loaded"));
         }
         // load spacecraft data here
 

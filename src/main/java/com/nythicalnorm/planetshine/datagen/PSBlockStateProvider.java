@@ -1,7 +1,6 @@
 package com.nythicalnorm.planetshine.datagen;
 
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.block.PSBlocks;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -19,7 +18,7 @@ public class PSBlockStateProvider extends BlockStateProvider {
 
     @Override
     protected void registerStatesAndModels() {
-        simpleBlockWithItem(PSBlocks.LUNAR_REGOLITH.get(), cubeAll(PSBlocks.LUNAR_REGOLITH.get()));
+        //simpleBlockWithItem(PSBlocks.LUNAR_REGOLITH.get(), cubeAll(PSBlocks.LUNAR_REGOLITH.get()));
     }
 
     protected ModelFile getColumnCubeModel(@NotNull RegistryObject<Block> block, ResourceLocation side, ResourceLocation end) {

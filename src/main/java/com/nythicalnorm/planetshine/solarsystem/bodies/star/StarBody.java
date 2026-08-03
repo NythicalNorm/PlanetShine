@@ -43,7 +43,7 @@ public class StarBody extends CelestialBody {
     }
 
     public static class StarBuilder extends OrbitalBody.Builder<StarBody> {
-        private String name;
+        private String name = "";
         private double radius = 1000;
         private double mass = 10E24;
         protected Quaternionf rotation = new Quaternionf();
