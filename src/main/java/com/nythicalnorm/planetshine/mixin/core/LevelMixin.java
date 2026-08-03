@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,7 +38,9 @@ public abstract class LevelMixin implements CelestialBodyAccessor {
         this.ps$celestialBody = celestialBody;
         Level level = (Level) (Object)this;
         if (celestialBody != null && level instanceof PlanetTimeAccessor planetTimeAccessor) {
-            planetTimeAccessor.ps$setDaylightData(new DaylightData(celestialBody));
+            if (celestialBody instanceof PlanetaryBody planetaryBody && planetaryBody.getDimensionalProperties().isRenderCustomSkybox()) {
+                planetTimeAccessor.ps$setDaylightData(new DaylightData(celestialBody));
+            }
         }
         if (level.getWorldBorder() instanceof PlanetWorldBorder planetWorldBorder) {
             planetWorldBorder.ps$setPlanetBorder(celestialBody);

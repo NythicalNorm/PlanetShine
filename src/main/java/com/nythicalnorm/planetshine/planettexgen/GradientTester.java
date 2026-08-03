@@ -2,7 +2,7 @@ package com.nythicalnorm.planetshine.planettexgen;
 
 import java.awt.*;
 
-public class GradientSupplier {
+public class GradientTester {
     public static PlanetGradient STAR_GRADIENT = new PlanetGradient(new BiomeGroup[]{
             new BiomeGroup("orangeHot", -0.5f, 0.5f, new BiomeGradient[]{
                         new BiomeGradient(0,0.5f, 0, 1, 1f, Color.decode("#fbba39")),
@@ -46,9 +46,37 @@ public class GradientSupplier {
             }),
 
             new BiomeGroup("low_lands", 0.2f, 0.5f, new BiomeGradient[]{
-                    new BiomeGradient(0f,0.2f, 0, 1f, 1f, Color.decode("#e46035")),
+                    new BiomeGradient(0f,0.2f, 0, 1f, 1f, Color.decode("#e3b366")),
                     new BiomeGradient(0.2f,0.3f, 0, 1f, 1f, Color.decode("#df623c")),
                     new BiomeGradient(0.3f,1f, 0, 1f, 1f, Color.decode("#da633a")),
+            }),
+    });
+
+    public static PlanetGradient VENUS_GRADIENT = new PlanetGradient(new BiomeGroup[] {
+            new BiomeGroup("light_clouds", -0.5f, 0.25f, new BiomeGradient[]{
+                    new BiomeGradient(0f,0.6f, 0, 1, 1f, Color.decode("#d1a662")),
+                    new BiomeGradient(0.6f,0.7f, 0, 1, 1f, Color.decode("#c59c58")),
+                    new BiomeGradient(0.7f,1f, 0, 1, 1f, Color.decode("#c59c58")),
+            }),
+
+            new BiomeGroup("dark_clouds", 0.10f, 0.5f, new BiomeGradient[]{
+                    new BiomeGradient(0f,0.6f, 0, 1f, 1f, Color.decode("#bd8e4b")),
+                    new BiomeGradient(0.6f,0.75f, 0, 1f, 1f, Color.decode("#ad8453")),
+                    new BiomeGradient(0.75f,1f, 0, 1f, 1f, Color.decode("#81613c")),
+            }),
+    });
+
+    public static PlanetGradient MERCURY_GRADIENT = new PlanetGradient(new BiomeGroup[] {
+            new BiomeGroup("land", -0.5f, 0.2f, new BiomeGradient[]{
+                    new BiomeGradient(0f,0.5f, 0, 1, 1f, Color.decode("#4c293b")),
+                    new BiomeGradient(0.5f,0.7f, 0, 1, 1f, Color.decode("#713d48")),
+                    new BiomeGradient(0.7f,1f, 0, 1, 1f, Color.decode("#824650")),
+            }),
+
+            new BiomeGroup("lava", 0.2f, 0.5f, new BiomeGradient[]{
+                    new BiomeGradient(0f,0.4f, 0, 1f, 1f, Color.decode("#d45609")),
+                    new BiomeGradient(0.4f,1.0f, 0, 1f, 1f, Color.decode("#da7b21")),
+                    //new BiomeGradient(0.75f,1f, 0, 1f, 1f, Color.decode("#81613c")),
             }),
     });
 }

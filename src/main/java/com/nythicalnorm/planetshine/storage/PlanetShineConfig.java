@@ -8,6 +8,7 @@ public class PlanetShineConfig {
     private static ForgeConfigSpec.ConfigValue<Double> TeleportToSpaceHeight;
     private static ForgeConfigSpec.ConfigValue<Double> SpeedForShipCrash;
     private static ForgeConfigSpec.ConfigValue<Double> PlanetTextureResolution;
+    private static ForgeConfigSpec.ConfigValue<Double> AtmosphericForceMultiplier;
 
     private static ForgeConfigSpec.ConfigValue<Boolean> OverrideVanillaWorldBorder;
     private static ForgeConfigSpec.ConfigValue<Boolean> allowTimeWarpOnPlanets;
@@ -34,6 +35,14 @@ public class PlanetShineConfig {
             return SpeedForShipCrash.get();
         } catch (Exception e) {
             return 350.0d;
+        }
+    }
+
+    public static double getAtmosphericForceMultiplier() {
+        try {
+            return AtmosphericForceMultiplier.get();
+        } catch (Exception e) {
+            return 1.0d;
         }
     }
 
@@ -75,6 +84,7 @@ public class PlanetShineConfig {
         TeleportToSpaceHeight = builder.define("TeleportToSpaceHeight", 1000.0d);
         PlanetTextureResolution = builder.define("PlanetTextureResolution", 2048.0d);
         SpeedForShipCrash = builder.define("SpeedForShipCrash", 350.0d);
+        AtmosphericForceMultiplier = builder.define("AtmosphericForceMultiplier", 1.0d);
 
         OverrideVanillaWorldBorder = builder.define("OverrideVanillaWorldBorder", true);
         DoFastShipPosUpdates = builder.define("DoFastShipPosUpdates", true);

@@ -1,13 +1,15 @@
 {
   "name": "sun",
   "type": "planetshine:star",
-  "radius": 696340000,
-  "mass": 1.989E30,
+  "radius": 261600000,
+  "mass": 1.7565459E28,
 
-  "heat_affecting_radius": 1e10,
-  "star_luminosity": 3.828e26,
+  "heat_affecting_radius": 2000000000,
+  "star_luminosity": 3.828e25,
 
   "child_planets": [
+    "mercury",
+    "venus",
     "earth",
     "mars"
   ],

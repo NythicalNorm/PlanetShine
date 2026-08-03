@@ -1,25 +1,25 @@
 {
   "name": "mars",
   "type": "planetshine:planet",
-  "radius": 3389500,
-  "mass": 6.4171e23,
+  "radius": 320000,
+  "mass": 	4.5154270e21,
 
   "north_pole_dir": {
-    "right_ascension": 180,
-    "declination": 25.19
+    "right_ascension": 0.0,
+    "declination": 0.0
   },
 
-  "starting_rotation": 4.0,
-  "rotation_period": 88642,
+  "starting_rotation": 0.0,
+  "rotation_period": 65517.859,
 
   "orbital_elements": {
-    "semi_major_axis": 227939012001.35272217,
-    "eccentricity": 9.331460654156362E-02,
-    "periapsis_time": 2451508.062864923850,
+    "semi_major_axis": 	20726155264,
+    "eccentricity": 0.051,
+    "periapsis_time": 8658000,
 
-    "inclination": 0.03228643836864143746,
-    "argument_of_periapsis": 5.0010203325580997458,
-    "longitude_of_ascending_node": 0.86502006745203718907
+    "inclination": 0.001047198,
+    "argument_of_periapsis": 0.0,
+    "longitude_of_ascending_node": 2.3649211
   },
 
   "atmospheric_data": {

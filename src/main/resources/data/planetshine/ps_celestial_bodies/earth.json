@@ -1,35 +1,35 @@
 {
   "name": "earth",
   "type": "planetshine:planet",
-  "radius": 6371000,
-  "mass": 5.97219E24,
+  "radius": 600000,
+  "mass": 5.2915158E22,
 
   "north_pole_dir": {
     "right_ascension": 90,
-    "declination": 23.44
+    "declination": 0.0
   },
 
   "starting_rotation": 3.59537825909,
-  "rotation_period": 86400,
+  "rotation_period": 21549.425,
   "child_planets": [
     "luna"
   ],
 
   "orbital_elements": {
-    "semi_major_axis": 149653496273.0,
-    "eccentricity": 1.704239718110438E-02,
-    "periapsis_time": 6.2504793475201942954,
+    "semi_major_axis": 13599840256,
+    "eccentricity": 0.0,
+    "periapsis_time": 4601800,
 
-    "inclination": 4.657951002584728917e-6,
-    "argument_of_periapsis": 5.1970176873649567284,
-    "longitude_of_ascending_node": 2.8619013937171278172
+    "inclination": 0.0,
+    "argument_of_periapsis": 0.0,
+    "longitude_of_ascending_node": 0.0
   },
 
   "atmospheric_data": {
     "has_atmosphere": true,
     "surface_color": "5ba3e6",
     "atmosphere_color": "0077ff",
-    "atmosphere_height": 120000,
+    "atmosphere_height": 70000,
     "atmosphere_pressure": 1.0,
     "atmosphere_alpha": 0.25,
     "alpha_night": 1.0,

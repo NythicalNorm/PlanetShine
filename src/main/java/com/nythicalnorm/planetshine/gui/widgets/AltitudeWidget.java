@@ -44,7 +44,7 @@ public class AltitudeWidget extends AbstractWidget {
         if (spacecraftScreen != null) {
             this.renderAltitudeNumbers(spacecraftScreen, pGuiGraphics, x, y);
             double airDensity = spacecraftScreen.getAirDensityAtAltitude();
-            float atmoProgress = (float) (Math.log(airDensity + 1) / 1.145d); // some vibe maths
+            float atmoProgress = (float) Mth.clamp(Math.log(airDensity + 1) / 1.145d, 0.0f, 1.0f); // some vibe maths
 
             int pixelValue = (int) Mth.lerp(atmoProgress, 14, 78);
             pGuiGraphics.blit(Altitude_GUI_TEXTURE, x + pixelValue, y + 15, 96, 0, 5, 13);

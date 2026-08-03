@@ -3,13 +3,16 @@ package com.nythicalnorm.planetshine.util.calculations;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
+import net.minecraft.util.Mth;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.joml.Vector3fc;
 
 public class AtmosphereCalc {
     // Universal constants
-    private static final double R = 287.05287;       // J/(kg·K)
+    private static final double R = 287.05287d;       // J/(kg·K)
+    private static final double g = 9.80665d;       // acceleration due to gravity (earth)
 
     // Atmosphere layers
     // Base heights (m)
@@ -63,7 +66,7 @@ public class AtmosphereCalc {
      * for altitudes up to roughly 120 km.
      */
     public static double getAirDensity(CelestialBody celestialBody, double altitudeMeters) {
-        altitudeMeters = (altitudeMeters / celestialBody.getAtmosphere().getAtmosphereHeight()) * 120000.0d;
+        altitudeMeters = (altitudeMeters / celestialBody.getAtmosphere().getAtmosphereHeight()) * 120_000.0d;
 
 
         if (altitudeMeters < 0.0d) {
@@ -95,13 +98,11 @@ public class AtmosphereCalc {
         if (L0 == 0.0) {
             // Isothermal layer
             temperature = T0;
-            pressure = P0 * Math.exp((-celestialBody.getAccelerationDueToGravity() * (altitudeMeters - h0))
-                            / (R * T0));
+            pressure = P0 * Math.exp((-g * (altitudeMeters - h0)) / (R * T0));
         } else {
             // Gradient layer
             temperature = T0 + L0 * (altitudeMeters - h0);
-            pressure = P0 * Math.pow( T0 / temperature,
-                    celestialBody.getAccelerationDueToGravity() / (R * L0));
+            pressure = P0 * Math.pow( T0 / temperature, g / (R * L0));
         }
 
         // Ideal gas law
@@ -120,6 +121,13 @@ public class AtmosphereCalc {
         return rotateDirection.mul(speedAtPoint);
     }
 
+    public static float getAtmoPercent(CelestialBody planetaryBody, double altitude) {
+        double seaLevelDensity = planetaryBody.getAtmosphere().getAtmosphereDensityAtSeaLevel();
+        double currentPlayerDensity = AtmosphereCalc.getAirDensity(planetaryBody, altitude);
+        float atmoPercent = (float) (currentPlayerDensity / seaLevelDensity);
+        return Mth.clamp(atmoPercent * 2.0f, 0.0f, 1.0f);
+    }
+
     public static Vector3d getDragForce(double airDensity, Vector3d airVelocity, double dragCoefficient, double crossSectionalArea) {
         Vector3d airDir = new Vector3d(airVelocity).normalize();
         double velocity = airVelocity.length();
@@ -133,6 +141,6 @@ public class AtmosphereCalc {
         //airVelocity.add(getPlanetGroundSpeedAt(planetaryBody, entityOrbitBody.getRelativePos(), planetaryBody.getNorthPoleDir()));
         double airDensity = getAirDensity(planetaryBody, entityOrbitBody.getAltitude());
         double crossSectionalArea = entityOrbitBody.getCrossSectionalArea(airVelocity);
-        return getDragForce(airDensity, airVelocity, 1.0d, crossSectionalArea);
+        return getDragForce(airDensity, airVelocity, PlanetShineConfig.getAtmosphericForceMultiplier(), crossSectionalArea);
     }
 }

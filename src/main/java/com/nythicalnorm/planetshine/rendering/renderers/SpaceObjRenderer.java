@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.rendering.renderTypes.RenderablePlanet;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
@@ -61,9 +62,9 @@ public class SpaceObjRenderer {
                 currentAlbedo = PSRenderer.getSunAngleOpacity();
                 atmosphere = Optional.of(planetOn.get().getAtmosphere());
             }
-        } else if (psClient.isInsideAtmosphereInSpaceDim()) {
-            // currentAlbedo = 1.0f - psClient.getDaylightRegion().getSunOcclusion();
-            // atmosphere = Optional.of(psClient.getPlayerOrbit().getParent().getAtmosphere());
+        } else if (psClient.isInsideAtmosphereInSpaceDim() && psClient.getPlayerOrbit().getParent() != null) {
+            currentAlbedo = 1.0f - AtmosphereCalc.getAtmoPercent(psClient.getPlayerOrbit().getParent(),
+                    psClient.getPlayerOrbit().getAltitude());
         }
 
         PSRenderer.drawStarBuffer(poseStack, projectionMatrix, currentAlbedo);

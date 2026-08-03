@@ -143,7 +143,7 @@ public class PSClient extends UniverseStage {
         }
     }
 
-    public void renderTick(float partialTick) {
+    public void simulateTick(float partialTick) {
         this.setCurrentTime(clientTimeHandler.calculateCurrentTime(partialTick));
         this.solarSystem.UpdatePlanets(this.getCurrentTime(), this.isTimeWarping());
         float deltatime = minecraft.getFrameTimeNs()/ 1_000_000_000f;
@@ -161,6 +161,8 @@ public class PSClient extends UniverseStage {
             this.playerOrbit.updateSurfaceDownRotation();
             this.daylightRegion.calculateForSpacecraft(this.playerOrbit);
         }
+
+        this.getScreenManager().updateScreenState();
     }
 
     public DaylightRegion getDaylightRegion() {

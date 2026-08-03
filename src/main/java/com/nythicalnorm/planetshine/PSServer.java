@@ -25,6 +25,7 @@ import com.nythicalnorm.planetshine.util.SpaceUtils;
 import com.nythicalnorm.planetshine.util.RunnableExecutor;
 import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -204,6 +205,9 @@ public class PSServer extends UniverseStage {
         if (planetTexHandler != null) {
             planetTexHandler.sendAllTexToPlayer(player, solarSystem.getAllPlanetaryBodies());
             // server.execute(() -> PlanetTexHandler.sendBiomeTexToPlayer(player, solarSystem.getDimensionOfPlanet(player.level().dimension())));
+        }
+        if (this.solarSystem.getAllPlanetaryBodies().isEmpty()) {
+            player.sendSystemMessage(Component.translatable("planetshine.state.no_planet_datapack").withStyle(ChatFormatting.RED));
         }
     }
 

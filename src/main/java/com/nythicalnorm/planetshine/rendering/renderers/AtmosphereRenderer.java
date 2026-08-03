@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
@@ -25,9 +26,9 @@ public class AtmosphereRenderer {
     private static Uniform OverlayAngle;
     private static Uniform AtmoAngle;
 
-    public static void setupShader(VertexBuffer skyBuffer) {
+    public static void setupShader() {
         skyboxShader = PSShaders.getSkyboxShader();
-        skyboxBuffer = skyBuffer;
+        skyboxBuffer = PSRenderer.getSkyboxBuffer();
         if (skyboxShader != null) {
             OverlayColor = skyboxShader.getUniform("nspOverlayColor");
             AtmoColor = skyboxShader.getUniform("nspAtmoColor");

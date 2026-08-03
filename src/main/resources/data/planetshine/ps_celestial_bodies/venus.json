@@ -1,0 +1,44 @@
+{
+  "name": "venus",
+  "type": "planetshine:planet",
+  "radius": 700000,
+  "mass": 1.2243980E23,
+
+  "north_pole_dir": {
+    "right_ascension": 0.0,
+    "declination": 0.0
+  },
+
+  "starting_rotation": 0.0,
+  "rotation_period": 80500.000,
+
+  "orbital_elements": {
+    "semi_major_axis": 	9832684544,
+    "eccentricity": 0.01,
+    "periapsis_time": 89461.5,
+
+    "inclination": 0.0366519,
+    "argument_of_periapsis": 0.0,
+    "longitude_of_ascending_node": 0.261799
+  },
+
+  "atmospheric_data": {
+    "has_atmosphere": true,
+    "surface_color": "81613c",
+    "atmosphere_color": "2e1f17",
+    "atmosphere_height": 90000,
+    "atmosphere_pressure": 5.0,
+    "atmosphere_alpha": 0.25,
+    "alpha_night": 1.0,
+    "alpha_day": 0.6
+  },
+
+  "dimension_id": "ad_astra:venus",
+  "dimensional_properties": {
+    "render_custom_skybox": true,
+    "draw_sunrise_disk": false,
+    "default_sky_color": "d18b52",
+    "affect_entity_gravity": false,
+    "affect_vs_ship_gravity": true
+  }
+}

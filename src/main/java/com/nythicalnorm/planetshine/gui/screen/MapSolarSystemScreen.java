@@ -269,7 +269,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     public void onClose() {
         super.onClose();
         if (isSpacecraftScreenOpen) {
-            screenManager.openPSSpacecraftScreen();
+            screenManager.openPSSpacecraftScreen(false);
         }
         this.saveScreenState();
         screenManager.closeMapScreen();

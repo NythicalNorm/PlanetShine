@@ -51,8 +51,8 @@ public class PSScreenManager {
 
     public void prepareForDimensionChange() {
         PSSpacecraftScreen spacecraftScreen = this.getSpacecraftScreen();
+
         if (spacecraftScreen != null) {
-            this.prevDimensionFacingDirection = spacecraftScreen.getFacingDirection();
             spacecraftScreen.saveScreenState();
             this.waitingForReopening = true;
         }
@@ -79,7 +79,7 @@ public class PSScreenManager {
         } else if (this.isSpacecraftScreenOpen && Minecraft.getInstance().player != null &&
                 VSGameUtilsKt.getShipMountedTo(Minecraft.getInstance().player) != null) {
             if (waitingForReopening) {
-                this.openPSSpacecraftScreen();
+                this.openPSSpacecraftScreen(false);
                 if (isMapScreenOpen) {
                     this.openMapScreen();
                 }
@@ -143,20 +143,19 @@ public class PSScreenManager {
         this.isMapScreenOpen = true;
     }
 
-    public void openPSSpacecraftScreen() {
+    public void openPSSpacecraftScreen(boolean newOpening) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (VSGameUtilsKt.getShipMountedTo(player) instanceof ClientShip) {
+        if (player != null && VSGameUtilsKt.getShipMountedTo(player) instanceof ClientShip) {
             EntityOrbitBody<?> entityOrbitBody = psClient.getControllingBody();
             float yaw = player.getViewYRot(0.0f);
             if (entityOrbitBody != null) {
                 PSSpacecraftScreen.FacingDirection facingDirection;
-                if (this.prevDimensionFacingDirection != null) {
+                if (this.prevDimensionFacingDirection != null && !newOpening) {
                     facingDirection = this.prevDimensionFacingDirection;
                     player.setYRot(facingDirection.getAngle());
-                    player.setXRot(0.0f);
-                    this.prevDimensionFacingDirection = null;
                 } else {
                     facingDirection = PSSpacecraftScreen.FacingDirection.fromYaw(yaw);
+                    this.prevDimensionFacingDirection = facingDirection;
                 }
 
                 PSSpacecraftScreen spacecraftScreen = new PSSpacecraftScreen(Component.empty(), entityOrbitBody, this,

@@ -9,7 +9,7 @@ import java.util.List;
 public abstract class UniverseStage {
     private static UniverseStage instance;
     public static final long WORLD_START_TIME = 0;
-    public static final List<Long> timeWarpSettings = List.of(1L, 10L, 100L, 1000L, 10000L, 100000L, 1000000L);
+    public static final List<Long> timeWarpSettings = List.of(1L, 5L, 10L, 100L, 1000L, 10_000L, 100_000L);
     public static SolarSystem anySolarSystem;
 
     protected volatile long currentTime = WORLD_START_TIME; // time passed since start in 1000 times currentTick, in milliTicks if you will.

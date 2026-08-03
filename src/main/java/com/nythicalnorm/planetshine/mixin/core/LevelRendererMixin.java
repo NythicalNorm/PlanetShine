@@ -32,20 +32,22 @@ public abstract class LevelRendererMixin {
     public void NSPrenderSky(PoseStack pPoseStack, Matrix4f pProjectionMatrix, float pPartialTick, Camera pCamera, boolean pIsFoggy, Runnable pSkyFogSetup, CallbackInfo ci) {
         // LevelRenderer levelRenderer = (LevelRenderer) (Object) this;
         Minecraft mc = Minecraft.getInstance();
-        PSClient css = PSClient.get();
+        PSClient psClient = PSClient.get();
 
-        if (mc.level == null || css == null) {
+        if (mc.level == null || psClient == null) {
             return;
         }
-        if (css.doRender()) {
+        if (psClient.doRender()) {
             pSkyFogSetup.run();
+            psClient.simulateTick(pPartialTick);
+
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();
                 if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !this.doesMobEffectBlockSky(pCamera)) {
-                    PSRenderer.renderSkybox(mc, pProjectionMatrix, pPoseStack, pPartialTick, pCamera, skyBuffer, css, css.getPlayerOrbit());
+                    PSRenderer.renderSkybox(mc, pProjectionMatrix, pPoseStack, pPartialTick, pCamera, skyBuffer, psClient, psClient.getPlayerOrbit());
+                    ci.cancel();
                 }
             }
-            ci.cancel();
         }
     }
 

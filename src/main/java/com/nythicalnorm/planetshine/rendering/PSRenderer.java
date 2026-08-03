@@ -6,8 +6,6 @@ import com.mojang.math.Axis;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.generators.SkyboxCubeGen;
 import com.nythicalnorm.planetshine.rendering.map.OrbitDrawer;
-import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
-import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
@@ -36,7 +34,6 @@ public class PSRenderer {
     private static VertexBuffer Star_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private static VertexBuffer Skybox_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private static Vec3 latestSkyColor;
-    private static boolean isFirstTime = true;
 
     public static void setupBuffers() {
         BufferBuilder bufferbuilder =  Tesselator.getInstance().getBuilder();
@@ -54,30 +51,18 @@ public class PSRenderer {
 
         OrbitDrawer.setupBuffers();
     }
-
-    private static void setupShaders() {
-        PlanetRenderer.setupShader();
-        AtmosphereRenderer.setupShader(Skybox_Buffer);
-        OrbitDrawer.setupShader();
-        // enable depth clamping shouldn't break stuff i don't think anyway.
+    public static VertexBuffer getSkyboxBuffer() {
+        return Skybox_Buffer;
     }
 
     public static void renderSkybox(Minecraft mc, Matrix4f projectionMatrix, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient, ClientPlayerOrbitBody playerOrbit)
     {
         FogRenderer.levelFogColor();
-        psClient.renderTick(partialTick);
-        psClient.getScreenManager().updateScreenState();
 
         if (!SpaceUtils.isSpaceLevel(mc.player.level()) && (
                 mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine()
         )) {
             return;
-        }
-
-        //temporary place to put this need to figure out when to call this.
-        if (isFirstTime) {
-            setupShaders();
-            isFirstTime = false;
         }
 
         GL11.glEnable(0x864F);
@@ -111,10 +96,7 @@ public class PSRenderer {
                 drawSunriseDisc(poseStack, psClient, Minecraft.getInstance().level);
             }
         } else if (playerOrbit.getParent() instanceof PlanetaryBody planetaryBody && planetaryBody.getAtmosphere().hasAtmosphere() && playerOrbit.getAltitude() <= planetaryBody.getAtmosphere().getAtmosphereHeight()) {
-            double seaLevelDensity = planetaryBody.getAtmosphere().getAtmosphereDensityAtSeaLevel();
-            double currentPlayerDensity = AtmosphereCalc.getAirDensity(planetaryBody, playerOrbit.getAltitude());
-            float atmoPercent = (float) (currentPlayerDensity / seaLevelDensity);
-            atmoPercent = Mth.clamp(atmoPercent * 2.0f, 0.0f, 1.0f);
+            float atmoPercent = AtmosphereCalc.getAtmoPercent(planetaryBody, playerOrbit.getAltitude());
 
             float timeOfDay = psClient.getDaylightRegion().getSunAngle();
             float[] skyColor = getSkyColorForTime(planetaryBody.getDimensionalProperties().getDefaultSkyColor(), atmoPercent, timeOfDay);

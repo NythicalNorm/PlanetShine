@@ -133,6 +133,8 @@ public abstract class EntityOrbitBody<T> extends OrbitalBody {
                 this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
                 if (this.orbitalElements.getEccentricity() > 0.9999d && !this.orbitalElements.isHyperbolic()) {
                     isNowInStateVec = true;
+                } else {
+                    PSServer.sendOrbitUpdateToRelevantPlayers(this);
                 }
             }
             else if (isNowInStateVec && !isStateVecControlled) {
