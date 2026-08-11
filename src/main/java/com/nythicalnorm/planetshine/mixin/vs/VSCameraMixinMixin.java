@@ -100,15 +100,4 @@ public abstract class VSCameraMixinMixin { // Yes I am going to name all mixin^2
             original.call(yaw, pitch, renderTransform);
         }
     }
-
-//    @TargetHandler(mixin = "org.valkyrienskies.mod.mixin.client.MixinCamera", name = "setupWithShipMounted")
-//    @WrapOperation(method = "@MixinSquared:Handler", at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/api/ships/properties/ShipTransform;getShipCoordinatesToWorldCoordinatesRotation()Lorg/joml/Quaterniondc;"))
-//    private Quaterniondc setSurfaceDownRotForShip(ShipTransform instance, Operation<Quaterniondc> original) {
-//        if (Minecraft.getInstance().screen instanceof MouseLookScreen screen && screen.movePlayerCamera() &&
-//                screen.getViewMode() == MouseLookScreen.ViewMode.SURFACE_DOWN) {
-//            return new Quaterniond(); //new Quaterniond(PSClient.get().getPlayerOrbit().getSurfaceDownRot());
-//        } else {
-//            return original.call(instance);
-//        }
-//    }
 }

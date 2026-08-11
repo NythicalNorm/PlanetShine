@@ -40,7 +40,7 @@ import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 import org.valkyrienskies.core.api.world.PhysLevel;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
-import org.valkyrienskies.core.internal.ShipTeleportData;
+import org.valkyrienskies.core.api.ships.ShipTeleportData;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.List;

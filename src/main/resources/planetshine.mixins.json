@@ -34,7 +34,7 @@
     "spaceentites.LocalPlayerSpaceMixin",
     "spaceentites.PlayerSpaceMixin",
     "timewarp.BedBlockMixin",
-    "vs.PhysShipImplMixin",
+    "vs.PhysVsBodyImplMixin",
     "worldborder.WorldBorderMixin",
     "worldgen.ClimateMixin"
   ],
@@ -48,9 +48,6 @@
     "ship_gui.DebugScreenOverlayMixin",
     "ship_gui.KeyboardHandlerMixin",
     "ship_gui.MinecraftMixin",
-    "spaceentites.PlayerRendererSpaceMixin",
-    "vs.TempFrustumMixin",
-    "vs.VSCameraMixinMixin",
-    "vs.VSGameRendererMixinMixin"
+    "spaceentites.PlayerRendererSpaceMixin"
   ]
 }
