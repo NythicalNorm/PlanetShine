@@ -33,16 +33,20 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.bodies.properties.BodyKinematics;
+import org.valkyrienskies.core.api.events.CollisionEvent;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.util.GameTickOnly;
+import org.valkyrienskies.core.api.util.PhysTickOnly;
 import org.valkyrienskies.core.api.world.PhysLevel;
 import org.valkyrienskies.core.api.world.ShipWorld;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
+import org.valkyrienskies.mod.common.ValkyrienSkiesMod;
+import org.valkyrienskies.mod.common.util.GameToPhysicsAdapter;
 import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 
 import java.lang.Math;
@@ -61,6 +65,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
     private static final int HOST_SPACE_GAP_SIZE = 16000;
     private static final int HOST_SPACE_DIAMETER = HOST_SPACE_GAP_SIZE / 2;
     private final List<LoadedServerShip> toTeleportList = new ArrayList<>();
+    private GameToPhysicsAdapter spaceDimGTPA;
 
     private boolean isDirty = false;
 
@@ -78,6 +83,7 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public void serverStarted() {
         this.shipTeleporter = new ShipTeleporter(VSGameUtilsKt.getShipObjectWorld(psServer.getMCServer()));
+        this.spaceDimGTPA = ValkyrienSkiesMod.getOrCreateGTPA(SpaceUtils.getSpaceLevelString());
     }
 
     public void setSpaceLevel(SpaceServerLevel spaceLevel) {
@@ -86,6 +92,10 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public SpaceServerLevel getSpaceLevel() {
         return spaceLevel;
+    }
+
+    public GameToPhysicsAdapter getSpaceDimGTPA() {
+        return spaceDimGTPA;
     }
 
     //Creates a new orbit space if absent and also sets the host's orbit space to be the new one.
@@ -448,5 +458,17 @@ public class HostSpaceManager implements IDataSavable<Map<OrbitId, Vector2ic>> {
 
     public void close() {
         //this.spaceLevel.close();
+    }
+
+    @PhysTickOnly
+    public void collisionEvent(CollisionEvent collisionEvent) {
+        if (!collisionEvent.getDimensionId().equals(SpaceUtils.getSpaceLevelString())) {
+            return;
+        }
+
+        collisionEvent.getContactPoints().forEach(contactPoint -> {
+            Vector3dc pos = contactPoint.getPosition();
+            Vector3dc velocity = contactPoint.getVelocity();
+        });
     }
 }

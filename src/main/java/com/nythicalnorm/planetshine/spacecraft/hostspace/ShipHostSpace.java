@@ -17,6 +17,7 @@ import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaterniond;
 import org.joml.Vector2ic;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
@@ -26,6 +27,9 @@ import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.world.PhysLevel;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
+import org.valkyrienskies.core.internal.joints.VSDistanceJoint;
+import org.valkyrienskies.core.internal.joints.VSJoint;
+import org.valkyrienskies.core.internal.joints.VSJointPose;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Iterator;
@@ -36,6 +40,7 @@ import java.util.function.Consumer;
 public class ShipHostSpace extends OrbitHostSpace {
     protected final ConcurrentLinkedQueue<Vector3dc> velocityForLastPhysTick;
     protected final ConcurrentLinkedQueue<ServerSpaceshipBody> nonHostShips;
+    protected Integer distanceJointID = null;
 
     public ShipHostSpace(OrbitId orbitIdOfHost, Vector2ic originPos, EntityOrbitBody<?> entityOrbitBody) {
         super(orbitIdOfHost, originPos, entityOrbitBody);
@@ -141,7 +146,50 @@ public class ShipHostSpace extends OrbitHostSpace {
             ship.setHostOrbitSpace(this);
             if (! this.hostBody.getOrbitId().equals(ship.getOrbitId())) {
                 this.nonHostShips.add(ship);
+            } else {
+                this.addDistanceJointToHostSpace((LoadedServerShip)this.hostBody.getBody());
             }
+        }
+    }
+
+    private void addDistanceJointToHostSpace(LoadedServerShip ship) {
+        VSJointPose pose0 = new VSJointPose(
+                ship.getTransform().getPositionInShip(),
+                new Quaterniond()
+        );
+
+        VSJointPose pose1 = new VSJointPose(
+                this.getOriginPos(),
+                new Quaterniond()
+        );
+
+        VSDistanceJoint joint = new VSDistanceJoint(
+                ship.getId(),
+                pose0,
+                null,
+                pose1,
+                null,
+                VSJoint.DEFAULT_COMPLIANCE,
+                0.0f,
+                0.0f,
+                0.000001f,
+                10.0f,
+                100.0f
+        );
+
+        PSServer.get().getHostSpaceManager().getSpaceDimGTPA().addJoint(joint, 0, this::setDistanceJointID);
+    }
+
+    public void setDistanceJointID(int distanceJointID) {
+        this.distanceJointID = distanceJointID;
+    }
+
+    @Override
+    public void hostLeft(boolean isTeleporting) {
+        super.hostLeft(isTeleporting);
+
+        if (this.distanceJointID != null) {
+            PSServer.get().getHostSpaceManager().getSpaceDimGTPA().removeJoint(distanceJointID);
         }
     }
 

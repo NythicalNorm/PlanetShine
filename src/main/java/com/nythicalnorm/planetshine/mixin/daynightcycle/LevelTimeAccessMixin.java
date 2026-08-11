@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle;
 
 
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.LevelTimeAccess;
@@ -22,9 +23,13 @@ public interface LevelTimeAccessMixin extends LevelReader {
      */
     @Overwrite
     default float getTimeOfDay(float pPartialTick) {
-        if (this instanceof PlanetTimeAccessor planetTimeAccessor) {
-            return planetTimeAccessor.ps$getSunAngle(0d, 0d);
+        if (!(this instanceof SpaceServerLevel)) {
+            if (this instanceof PlanetTimeAccessor planetTimeAccessor) {
+                return planetTimeAccessor.ps$getSunAngle(0d, 0d);
+            }
+            return this.dimensionType().timeOfDay(this.dayTime());
+        } else {
+            return this.dimensionType().timeOfDay(6000L);
         }
-        return this.dimensionType().timeOfDay(this.dayTime());
     }
 }

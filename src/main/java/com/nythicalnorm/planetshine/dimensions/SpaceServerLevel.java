@@ -113,6 +113,11 @@ public class SpaceServerLevel extends ServerLevel implements PlanetTimeAccessor 
     }
 
     @Override
+    public long getDayTime() {
+        return 6000L;
+    }
+
+    @Override
     public boolean ps$DaylightDataExists() {
         return true;
     }
