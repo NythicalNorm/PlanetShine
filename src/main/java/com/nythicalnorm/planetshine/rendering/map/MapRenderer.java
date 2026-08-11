@@ -37,8 +37,9 @@ public class MapRenderer {
         }
 
         renderTree.propagateRender(graphics, poseStack, projectionMatrix, null, currentFocus);
-        ManeuverRenderer.renderFromBody(PSClient.get().getControllingBody(), this.mapRenderables, poseStack, projectionMatrix);
-
+        ManeuverRenderer.renderAllSOIChanges(
+                poseStack, projectionMatrix, PSClient.get().getManeuverManager().getPredictedSOIChangesList(), mapRenderables
+        );
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
