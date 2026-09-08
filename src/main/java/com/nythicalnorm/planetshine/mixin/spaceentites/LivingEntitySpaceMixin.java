@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.WalkAnimationState;
 import net.minecraft.world.entity.player.Player;
@@ -24,11 +25,17 @@ public class LivingEntitySpaceMixin {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
         float frictionVal = constant;
 
-        if (livingEntity.level() != null && SpaceUtils.isSpaceLevel(livingEntity.level()) && !livingEntity.onGround()) {
+        if (livingEntity.level() == null) {
+            return frictionVal;
+        }
+
+        if (SpaceUtils.isSpaceLevel(livingEntity.level()) && !livingEntity.onGround()) {
             frictionVal = 1.0F;
             if (livingEntity instanceof Player player && player.getAbilities().flying) {
                 frictionVal = constant;
             }
+        } else {
+            frictionVal = AtmosphereCalc.getEntityFrictionValue(constant, livingEntity.level());
         }
         return frictionVal;
     }

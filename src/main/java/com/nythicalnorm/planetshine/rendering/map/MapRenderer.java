@@ -9,6 +9,7 @@ import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.rendering.renderTypes.*;
+import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
@@ -41,6 +42,34 @@ public class MapRenderer {
                 poseStack, projectionMatrix, PSClient.get().getManeuverManager().getPredictedSOIChangesList(), mapRenderables
         );
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    public void renderManeuverNodes(GuiGraphics graphics, PoseStack poseStack, Matrix4f projectionMatrix,
+                                    int mouseX, int mouseY, EntityOrbitBody<?> controllingBody) {
+        if (this.currentOpenScreen == null) {
+            return;
+        }
+
+        Vector3d outRayDir = new Vector3d();
+        Vector3d outPosition = new Vector3d();
+
+        this.currentOpenScreen.getMouseToWorldRays(
+                (float) mouseX,
+                (float) mouseY,
+                this.currentOpenScreen.getFocusedOrbitalBody().getAbsolutePos(),
+                outRayDir,
+                outPosition
+        );
+
+        ManeuverRenderer.renderMouseOverOrbitPoint (
+                graphics, poseStack, projectionMatrix,
+                mouseX, mouseY,
+                outRayDir, outPosition,
+                controllingBody,
+                PSClient.get().getManeuverManager().getPredictedSOIChangesList(),
+                this.getMapRenderables()
+        );
+
     }
 
     public void updateMapRenderables(PSClient css, OrbitalBody currentFocusedBody) {
@@ -88,8 +117,12 @@ public class MapRenderer {
         return this.mapRenderables.get(orbitId);
     }
 
-    public Collection<MapRenderable> getMapRenderables() {
+    public Collection<MapRenderable> getMapRenderableValues() {
         return this.mapRenderables.values();
+    }
+
+    public Map<OrbitId, MapRenderable> getMapRenderables() {
+        return mapRenderables;
     }
 
     public static Vector3f toMapCoordinate(Vector3dc position) {

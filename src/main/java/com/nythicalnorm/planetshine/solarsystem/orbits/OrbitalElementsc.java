@@ -12,6 +12,7 @@ import java.util.OptionalLong;
 public interface OrbitalElementsc {
     double ToCartesian(long timeElapsed, Vector3d outPos, Vector3d outVel);
     double getSemiMajorAxis();
+    double getSemiMinorAxis();
     double getEccentricity();
     long getPeriapsisTime();
     double getMeanAngularMotion();
@@ -29,7 +30,12 @@ public interface OrbitalElementsc {
     double getApoapsis();
     double getPeriapsis();
     Quaterniondc getOrbitRotation();
+    Vector3d getPositionAtAnomaly(double trueAnomaly);
+    Vector3d getPeriapsisPosition();
+    Vector3d getApoapsisPosition();
+
     void initCalcs(double parentMass);
 
     @Nullable OrbitalCalc.SOIIntercept findOrbitEscapeIntercept(CelestialBody body, long elapsedTime);
+
 }

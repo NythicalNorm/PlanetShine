@@ -2,6 +2,7 @@ package com.nythicalnorm.planetshine.util;
 
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
@@ -77,5 +78,120 @@ public class ProjectionUtils {
         double discriminant = b * b - 4 * a * c;
 
         return discriminant >= 0;
+    }
+
+    public static Vector3d intersectLinePlane (
+            Vector3dc lineStart,
+            Vector3dc lineDir,
+            Vector3dc planePos,
+            Quaterniondc planeRot
+    ) {
+        // Plane normal = plane's local +Y direction rotated into world space
+        Vector3d planeNormal = new Vector3d(0, 1, 0).rotate(planeRot);
+
+        // denominator = lineDir · planeNormal
+        double denom = lineDir.dot(planeNormal);
+
+        // Line is parallel to plane
+        if (Math.abs(denom) < 1e-6f) {
+            return null;
+        }
+
+        // t = (planePos - lineStart) · planeNormal
+        //     ------------------------------------
+        //          lineDir · planeNormal
+        double t = new Vector3d(planePos)
+                .sub(lineStart)
+                .dot(planeNormal) / denom;
+
+        // Intersection point = lineStart + lineDir * t
+        return new Vector3d(lineDir)
+                .mul(t)
+                .add(lineStart);
+    }
+
+    public static Vector2d closestPointOnHyperbola(
+            double a,
+            double b,
+            Vector2d target
+    ) {
+        a = Math.abs(a);
+        b = Math.abs(b);
+        // Try both branches and return the closest result.
+        Vector2d right = closestOnBranch(a, b, target, false);
+        Vector2d left  = closestOnBranch(a, b, target, true);
+
+        double rightDist = right.distanceSquared(target);
+        double leftDist  = left.distanceSquared(target);
+
+        return rightDist < leftDist ? right : left;
+    }
+
+    private static Vector2d closestOnBranch(
+            double a,
+            double b,
+            Vector2d target,
+            boolean leftBranch
+    ) {
+        /*
+         * Initial guess.
+         *
+         * A reasonable starting point is based on the direction
+         * from the hyperbola's center toward the target.
+         */
+        double t;
+
+        double xSign = leftBranch ? -1.0f : 1.0f;
+
+        double normalizedY = target.y / b;
+
+        t = OrbitalCalc.aSinh(
+                Math.max(-1.0, Math.min(1.0, normalizedY))
+        );
+
+        // Newton-Raphson
+        for (int i = 0; i < 60; i++) {
+            double sinh = Math.sinh(t);
+            double cosh = Math.cosh(t);
+
+            double x = xSign * a * cosh;
+            double y = b * sinh;
+
+            double dx = xSign * a * sinh;
+            double dy = b * cosh;
+
+            double ddx = xSign * a * cosh;
+            double ddy = b * sinh;
+
+            // f(t) = (P(t) - target) · P'(t)
+            double f =
+                    (x - target.x) * dx +
+                            (y - target.y) * dy;
+
+            // f'(t)
+            double df =
+                    dx * dx +
+                            (x - target.x) * ddx +
+                            dy * dy +
+                            (y - target.y) * ddy;
+
+            if (Math.abs(df) < 1e-14f)
+                break;
+
+            double delta = f / df;
+
+            t -= delta;
+
+            if (Math.abs(delta) < 1e-14f)
+                break;
+        }
+
+        double cosh = Math.cosh(t);
+        double sinh = Math.sinh(t);
+
+        return new Vector2d(
+                xSign * a * cosh,
+                b * sinh
+        );
     }
 }

@@ -4,7 +4,6 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.planettexgen.PlanetGradient;
 import com.nythicalnorm.planetshine.planettexgen.PlanetMapGen;
 import com.nythicalnorm.planetshine.planettexgen.TexGenTask;
-import net.minecraft.util.RandomSource;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -16,13 +15,11 @@ import java.nio.file.Path;
 public class WholePlanetTexGenTask extends TexGenTask {
     private final Path planetDir;
     private final String planetName;
-    private final RandomSource randomSource;
     private final PlanetGradient gradient;
 
-    public WholePlanetTexGenTask(Path planetDir, String planetName, RandomSource randomSource, PlanetGradient gradient) {
+    public WholePlanetTexGenTask(Path planetDir, String planetName, PlanetGradient gradient) {
         this.planetDir = planetDir;
         this.planetName = planetName;
-        this.randomSource = randomSource;
         this.gradient = gradient;
     }
 
@@ -32,7 +29,7 @@ public class WholePlanetTexGenTask extends TexGenTask {
         File planetTexFileLocation = new File(planetTexPath.toUri());
 
         if (!planetTexFileLocation.exists()) {
-            BufferedImage planetMap = PlanetMapGen.GenerateMap(randomSource, gradient);
+            BufferedImage planetMap = PlanetMapGen.GenerateMap(gradient);
 
             try (FileOutputStream fileWriter = new FileOutputStream(planetTexFileLocation)) {
                 byte[] imageBytes = convertBufferedImageToPngBytes(planetMap);

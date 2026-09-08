@@ -2,8 +2,11 @@ package com.nythicalnorm.planetshine.util;
 
 import com.nythicalnorm.planetshine.dimensions.SpaceDimension;
 import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -38,6 +41,19 @@ public class SpaceUtils {
             return new Vector2d(Math.toDegrees(latitude), Math.toDegrees(longitude));
         }
         return null;
+    }
+
+    public static float getEntityPlanetGravity(float overworldGravity, Level level) {
+        if (SpaceUtils.isSpaceLevel(level)) {
+            return 0.0f;
+        } else if (((CelestialBodyAccessor)level).ps$isPlanet()) {
+            CelestialBody celestialBody = ((CelestialBodyAccessor) level).ps$getCelestialBody();
+            if (celestialBody instanceof PlanetaryBody planetaryBody && planetaryBody.getDimensionalProperties().isAffectEntityGravity()) {
+                double accelerationDueToGravity = celestialBody.getAccelerationDueToGravity() / AtmosphereCalc.g;
+                return (float) (overworldGravity * accelerationDueToGravity);
+            }
+        }
+        return overworldGravity;
     }
 
     private static final double distanceToSearch = 2000;

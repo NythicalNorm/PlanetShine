@@ -136,8 +136,7 @@ public class OrbitDrawer {
         VertexBuffer drawBuffer = isElliptical ? circleBuffer : hyperbolaBuffer;
 
         double a = orbitalElements.getSemiMajorAxis();
-        double b = isElliptical ? a*Math.sqrt(1-(orbitalElements.getEccentricity() * orbitalElements.getEccentricity()))
-                : a*Math.sqrt((orbitalElements.getEccentricity() * orbitalElements.getEccentricity()) - 1);
+        double b = orbitalElements.getSemiMinorAxis();
 
         a = a * MapRenderer.SCALE_FACTOR;
         b = b * MapRenderer.SCALE_FACTOR;

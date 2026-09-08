@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -45,6 +46,15 @@ public abstract class LevelMixin implements CelestialBodyAccessor {
         if (level.getWorldBorder() instanceof PlanetWorldBorder planetWorldBorder) {
             planetWorldBorder.ps$setPlanetBorder(celestialBody);
         }
+    }
+
+    @Override
+    public @Nullable String ps$getBiomeGroupNameAt(int x, int y, int z) {
+        if (this.ps$celestialBody == null || this.ps$celestialBody.getCelestialServerData() == null ||
+                this.ps$celestialBody.getCelestialServerData().getPlanetGradient() == null) {
+            return null;
+        }
+        return this.ps$celestialBody.getCelestialServerData().getPlanetGradient().getBiomeNameAt(x, y, z, this.ps$celestialBody);
     }
 
     @ModifyReturnValue(method = "getDayTime", at= @At(value = "RETURN"))

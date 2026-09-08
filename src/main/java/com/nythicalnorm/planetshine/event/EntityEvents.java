@@ -37,7 +37,7 @@ public class EntityEvents {
         CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) level;
 
         if (planetAccessor.ps$isPlanet()){
-            double planetAcceleration = planetAccessor.ps$getCelestialBody().getEntityAccelerationDueToGravity();
+            double planetAcceleration = planetAccessor.ps$getCelestialBody().getLivingEntityAccelerationDueToGravity();
 
             if (planetAcceleration <= 0){
                 event.setCanceled(true);
@@ -74,7 +74,7 @@ public class EntityEvents {
             }
 
             if (applyGravityModifier) {
-                tempGravity = planetAccessor.ps$getCelestialBody().getEntityAccelerationDueToGravity();
+                tempGravity = planetAccessor.ps$getCelestialBody().getLivingEntityAccelerationDueToGravity();
             }
 
             AttributeModifier gravityModifier = new AttributeModifier(gravityUUID, "planetshine.planetgravity",

@@ -206,7 +206,7 @@ public class OrbitalElements implements OrbitalElementsc {
             return anomaly;
         }  else {
             double cosTrueAnomoly = Math.cos(trueAnomoly);
-            double anomaly = OrbitalCalc.invCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
+            double anomaly = OrbitalCalc.aCosh((Eccentricity + cosTrueAnomoly) / (1 + Eccentricity * cosTrueAnomoly));
             anomaly = (trueAnomoly > Math.PI) ? -anomaly : anomaly;
 
             this.MeanAngularMotion = Math.sqrt(Mu / -(SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
@@ -230,6 +230,34 @@ public class OrbitalElements implements OrbitalElementsc {
             this.MeanAngularMotion = Math.sqrt(Mu/(SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
         } else {
             this.MeanAngularMotion = Math.sqrt(Mu/-(SemiMajorAxis * SemiMajorAxis * SemiMajorAxis));
+        }
+    }
+
+    @Override
+    public Vector3d getPositionAtAnomaly(double trueAnomaly) {
+        double semiLatus = Eccentricity < 1 ? SemiMajorAxis * (1 - Eccentricity * Eccentricity) :
+                Math.abs(SemiMajorAxis) * (Eccentricity * Eccentricity - 1);
+
+        double radius = semiLatus / (1 + Eccentricity * Math.cos(trueAnomaly));
+
+        double sinVal = Math.sin(trueAnomaly);
+        double cosVal = org.joml.Math.cosFromSin(sinVal, trueAnomaly);
+        Vector3d pos = new Vector3d(radius * cosVal, 0d, -(radius * sinVal));
+        this.getOrbitRotation().transform(pos);
+        return pos;
+    }
+
+    @Override
+    public Vector3d getPeriapsisPosition() {
+        return this.getPositionAtAnomaly(0.0d);
+    }
+
+    @Override
+    public Vector3d getApoapsisPosition() {
+        if (this.isHyperbolic()) {
+            return new Vector3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        } else {
+            return this.getPositionAtAnomaly(Math.PI);
         }
     }
 
@@ -278,6 +306,12 @@ public class OrbitalElements implements OrbitalElementsc {
     @Override
     public double getSemiMajorAxis() {
         return SemiMajorAxis;
+    }
+
+    @Override
+    public double getSemiMinorAxis() {
+        return isHyperbolic() ? this.getSemiMajorAxis() * Math.sqrt((Eccentricity * Eccentricity) - 1) :
+                this.getSemiMajorAxis() * Math.sqrt(1 - (Eccentricity * Eccentricity));
     }
 
     @Override

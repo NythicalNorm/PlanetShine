@@ -40,7 +40,7 @@ public class OrbitalCalc {
             return (lastPeriapsisTime + TimeCalc.timeDoubleToLong(timeDiffTerm));
         } else {
             double cosTrueAnomoly = Math.cos(trueAnomaly);
-            double H = invCosh((eccentricity + cosTrueAnomoly) / (1 + eccentricity * cosTrueAnomoly));
+            double H = aCosh((eccentricity + cosTrueAnomoly) / (1 + eccentricity * cosTrueAnomoly));
             H = (trueAnomaly > Math.PI) ? -H : H;
 
             double timeDiffTerm = (eccentricity * Math.sinh(H) - H) / meanAngularMotion;
@@ -82,11 +82,14 @@ public class OrbitalCalc {
         return getTrueAnomalyFromEccentricAnomaly(eccentricAnomaly, newOrbit.getEccentricity());
     }
 
-    public static double invCosh(double x) {
+    public static double aCosh(double x) {
         if (x < 1.0) {
             return Double.NaN;
         }
-        return Math.log(x + Math.sqrt(x*x - 1));
+        return Math.log(x + Math.sqrt(x * x - 1));
+    }
+    public static double aSinh(double x) {
+        return Math.log(x + Math.sqrt(x * x + 1.0));
     }
 
     public static @Nullable CelestialBody calculateSOIChange(OrbitalCalc.SOIIntercept nextOrbitIntercept, CelestialBody parentBody,

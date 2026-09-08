@@ -23,6 +23,10 @@ public class BiomeGroup {
         }
     }
 
+    public String getName() {
+        return name;
+    }
+
     public static BiomeGroup readFromJson(JsonObject biomeGroup) {
         String name = biomeGroup.get("name").getAsString();
         float min = biomeGroup.get("min").getAsFloat();

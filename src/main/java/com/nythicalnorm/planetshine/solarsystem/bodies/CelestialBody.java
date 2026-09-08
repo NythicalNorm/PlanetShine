@@ -174,7 +174,7 @@ public abstract class CelestialBody extends OrbitalBody {
         return val/(radius*radius);
     }
 
-    public double getEntityAccelerationDueToGravity() {
+    public double getLivingEntityAccelerationDueToGravity() {
         return getAccelerationDueToGravity() * 0.1d * 0.08d;
     }
 

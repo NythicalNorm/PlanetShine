@@ -1,10 +1,13 @@
 package com.nythicalnorm.planetshine.util.calculations;
 
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.storage.PlanetShineConfig;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.joml.Vector3fc;
@@ -12,7 +15,8 @@ import org.joml.Vector3fc;
 public class AtmosphereCalc {
     // Universal constants
     private static final double R = 287.05287d;       // J/(kg·K)
-    private static final double g = 9.80665d;       // acceleration due to gravity (earth)
+    public static final double g = 9.80665d;       // acceleration due to gravity (earth)
+    private static final double DefaultOverworldAirDensity = 1.225d;       // acceleration due to gravity (earth)
 
     // Atmosphere layers
     // Base heights (m)
@@ -66,6 +70,10 @@ public class AtmosphereCalc {
      * for altitudes up to roughly 120 km.
      */
     public static double getAirDensity(CelestialBody celestialBody, double altitudeMeters) {
+        if (!celestialBody.getAtmosphere().hasAtmosphere()) {
+            return 0.0d;
+        }
+
         altitudeMeters = (altitudeMeters / celestialBody.getAtmosphere().getAtmosphereHeight()) * 120_000.0d;
 
 
@@ -142,5 +150,30 @@ public class AtmosphereCalc {
         double airDensity = getAirDensity(planetaryBody, entityOrbitBody.getAltitude());
         double crossSectionalArea = entityOrbitBody.getCrossSectionalArea(airVelocity);
         return getDragForce(airDensity, airVelocity, PlanetShineConfig.getAtmosphericForceMultiplier(), crossSectionalArea);
+    }
+
+    public static float getEntityFrictionValue(float overworldFriction, Level level) {
+        if (SpaceUtils.isSpaceLevel(level)) {
+            return 1.0f;
+        } else if (((CelestialBodyAccessor)level).ps$isPlanet()) {
+            CelestialBody celestialBody = ((CelestialBodyAccessor)level).ps$getCelestialBody();
+
+            if (celestialBody instanceof PlanetaryBody planetaryBody && planetaryBody.getDimensionalProperties().isAffectEntityGravity()) {
+                if (!celestialBody.getAtmosphere().hasAtmosphere()) {
+                    return 1.0f;
+                }
+
+                float seaLevelDensity = (float) celestialBody.getAtmosphere().getAtmosphereDensityAtSeaLevel();
+                float atmoPercent = (Math.max(seaLevelDensity, 0.0001f)) / (float) DefaultOverworldAirDensity;
+                float atmoAdjusted = 1 - (1 / (atmoPercent + 1));
+
+                if (atmoAdjusted <= 0.5f) {
+                    return Mth.lerp(atmoAdjusted * 2.0f, 1.0f, overworldFriction);
+                } else {
+                    return Mth.lerp((atmoAdjusted * 2.0f) - 1.0f, overworldFriction, 0.8f);
+                }
+            }
+        }
+        return overworldFriction;
     }
 }

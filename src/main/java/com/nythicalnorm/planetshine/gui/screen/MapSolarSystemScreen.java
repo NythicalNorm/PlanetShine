@@ -118,6 +118,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
         mapRenderer.renderMapObjects(graphics, mapPosestack, projectionMatrix, focusableBodies[currentFocusedBodyIndex]);
+        mapRenderer.renderManeuverNodes(graphics, mapPosestack, projectionMatrix, mouseX, mouseY, PSClient.get().getControllingBody());
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
         mapPosestack.popPose();
@@ -161,7 +162,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     protected boolean mouseLeftDoubleClicked(double pMouseX, double pMouseY) {
         SolarSystem solarSystem =  PSClient.get().getSolarSystem();
         // check for all the planet icons
-        OrbitalBody clickedBody = this.findPlanetOrbitBodyHoveringOver((int) pMouseX, (int) pMouseY, mapRenderer.getMapRenderables());
+        OrbitalBody clickedBody = this.findPlanetOrbitBodyHoveringOver((int) pMouseX, (int) pMouseY, mapRenderer.getMapRenderableValues());
 
         // check for all the entity icons
         if (clickedBody == null) {
@@ -173,15 +174,18 @@ public class MapSolarSystemScreen extends MouseLookScreen {
             return true;
         }
 
-        // raycast for checking celestial bodies themselves
-        Vector3d rayDir = ProjectionUtils.screenToWorldRay((float) pMouseX, (float) pMouseY, width, height, projectionMatrix, lastCameraModelView);
-        Vector3d cameraPos = new Vector3d(relativeCameraPos);
-        OrbitalBody body = this.getFocusedOrbitalBody();
+        Vector3d outRayDir = new Vector3d();
+        Vector3d outPosition = new Vector3d();
 
-        rayDir.normalize();
-        cameraPos = cameraPos.add(body.getAbsolutePos());
+        this.getMouseToWorldRays(
+            (float) pMouseX,
+            (float) pMouseY,
+            this.getFocusedOrbitalBody().getAbsolutePos(),
+            outRayDir,
+            outPosition
+        );
 
-        CelestialBody celestialBody = ProjectionUtils.raycastPlanets(cameraPos, rayDir, solarSystem);
+        CelestialBody celestialBody = ProjectionUtils.raycastPlanets(outPosition, outRayDir, solarSystem);
         if (celestialBody != null) {
             this.setFocusBody(celestialBody);
             return true;
@@ -193,7 +197,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
     private void renderToolTip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         PSClient psClient = PSClient.get();
 
-        OrbitalBody hoveringOverPlanet = findPlanetOrbitBodyHoveringOver(mouseX, mouseY, mapRenderer.getMapRenderables());
+        OrbitalBody hoveringOverPlanet = findPlanetOrbitBodyHoveringOver(mouseX, mouseY, mapRenderer.getMapRenderableValues());
         if (hoveringOverPlanet != null) {
             renderSpacecraftTooltip(guiGraphics, mouseX, mouseY, hoveringOverPlanet);
         }
@@ -207,6 +211,14 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         if (hoverOverBody != null) {
             renderSpacecraftTooltip(guiGraphics, mouseX, mouseY, hoverOverBody);
         }
+    }
+
+    public void getMouseToWorldRays(float pMouseX, float pMouseY, Vector3dc absolutePos,
+                                       Vector3d outRayDir, Vector3d outPos) {
+        outRayDir.set(ProjectionUtils.screenToWorldRay(pMouseX, pMouseY, width, height, projectionMatrix, lastCameraModelView));
+        outPos.set(relativeCameraPos);
+        outRayDir.normalize();
+        outPos.add(absolutePos);
     }
 
     private void renderSpacecraftTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY, OrbitalBody entityOrbitBody) {
@@ -236,7 +248,7 @@ public class MapSolarSystemScreen extends MouseLookScreen {
         return null;
     }
 
-    private boolean isHoveringOver(int mouseX, int mouseY, MapIconRenderable mapIconRenderable) {
+    protected boolean isHoveringOver(int mouseX, int mouseY, MapIconRenderable mapIconRenderable) {
         if (mapIconRenderable.shouldDrawIcon()) {
             Vector2ic iconPos = mapIconRenderable.getLatestMapPos();
             if (iconPos == null) {

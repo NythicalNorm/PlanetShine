@@ -40,10 +40,10 @@ public class PlanetTexHandler {
             return;
         }
 
-        RandomSource randomSource = RandomSource.create(server.getLevel(Level.OVERWORLD).getSeed());
         texExecuter = Executors.newSingleThreadExecutor();
 
         server.getPlayerList().broadcastSystemMessage(Component.translatable("planetshine.state.planetgen_start"), true);
+        int i = 0;
 
         for (CelestialBody celestialBody : planets.getAllPlanetaryBodies().values()) {
             Path celestialBodyDir = planetsTexturesPath.resolve(celestialBody.getName());
@@ -53,10 +53,15 @@ public class PlanetTexHandler {
             if (planetGradient == null) {
                 PlanetShine.logError("Can't load a texture data pack for planet: " + celestialBody.getName() + ", Texture will not be generated");
                 continue;
+            } else {
+                celestialBody.getCelestialServerData().setPlanetGradient(planetGradient);
             }
 
+            RandomSource randomSource = RandomSource.create(server.getLevel(Level.OVERWORLD).getSeed() + i++);
+            planetGradient.setRandomSource(randomSource);
+
             CompletableFuture<byte[]> planetImgData = CompletableFuture.supplyAsync(
-                    new WholePlanetTexGenTask(celestialBodyDir, celestialBody.getName(), randomSource, planetGradient), texExecuter);
+                    new WholePlanetTexGenTask(celestialBodyDir, celestialBody.getName(), planetGradient), texExecuter);
 
             celestialBody.getCelestialServerData().setPlanetTextureFolder(celestialBodyDir);
             celestialBody.getCelestialServerData().setPlanetMainTexBytes(planetImgData);
