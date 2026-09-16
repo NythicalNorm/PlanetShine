@@ -8,24 +8,34 @@ import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
-import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.AbstractSpaceshipBody;
+import com.nythicalnorm.planetshine.spacecraft.spaceship.ServerSpaceshipBody;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
+import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2ic;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
+import org.valkyrienskies.core.api.world.PhysLevel;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 public abstract class OrbitHostSpace implements OrbitHostAccessor {
     protected final OrbitId orbitIdOfHost;
     protected final Vector2ic originPos;
-    protected final EntityOrbitBody hostBody;
+    protected final EntityOrbitBody<?> hostBody;
 
     @GameTickOnly
     protected final ConcurrentLinkedQueue<Entity> nonHostEntities;
@@ -33,7 +43,9 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
 
     protected final ConcurrentLinkedQueue<Vector3dc> velocityForLastGameTick;
 
-    public OrbitHostSpace(OrbitId orbitIdOfHost, Vector2ic originPos, EntityOrbitBody entityOrbitBody) {
+    protected float sunOcclusion;
+
+    public OrbitHostSpace(OrbitId orbitIdOfHost, Vector2ic originPos, EntityOrbitBody<?> entityOrbitBody) {
         this.orbitIdOfHost = orbitIdOfHost;
         this.originPos = originPos;
         this.nonHostEntities = new ConcurrentLinkedQueue<>();
@@ -43,7 +55,7 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
     }
 
     @Override
-    public EntityOrbitBody getHostBody() {
+    public EntityOrbitBody<?> getHostBody() {
         return hostBody;
     }
 
@@ -57,48 +69,82 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
         return orbitIdOfHost;
     }
 
-    public void OnGameTick() {
-        Vector3d velocity = Calc.pollVectorQueue(velocityForLastGameTick);
+    public float getSunOcclusion() {
+        return sunOcclusion;
+    }
 
-        if (velocity.x() == 0.0d && velocity.y() == 0.0d && velocity.z() == 0.0d) {
-            return;
-        }
+    public void OnGameTick() {
+        this.sunOcclusion = DayNightCycleCalc.getSunOcclusionForSpacecraft(this.hostBody);
+        Vector3d velocity = MiscCalc.pollVectorQueue(velocityForLastGameTick);
+        boolean applyVelocity = velocity.x() != 0.0d || velocity.y() != 0.0d || velocity.z() != 0.0d;
 
         Iterator<Entity> entityIterator = this.nonHostEntities.iterator();
+        double maxDistToCenter = this.getMaxDistToHostCenter();
 
         while (entityIterator.hasNext()) {
             Entity entity = entityIterator.next();
-            if (PSServer.get().getHostSpaceManager().getHostSpacePos(entity.position()).equals(this.originPos.x(), this.originPos.y())
-                    && !entity.isPassenger()) {
-                Vec3 ogVel = entity.getDeltaMovement();
-                entity.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
-                        ogVel.z - velocity.z());
-            } else {
-                removeEntityFromHostSpace(entity);
+            if (PSServer.get().getHostSpaceManager().getHostSpacePos(entity.position().x(), entity.position().z())
+                    .equals(this.originPos.x(), this.originPos.y()))
+            {
+                if (!entity.isPassenger() && applyVelocity) {
+                    Vec3 ogVel = entity.getDeltaMovement();
+                    entity.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
+                            ogVel.z - velocity.z());
+                }
+                if (!VSGameUtilsKt.isBlockInShipyard(entity.level(), entity.blockPosition()) &&
+                        this.getOriginPos().distance(entity.position().x(),
+                                entity.position().y(), entity.position().x()) > maxDistToCenter)
+                {
+                    removeEntityFromHostSpace(entity);
+                }
+            }
+        }
+
+        Iterator<ServerPlayerOrbitBody> playerIterator = this.playerOrbitBodies.iterator();
+
+        while (playerIterator.hasNext()) {
+            ServerPlayerOrbitBody playerOrbitBody = playerIterator.next();
+            ServerPlayer player = (ServerPlayer) playerOrbitBody.getBody();
+            if (player != null && PSServer.get().getHostSpaceManager().getHostSpacePos(player.position().x(), player.position().z())
+                    .equals(this.originPos.x(), this.originPos.y()))
+            {
+                if (!player.isPassenger() && applyVelocity) {
+                    Vec3 ogVel = player.getDeltaMovement();
+                    player.setDeltaMovement(ogVel.x - velocity.x(), ogVel.y - velocity.y(),
+                            ogVel.z - velocity.z());
+                    player.connection.send(new ClientboundSetEntityMotionPacket(player));
+                }
+                if (!VSGameUtilsKt.isBlockInShipyard(player.level(), player.blockPosition()) &&
+                        this.getOriginPos().distance(playerOrbitBody.getMcPosition()) > maxDistToCenter &&
+                        !VSGameUtilsKt.getShipsIntersecting(player.level(),
+                                player.getBoundingBox().inflate(5.0)).iterator().hasNext()
+                ) {
+                    this.playerOrbitBodyLeft(playerOrbitBody);
+                }
             }
         }
     }
 
-    @PhysTickOnly
-    public void onPhysTick() {
+    protected double getMaxDistToHostCenter() {
+        return PSServer.get().getMCServer().getPlayerList().getViewDistance() * 16;
     }
 
-    public void removeOrbitBody(EntityOrbitBody entityOrbitBody) {
+    @PhysTickOnly
+    public void onPhysTick(PhysLevel physLevel) {
+    }
+
+    public void removeOrbitBody(EntityOrbitBody<?> entityOrbitBody, boolean isTeleporting) {
         if (entityOrbitBody.equals(this.getHostBody())) {
-            this.hostLeft();
+            this.hostLeft(isTeleporting);
+            return;
         }
         if (entityOrbitBody instanceof ServerPlayerOrbitBody serverPlayerOrbitBody) {
             this.playerOrbitBodies.remove(serverPlayerOrbitBody);
         }
     }
 
-    public void hostLeft() {
-        for (Entity entity : nonHostEntities) { // doesn't work yet.
-            if (!(entity instanceof Player)) {
-                entity.remove(Entity.RemovalReason.DISCARDED);
-            }
-        }
-        PSServer.get().getHostSpaceManager().removeHostSpace(this);
+    public void hostLeft(boolean isTeleporting) {
+        PSServer.get().getHostSpaceManager().removeHostSpace(this, isTeleporting);
     }
 
     public Vector2ic getOriginPos2I() {
@@ -116,6 +162,10 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
                 this.playerOrbitBodies.add(player);
             }
         }
+    }
+
+    public void addShipToHostSpace(ServerSpaceshipBody serverSpaceshipBody) {
+        // weird case where a ship is added to a player host space.
     }
 
     public void removeEntityFromHostSpace(Entity entity) {
@@ -136,5 +186,95 @@ public abstract class OrbitHostSpace implements OrbitHostAccessor {
             solarSystem.entityChangeOrbitalSOIs(playerOrbit, newParent, nonHostOrbit);
             PacketHandler.sendToAllClients(new ClientboundOrbitSOIChange(playerOrbit.getOrbitId(), newParent, nonHostOrbit));
         });
+    }
+
+    public @Nullable EntityOrbitBody<?> findNewHost() {
+        EntityOrbitBody<?> newHost = null;
+        double distance = Double.POSITIVE_INFINITY;
+
+        for (ServerPlayerOrbitBody orbitBody : this.playerOrbitBodies) {
+            if (orbitBody.isBodyEntityLoaded() && orbitBody.getMcPosition().distance(this.getOriginPos()) < distance) {
+                newHost = orbitBody;
+            }
+        }
+
+        return newHost;
+    }
+
+    protected static Vector3d getHostPosDifference(OrbitHostSpace oldSpace, OrbitHostSpace newSpace, EntityOrbitBody<?> entityOrbitBody) {
+        Vector3d originOffset = new Vector3d(newSpace.getOriginPos()).sub(oldSpace.getOriginPos());
+        Vector3d entityBodyOffset = new Vector3d(oldSpace.getOriginPos()).sub(entityOrbitBody.getMcPosition());
+
+        return originOffset.add(entityBodyOffset);
+    }
+
+    public void playerOrbitBodyLeft(ServerPlayerOrbitBody playerOrbitBody) {
+        OrbitHostSpace newPlayerHost = PSServer.get().getHostSpaceManager().getOrCreateHostSpace(playerOrbitBody);
+        Vector3dc originDifference = getHostPosDifference(this, newPlayerHost, playerOrbitBody);
+        Player player = playerOrbitBody.getBody();
+
+        if (playerOrbitBody.isBodyEntityLoaded() && !player.isPassenger()) {
+
+            playerOrbitBody.getBody().teleportTo(player.position().x() + originDifference.x(),
+                    player.position().y() + originDifference.y(),
+                    player.position().z() + originDifference.z());
+        }
+        this.playerOrbitBodies.removeIf(playerBody -> playerBody.getOrbitId() == playerOrbitBody.getOrbitId());
+    }
+
+    public void handleHostSpaceHandover(EntityOrbitBody<?> orbitBody, OrbitHostSpace newHost) {
+        Vector3dc originDifference = getHostPosDifference(this, newHost, orbitBody);
+
+        this.nonHostEntities.forEach(entity -> {
+            if (!entity.isPassenger()) {
+                entity.teleportTo(entity.position().x() + originDifference.x(),
+                        entity.position().y() + originDifference.y(),
+                        entity.position().z() + originDifference.z());
+            }
+            newHost.addEntityToHostSpace(entity);
+        });
+
+        this.playerOrbitBodies.forEach(playerOrbitBody -> {
+            Player player = playerOrbitBody.getBody();
+
+            if (playerOrbitBody.isBodyEntityLoaded() && !player.isPassenger()) {
+                player.teleportTo(player.position().x() + originDifference.x(),
+                        player.position().y() + originDifference.y(),
+                        player.position().z() + originDifference.z());
+            }
+            newHost.addPlayerToHostSpace(playerOrbitBody);
+        });
+    }
+
+    public void cleanUpEntities() {
+        this.nonHostEntities.forEach(entity -> {
+            if (!(entity instanceof Player)) {
+                entity.remove(Entity.RemovalReason.DISCARDED);
+            }
+        });
+    }
+
+    // Be careful cause you can call this on game and physics threads. so make sure you are doing proper operations on them.
+    public void affectShips(Consumer<AbstractSpaceshipBody> orbitBodyConsumer) {
+    }
+
+    public void affectMCEntities(Consumer<Entity> orbitBodyConsumer) {
+        for (Entity entity : this.nonHostEntities) {
+            orbitBodyConsumer.accept(entity);
+        }
+        for (AbstractPlayerOrbitBody playerOrbitBody : this.playerOrbitBodies) {
+            if (playerOrbitBody.isBodyEntityLoaded()) {
+                orbitBodyConsumer.accept(playerOrbitBody.getBody());
+            }
+        }
+    }
+
+    public boolean hasPlayers() {
+        return !this.playerOrbitBodies.isEmpty();
+    }
+
+    @Override
+    public boolean isUnloadedHostSpace() {
+        return false;
     }
 }

@@ -22,5 +22,4 @@ public class PlayerSpaceMixin implements PlayerOrbitAccessor {
     public void setOrbitalBody(AbstractPlayerOrbitBody abstractPlayerOrbitBody) {
         this.playerOrbitBody = abstractPlayerOrbitBody;
     }
-
 }

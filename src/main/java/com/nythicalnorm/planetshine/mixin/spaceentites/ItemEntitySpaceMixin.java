@@ -1,6 +1,7 @@
 package com.nythicalnorm.planetshine.mixin.spaceentites;
 
 import com.nythicalnorm.planetshine.util.SpaceUtils;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import net.minecraft.world.entity.item.ItemEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
@@ -12,8 +13,30 @@ public class ItemEntitySpaceMixin {
     public float changeFrictionMultiplier(float constant) {
         ItemEntity itemEntity = ((ItemEntity)(Object) this);
 
-        if (itemEntity.level() != null && SpaceUtils.isSpaceLevel(itemEntity.level())) {
-            return 1.0F;
+        if (itemEntity.level() != null) {
+            return AtmosphereCalc.getEntityFrictionValue(constant, itemEntity.level());
+        } else {
+            return constant;
+        }
+    }
+
+    @ModifyConstant(method = "tick", constant = @Constant(doubleValue = 0.98D, ordinal = 0))
+    public double changeFrictionMultiplier2(double constant) {
+        ItemEntity itemEntity = ((ItemEntity)(Object) this);
+
+        if (itemEntity.level() != null) {
+            return AtmosphereCalc.getEntityFrictionValue((float) constant, itemEntity.level());
+        } else {
+            return constant;
+        }
+    }
+
+    @ModifyConstant(method = "tick", constant = @Constant(doubleValue = -0.04d, ordinal = 0))
+    public double changeGravityMultiplier(double constant) {
+        ItemEntity itemEntity = ((ItemEntity)(Object) this);
+
+        if (itemEntity.level() != null) {
+            return SpaceUtils.getEntityPlanetGravity((float) constant, itemEntity.level());
         } else {
             return constant;
         }

@@ -3,13 +3,14 @@ package com.nythicalnorm.planetshine.gui.widgets;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.gui.screen.ISpacecraftOrbitDataDisplay;
+import com.nythicalnorm.planetshine.gui.screen.PSSpacecraftScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +24,8 @@ public class AltitudeWidget extends AbstractWidget {
     ScrollingNumber[] scrollingNumbers;
     private static final int AmountOfNumberDisplays = 9;
 
-    public AltitudeWidget(int pX, int pY, int pWidth, int pHeight, Component pMessage) {
-        super(pX, pY, pWidth, pHeight, pMessage);
+    public AltitudeWidget(int pX, int pY, Component pMessage) {
+        super(pX - 46, pY, 92, 28, pMessage);
         scrollingNumbers = new ScrollingNumber[AmountOfNumberDisplays];
 
         for (int i = 0; i < scrollingNumbers.length; i++) {
@@ -34,15 +35,19 @@ public class AltitudeWidget extends AbstractWidget {
 
     @Override
     protected void renderWidget(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-        int x = getX() - 46;
+        int x = getX();
         int y = getY();
 
         pGuiGraphics.blit(Altitude_GUI_TEXTURE, x, y,0,0,92,28);
-        Screen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
+        PSSpacecraftScreen spacecraftScreen = PSClient.get().getScreenManager().getSpacecraftScreen();
 
-        if (spacecraftScreen instanceof ISpacecraftOrbitDataDisplay orbitDataDisplay) {
-            this.renderAltitudeNumbers(orbitDataDisplay, pGuiGraphics, x, y);
-            pGuiGraphics.blit(Altitude_GUI_TEXTURE, x + 10, y + 15, 96, 0, 5, 13);
+        if (spacecraftScreen != null) {
+            this.renderAltitudeNumbers(spacecraftScreen, pGuiGraphics, x, y);
+            double airDensity = spacecraftScreen.getAirDensityAtAltitude();
+            float atmoProgress = (float) Mth.clamp(Math.log(airDensity + 1) / 1.145d, 0.0f, 1.0f); // some vibe maths
+
+            int pixelValue = (int) Mth.lerp(atmoProgress, 11, 77);
+            pGuiGraphics.blit(Altitude_GUI_TEXTURE, x + pixelValue, y + 14, 95, 0, 6, 15);
         }
     }
 

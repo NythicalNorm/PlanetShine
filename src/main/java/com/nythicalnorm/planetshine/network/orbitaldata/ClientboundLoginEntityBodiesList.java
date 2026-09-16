@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class ClientboundLoginEntityBodiesList {
-    private final List<EntityOrbitBody> entityOrbitBodyList;
-    private List<NetworkEncoders.TempEntityOrbitHolder> entityOrbitHolders;
+    private final List<EntityOrbitBody<?>> entityOrbitBodyList;
+    private final List<NetworkEncoders.TempEntityOrbitHolder> entityOrbitHolders;
 
-    public ClientboundLoginEntityBodiesList(List<EntityOrbitBody> entityOrbitBodyList) {
+    public ClientboundLoginEntityBodiesList(List<EntityOrbitBody<?>> entityOrbitBodyList) {
         this.entityOrbitBodyList = entityOrbitBodyList;
         this.entityOrbitHolders = null;
     }

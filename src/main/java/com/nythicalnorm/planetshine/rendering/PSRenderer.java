@@ -6,9 +6,13 @@ import com.mojang.math.Axis;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.generators.SkyboxCubeGen;
 import com.nythicalnorm.planetshine.rendering.map.OrbitDrawer;
-import com.nythicalnorm.planetshine.rendering.renderers.AtmosphereRenderer;
-import com.nythicalnorm.planetshine.rendering.renderers.PlanetRenderer;
 import com.nythicalnorm.planetshine.rendering.renderers.SpaceObjRenderer;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightRegion;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
+import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -30,7 +34,6 @@ public class PSRenderer {
     private static VertexBuffer Star_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private static VertexBuffer Skybox_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private static Vec3 latestSkyColor;
-    private static boolean isFirstTime = true;
 
     public static void setupBuffers() {
         BufferBuilder bufferbuilder =  Tesselator.getInstance().getBuilder();
@@ -48,50 +51,31 @@ public class PSRenderer {
 
         OrbitDrawer.setupBuffers();
     }
-
-    private static void setupShaders() {
-        PlanetRenderer.setupShader();
-        AtmosphereRenderer.setupShader(Skybox_Buffer);
-        OrbitDrawer.setupShader();
-        // enable depth clamping shouldn't break stuff i don't think anyway.
+    public static VertexBuffer getSkyboxBuffer() {
+        return Skybox_Buffer;
     }
 
-    public static void renderSkybox(Minecraft mc, LevelRenderer levelRenderer, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient)
+    public static void renderSkybox(Minecraft mc, Matrix4f projectionMatrix, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient, ClientPlayerOrbitBody playerOrbit)
     {
         FogRenderer.levelFogColor();
-        psClient.renderTick(partialTick);
 
-        if (mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine()) {
+        if (!SpaceUtils.isSpaceLevel(mc.player.level()) && (
+                mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine()
+        )) {
             return;
         }
 
-        if (isFirstTime) {
-            setupShaders();
-            isFirstTime = false;
-        }
-
         GL11.glEnable(0x864F);
-        double fov = mc.gameRenderer.getFov(camera, partialTick, true);
-        Matrix4f projectionMatrix = mc.gameRenderer.getProjectionMatrix(fov);
 
         RenderSystem.depthMask(false);
 
-        if (psClient.isOnPlanet()) {
-            if (psClient.getCurrentPlanet().get().getAtmosphere().hasAtmosphere()) {
-                latestSkyColor = Minecraft.getInstance().level.getSkyColor(camera.getPosition(), partialTick);
-
-                RenderSystem.setShaderColor((float) latestSkyColor.x, (float) latestSkyColor.y, (float) latestSkyColor.z, 1.0F);
-                ShaderInstance posShad = RenderSystem.getShader();
-                sky_Buffer.bind();
-                sky_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, posShad);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-
-                drawSunriseDisc(poseStack, Minecraft.getInstance().level);
-            }
-        }
+        drawAtmosphere(psClient, playerOrbit, sky_Buffer, camera, poseStack, projectionMatrix, partialTick);
 
         poseStack.pushPose();
-        poseStack.mulPose(new Quaternionf().set(psClient.getPlayerOrbit().getPlayerOnPlanetRotation()));
+
+        if (!psClient.weInSpaceDim()) {
+            poseStack.mulPose(new Quaternionf().set(playerOrbit.getPlayerRotation()));
+        }
 
         SpaceObjRenderer.renderPlanetaryBodies(poseStack, psClient.getSpaceRenderables(), psClient, camera, projectionMatrix, partialTick);
         RenderSystem.depthMask(true);
@@ -101,6 +85,58 @@ public class PSRenderer {
 
     public static void close() {
         latestSkyColor = null;
+    }
+
+    private static void drawAtmosphere(PSClient psClient, ClientPlayerOrbitBody playerOrbit, VertexBuffer sky_Buffer, Camera camera, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
+        if (psClient.isOnPlanet() && psClient.getCurrentPlanet().get() instanceof PlanetaryBody planetaryBody && planetaryBody.getAtmosphere().hasAtmosphere()) {
+            latestSkyColor = Minecraft.getInstance().level.getSkyColor(camera.getPosition(), partialTick);
+            drawSkyDisc((float) latestSkyColor.x,(float) latestSkyColor.y,(float) latestSkyColor.z, 1.0f, sky_Buffer, poseStack, projectionMatrix);
+
+            if (planetaryBody.getDimensionalProperties().isDrawSunriseDisk()) {
+                drawSunriseDisc(poseStack, psClient, Minecraft.getInstance().level);
+            }
+        } else if (playerOrbit.getParent() instanceof PlanetaryBody planetaryBody && planetaryBody.getAtmosphere().hasAtmosphere() && playerOrbit.getAltitude() <= planetaryBody.getAtmosphere().getAtmosphereHeight()) {
+            float atmoPercent = AtmosphereCalc.getAtmoPercent(planetaryBody, playerOrbit.getAltitude());
+
+            float timeOfDay = psClient.getDaylightRegion().getSunAngle();
+            float[] skyColor = getSkyColorForTime(planetaryBody.getDimensionalProperties().getDefaultSkyColor(), atmoPercent, timeOfDay);
+            latestSkyColor = new Vec3(skyColor[0], skyColor[1], skyColor[2]);
+            RenderSystem.enableBlend();
+            renderSpaceSky(poseStack, projectionMatrix);
+            renderSpaceSky(skyColor[0], skyColor[1], skyColor[2], skyColor[3], poseStack, projectionMatrix);
+            RenderSystem.disableBlend();
+        } else {
+            renderSpaceSky(poseStack, projectionMatrix);
+        }
+    }
+
+    private static void drawSkyDisc(float r, float g, float b, float a, VertexBuffer sky_Buffer, PoseStack poseStack, Matrix4f projectionMatrix) {
+        RenderSystem.setShaderColor(r, g, b, a);
+        ShaderInstance posShad = RenderSystem.getShader();
+        sky_Buffer.bind();
+        sky_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, posShad);
+        VertexBuffer.unbind();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    public static void renderSpaceSky(float r, float g, float b, float a,PoseStack poseStack, Matrix4f projectionMatrix) {
+        RenderSystem.setShaderColor(r, g, b, a);
+        poseStack.pushPose();
+        Skybox_Buffer.bind();
+        Skybox_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
+        VertexBuffer.unbind();
+        poseStack.popPose();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    public static void renderSpaceSky(PoseStack poseStack, Matrix4f projectionMatrix) {
+        RenderSystem.setShaderColor(0.039f, 0.043f, 0.078f, 1.0F);
+        poseStack.pushPose();
+        Skybox_Buffer.bind();
+        Skybox_Buffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
+        VertexBuffer.unbind();
+        poseStack.popPose();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     public static void drawStarBuffer(PoseStack poseStack, Matrix4f projectionMatrix, float alpha) {
@@ -118,7 +154,8 @@ public class PSRenderer {
         pBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
         for (Vector3f vertex : cubeVertecies) {
-            pBuilder.vertex(vertex.x, vertex.y, vertex.z).color(10, 11, 20, 255).endVertex();
+            //pBuilder.vertex(vertex.x, vertex.y, vertex.z).color(10, 11, 20, 255).endVertex();
+            pBuilder.vertex(vertex.x, vertex.y, vertex.z).color(1.0f,1.0f,1.0f,1.0f).endVertex();
         }
 
         return pBuilder.end();
@@ -128,7 +165,7 @@ public class PSRenderer {
         RandomSource randomsource = RandomSource.create(1000L);
         pBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        for(int i = 0; i < 700; ++i) {
+        for(int i = 0; i < 1500; ++i) {
             double d0 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
             double d1 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
             double d2 = (double)(randomsource.nextFloat() * 2.0F - 1.0F);
@@ -183,6 +220,18 @@ public class PSRenderer {
         return pBuilder.end();
     }
 
+    public static float[] getSkyColorForTime(int color, float alpha, float time) {
+        float[] skyColor = MiscCalc.getRGBAFloats(color, alpha);
+
+        float shade = Mth.cos(time * ((float)Math.PI * 2F)) * 2.0F + 0.5F;
+        shade = Mth.clamp(shade, 0.0F, 1.0F);
+        skyColor[0] = skyColor[0] * shade;
+        skyColor[1] = skyColor[1] * shade;
+        skyColor[2] = skyColor[2] * shade;
+
+        return skyColor;
+    }
+
     public static Vec3 getLatestSkyColor() {
         return latestSkyColor;
     }
@@ -193,18 +242,31 @@ public class PSRenderer {
             PSClient css = PSClient.get();
             if (css.isOnPlanet() && clientLevel.dimension() == Level.OVERWORLD) {
                 Vector3d sunPosD = new Vector3d(css.getPlayerOrbit().getAbsolutePos()).normalize();
-                return sunPosD.rotate(css.getPlayerOrbit().getPlayerOnPlanetRotation());
+                return sunPosD.rotate(css.getPlayerOrbit().getPlayerRotation());
             }
         }
         return null;
     }
 
-    private static void drawSunriseDisc(PoseStack poseStack, ClientLevel level) {
+    public static float getSunAngleOpacity() {
+        DaylightRegion daylightRegion = PSClient.get().getDaylightRegion();
+        float angle = daylightRegion.getSunAngle();
+        if (daylightRegion.isOngoingEclipse()) {
+            float delta = Mth.clamp(daylightRegion.getSunOcclusion() * 10.0f, 0.0f, 1.0f);
+            angle = Mth.lerp(delta, angle, 1.0f);
+        } else {
+            angle = angle < 0.5f ? angle * 2f : (1.0f - angle) * 2f;
+        }
+
+        return angle;
+    }
+
+    private static void drawSunriseDisc(PoseStack poseStack, PSClient psClient, ClientLevel level) {
         RenderSystem.enableBlend();
-        float[] sunriseColor = level.effects().getSunriseColor(PSClient.get().getDaylightRegion().getSunAngle(),0f);
+        float[] sunriseColor = level.effects().getSunriseColor(psClient.getDaylightRegion().getSunAngle(),0f);
         Vector3d sunPos = getSunPosOverworld();
 
-        if (sunriseColor == null || sunPos == null) {
+        if (sunriseColor == null || sunPos == null || psClient.getDaylightRegion().isOngoingEclipse()) {
             return;
         }
 

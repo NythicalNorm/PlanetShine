@@ -3,14 +3,17 @@ package com.nythicalnorm.planetshine.gui;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.gui.screen.*;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.spacecraft.player.ClientPlayerOrbitBody;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.valkyrienskies.core.api.ships.ClientShip;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -21,6 +24,14 @@ public class PSScreenManager {
     private boolean isSpacecraftScreenOpen = false;
     private MapSolarSystemScreen.MapState mapState = null;
     private PSSpacecraftScreen.SpacecraftScreenState spacecraftScreenState = null;
+    private boolean waitingForReopening = false;
+    private final PSClient psClient;
+    private SpacecraftOrbitalState currentOrbitalState = SpacecraftOrbitalState.ON_PLANET;
+    private PSSpacecraftScreen.FacingDirection prevDimensionFacingDirection = null;
+
+    public PSScreenManager(PSClient psClient) {
+        this.psClient = psClient;
+    }
 
     public MapSolarSystemScreen.MapState getMapState() {
         return mapState;
@@ -34,36 +45,76 @@ public class PSScreenManager {
         this.spacecraftScreenState = spacecraftScreenState;
     }
 
-    public void playerChangeDimension() {
-        if (isSpacecraftScreenOpen) {
-            this.openSpaceHUDScreen(PSClient.get());
-        } else if (isMapScreenOpen) {
-            this.openMapScreen();
+    public PSSpacecraftScreen.SpacecraftScreenState getSpacecraftScreenState() {
+        return spacecraftScreenState;
+    }
+
+    public void prepareForDimensionChange() {
+        PSSpacecraftScreen spacecraftScreen = this.getSpacecraftScreen();
+
+        if (spacecraftScreen != null) {
+            spacecraftScreen.saveScreenState();
+            this.waitingForReopening = true;
+        }
+
+        if (Minecraft.getInstance().screen instanceof MapSolarSystemScreen mapSolarSystemScreen) {
+            mapSolarSystemScreen.saveScreenState();
+            this.waitingForReopening = true;
         }
     }
 
     public boolean isNotDrawPlanetShine() {
-        updateScreenState();
         return Minecraft.getInstance().screen instanceof MapSolarSystemScreen;
     }
 
     public void updateScreenState() {
         Screen screen = Minecraft.getInstance().screen;
         if (screen instanceof DeathScreen) {
-            if (isMapScreenOpen) {
+            if (this.isMapScreenOpen) {
                 closeMapScreen();
             }
-            if (isSpacecraftScreenOpen) {
+            if (this.isSpacecraftScreenOpen) {
                 closeSpacecraftScreen();
             }
-        } else if (screen instanceof PSSpacecraftScreen &&
-                VSGameUtilsKt.getShipMountedTo(Minecraft.getInstance().player) == null) {
-            screen.onClose();
+        } else if (this.isSpacecraftScreenOpen && Minecraft.getInstance().player != null &&
+                VSGameUtilsKt.getShipMountedTo(Minecraft.getInstance().player) != null) {
+            if (waitingForReopening) {
+                this.openPSSpacecraftScreen(false);
+                if (isMapScreenOpen) {
+                    this.openMapScreen();
+                }
+                this.waitingForReopening = false;
+            }
+            this.updateOrbitalState(psClient.getPlayerOrbit());
+        }
+    }
+
+    private void updateOrbitalState(@NotNull ClientPlayerOrbitBody playerOrbit) {
+        SpacecraftOrbitalState newOrbitState;
+        if (playerOrbit.getOrbitalElements() == null || playerOrbit.getParent() == null) {
+            return;
+        }
+
+        if (psClient.isOnPlanet()) {
+            newOrbitState = SpacecraftOrbitalState.ON_PLANET;
+        } else if (((playerOrbit.getOrbitalElements().getPeriapsis() - playerOrbit.getParent().getRadius())
+                > playerOrbit.getParent().getAtmosphere().getSafeAltitude()) || playerOrbit.getOrbitalElements().isHyperbolic()) {
+            newOrbitState = SpacecraftOrbitalState.IN_ORBIT;
+        } else {
+            newOrbitState = SpacecraftOrbitalState.SUB_ORBITAL;
+        }
+
+        if (currentOrbitalState != newOrbitState) {
+             PSSpacecraftScreen spacecraftScreen = this.getSpacecraftScreen();
+            if (spacecraftScreen != null) {
+                spacecraftScreen.orbitModeChanged(newOrbitState);
+                this.currentOrbitalState = newOrbitState;
+            }
         }
     }
 
     public void closeMapScreen() {
-        PSClient.get().getMapRenderer().setScreen(null);
+        psClient.getMapRenderer().setScreen(null);
         isMapScreenOpen = false;
     }
 
@@ -92,21 +143,40 @@ public class PSScreenManager {
         this.isMapScreenOpen = true;
     }
 
-    public void openSpaceHUDScreen(PSClient psClient) {
-        if (VSGameUtilsKt.getShipMountedTo(Minecraft.getInstance().player) instanceof ClientShip) {
-            EntityOrbitBody entityOrbitBody = psClient.getControllingBody();
+    public void openPSSpacecraftScreen(boolean newOpening) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && VSGameUtilsKt.getShipMountedTo(player) instanceof ClientShip) {
+            EntityOrbitBody<?> entityOrbitBody = psClient.getControllingBody();
+            float yaw = player.getViewYRot(0.0f);
             if (entityOrbitBody != null) {
-                Minecraft.getInstance().setScreen(new PSSpacecraftScreen(Component.empty(), entityOrbitBody, spacecraftScreenState));
+                PSSpacecraftScreen.FacingDirection facingDirection;
+                if (this.prevDimensionFacingDirection != null && !newOpening) {
+                    facingDirection = this.prevDimensionFacingDirection;
+                    player.setYRot(facingDirection.getAngle());
+                } else {
+                    facingDirection = PSSpacecraftScreen.FacingDirection.fromYaw(yaw);
+                    this.prevDimensionFacingDirection = facingDirection;
+                }
+
+                PSSpacecraftScreen spacecraftScreen = new PSSpacecraftScreen(Component.empty(), entityOrbitBody, this,
+                        facingDirection);
+                Minecraft.getInstance().setScreen(spacecraftScreen);
                 this.isSpacecraftScreenOpen = true;
             }
         }
     }
 
-    public @Nullable Screen getSpacecraftScreen() {
+    public @Nullable PSSpacecraftScreen getSpacecraftScreen() {
         if (Minecraft.getInstance().screen instanceof MouseLookScreen mouseLookScreen) {
             return mouseLookScreen.getSpacecraftScreen();
         } else {
             return null;
         }
+    }
+
+    public enum SpacecraftOrbitalState {
+        ON_PLANET,
+        SUB_ORBITAL,
+        IN_ORBIT
     }
 }

@@ -1,5 +1,7 @@
 package com.nythicalnorm.planetshine.spacecraft.vs;
 
+import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
+import com.nythicalnorm.planetshine.util.SpaceUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.RelativeMovement;
@@ -9,6 +11,7 @@ import org.joml.primitives.AABBd;
 import org.joml.primitives.AABBdc;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.ServerShip;
+import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 import org.valkyrienskies.core.impl.game.ShipTeleportDataImpl;
 import org.valkyrienskies.core.internal.ShipTeleportData;
@@ -34,7 +37,13 @@ public class ShipTeleporter {
         this.entityTeleportDataQueue = new ArrayDeque<>();
     }
 
-    public void teleportShipsWithEntities(LoadedServerShip serverShip, ShipTeleportData shipTeleportData, ServerLevel levelOld, ServerLevel levelNew) {
+    public void teleportShipsWithEntities(
+            LoadedServerShip serverShip,
+            ShipTeleportData shipTeleportData,
+            ServerLevel levelOld,
+            ServerLevel levelNew,
+            boolean teleportNearbyShips
+    ) {
         AABBdc shipWorldAABB = serverShip.getWorldAABB();
 
         AABBdc shipAABBInflated = new AABBd(shipWorldAABB.minX() - shipExtraRange, shipWorldAABB.minY() - shipExtraRange,
@@ -44,8 +53,16 @@ public class ShipTeleporter {
         AABB entityAABB = new AABB(shipWorldAABB.minX(), shipWorldAABB.minY(), shipWorldAABB.minZ(), shipWorldAABB.maxX(),
                 shipWorldAABB.maxY(), shipWorldAABB.maxZ()).inflate(5d);
 
-        LoadedServerShip biggestShip = this.collectIntersectingShips(serverShipWorld.getLoadedShips().getIntersecting(shipAABBInflated,
-                        VSGameUtilsKt.getDimensionId(levelOld)), shipTeleportData);
+        Iterable<LoadedServerShip> serverShipIterable;
+
+        if (teleportNearbyShips) {
+            serverShipIterable = serverShipWorld.getLoadedShips().getIntersecting(shipAABBInflated,
+                    VSGameUtilsKt.getDimensionId(levelOld));
+        } else {
+            serverShipIterable = List.of(serverShip);
+        }
+
+        LoadedServerShip biggestShip = this.collectIntersectingShips(serverShipIterable, shipTeleportData);
 
         if (biggestShip == null) {
             return;
@@ -94,7 +111,8 @@ public class ShipTeleporter {
             Quaterniond rotNew = transformRot(new Quaterniond(childShip.getTransform().getRotation()),
                     oldParentTransform.getRotation(), parentTeleportData.getNewRot());
 
-            ShipTeleportDataImpl childShipData = new ShipTeleportDataImpl(posNew, rotNew, new Vector3d(), childShip.getAngularVelocity(),
+            ShipTeleportDataImpl childShipData = new ShipTeleportDataImpl(posNew, rotNew, new Vector3d(childShip.getVelocity()).add(parentTeleportData.getNewVel()),
+                    childShip.getAngularVelocity(),
                     parentTeleportData.getNewDimension(), null, null);
             shipTeleportDataQueue.add(new ShipToTeleport(childShip, childShipData));
             alreadyTeleported.add(childShip.getId());
@@ -182,6 +200,9 @@ public class ShipTeleporter {
 
             if (passenger.teleportTo(levelNew, parentEntity.position().x, parentEntity.position().y, parentEntity.position().z, EnumSet.noneOf(RelativeMovement.class), 0f, 0f)) {
                 Entity postTeleportPassenger = levelNew.getEntity(passenger.getUUID());
+                if (postTeleportPassenger == null) {
+                    continue;
+                }
 
                 postTeleportPassenger.startRiding(parentEntity, true);
                 this.teleportPassengers(postTeleportPassenger, subPassengerList, levelNew);
@@ -209,6 +230,45 @@ public class ShipTeleporter {
 
     public void resetTeleports() {
         alreadyTeleported.clear();
+    }
+
+    public void teleportShipInSpaceDim(Ship ship, Vector3d newPos, boolean isHost) {
+        ShipTeleportDataImpl teleportData;
+
+        if (isHost) {
+            teleportData = new ShipTeleportDataImpl(newPos, ship.getTransform().getRotation(), new Vector3d(), ship.getAngularVelocity(),
+                    SpaceUtils.getSpaceLevelString(), null, null);
+        } else {
+            teleportData = new ShipTeleportDataImpl(newPos, ship.getTransform().getRotation(), ship.getVelocity(), ship.getAngularVelocity(),
+                    SpaceUtils.getSpaceLevelString(), null, null);
+        }
+
+        serverShipWorld.teleportShip((ServerShip) ship, teleportData);
+    }
+
+    public List<Entity> teleportInSameDimension(LoadedServerShip serverShip, ShipTeleportData shipTeleportData, SpaceServerLevel spaceLevel) {
+        AABBdc shipWorldAABB = serverShip.getWorldAABB();
+        Vector3dc shipPos = serverShip.getTransform().getPosition();
+
+        AABB entityAABB = new AABB(shipWorldAABB.minX(), shipWorldAABB.minY(), shipWorldAABB.minZ(), shipWorldAABB.maxX(),
+                shipWorldAABB.maxY(), shipWorldAABB.maxZ()).inflate(5d);
+        List<Entity> allEntities = spaceLevel.getEntities((Entity) null, entityAABB, (entity) -> true);
+
+        for (Entity entity : allEntities) {
+            if (!VSGameUtilsKt.isBlockInShipyard(spaceLevel, entity.position())) {
+                Vector3d posNew;
+                posNew = new Vector3d(entity.position().x - shipPos.x(),
+                        entity.position().y - shipPos.y(),
+                        entity.position().z - shipPos.z());
+
+                ((IEntityDraggingInformationProvider) entity).getDraggingInformation().setLastShipStoodOn(null);
+                posNew.add(shipTeleportData.getNewPos());
+                entity.teleportTo(posNew.x, posNew.y, posNew.z);
+            }
+        }
+
+        this.serverShipWorld.teleportShip(serverShip, shipTeleportData);
+        return allEntities;
     }
 
     private record ShipToTeleport(LoadedServerShip serverShip, ShipTeleportData data) {}

@@ -2,7 +2,6 @@ package com.nythicalnorm.planetshine.solarsystem.orbits;
 
 import com.google.gson.JsonObject;
 import com.nythicalnorm.planetshine.network.NetworkEncoders;
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.storage.NBTEncoders;
 import net.minecraft.nbt.CompoundTag;
@@ -13,8 +12,7 @@ import java.util.Map;
 
 public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Builder<T>> {
     public void encodeBuffer(T orbit, FriendlyByteBuf byteBuf) {
-        String typeName = OrbitalBodyTypesHolder.getOrbitalBodyTypeName(orbit);
-        NetworkEncoders.writeASCII(byteBuf, typeName);
+        byteBuf.writeResourceLocation(orbit.getType().getId());
         orbit.id.encodeToBuffer(byteBuf);
         byteBuf.writeComponent(orbit.displayName);
         NetworkEncoders.writeVector3d(byteBuf, orbit.getRelativePos());
@@ -49,7 +47,7 @@ public abstract class OrbitCodec<T extends OrbitalBody, M extends OrbitalBody.Bu
 
     public CompoundTag encodeNBT(T orbit) {
         CompoundTag tag = new CompoundTag();
-        String typeName = OrbitalBodyTypesHolder.getOrbitalBodyTypeName(orbit);
+        String typeName = orbit.getType().getId().toString();
         tag.putString("type_name", typeName);
 
         orbit.id.encodeToNBT(tag, "orbit_id");

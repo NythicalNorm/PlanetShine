@@ -3,7 +3,7 @@ package com.nythicalnorm.planetshine.mixin.daynightcycle;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DaylightDetectorBlock;
@@ -15,7 +15,8 @@ public class DaylightDetectorBlockMixin {
     @WrapOperation(method = "updateSignalStrength", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getSunAngle(F)F"))
     private static float getSunAngle(Level level, float pPartialTicks, Operation<Float> original, @Local(argsOnly = true) BlockPos blockPos) {
         if (level instanceof PlanetTimeAccessor planetTimeAccessor && planetTimeAccessor.ps$DaylightDataExists()) {
-            return planetTimeAccessor.ps$getSunAngle(blockPos.getX(), blockPos.getZ());
+            float time = planetTimeAccessor.ps$getSunAngle(blockPos.getX(), blockPos.getZ());
+            return time * ((float)Math.PI * 2F);
         }
         return original.call(level, pPartialTicks);
     }

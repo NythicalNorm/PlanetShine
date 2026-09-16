@@ -70,6 +70,12 @@ public class PacketHandler {
                 .consumerMainThread(ClientboundOrbitChange::handle)
                 .add();
 
+        INSTANCE.messageBuilder(ClientboundStateVectorChange.class, id++)
+                .encoder(ClientboundStateVectorChange::encode)
+                .decoder(ClientboundStateVectorChange::new)
+                .consumerMainThread(ClientboundStateVectorChange::handle)
+                .add();
+
         INSTANCE.messageBuilder(ClientboundOrbitRemove.class, id++)
                 .encoder(ClientboundOrbitRemove::encode)
                 .decoder(ClientboundOrbitRemove::new)
@@ -80,6 +86,18 @@ public class PacketHandler {
                 .encoder(ClientboundHostOrbitSet::encode)
                 .decoder(ClientboundHostOrbitSet::new)
                 .consumerMainThread(ClientboundHostOrbitSet::handle)
+                .add();
+
+        INSTANCE.messageBuilder(ClientboundHostSpaceOrbitIDSet.class, id++)
+                .encoder(ClientboundHostSpaceOrbitIDSet::encode)
+                .decoder(ClientboundHostSpaceOrbitIDSet::new)
+                .consumerMainThread(ClientboundHostSpaceOrbitIDSet::handle)
+                .add();
+
+        INSTANCE.messageBuilder(ClientboundSetOrbitIntercept.class, id++)
+                .encoder(ClientboundSetOrbitIntercept::encode)
+                .decoder(ClientboundSetOrbitIntercept::new)
+                .consumerMainThread(ClientboundSetOrbitIntercept::handle)
                 .add();
 
         INSTANCE.messageBuilder(ClientboundTimeWarpUpdate.class, id++)

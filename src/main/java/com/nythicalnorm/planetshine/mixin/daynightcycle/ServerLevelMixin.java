@@ -3,8 +3,10 @@ package com.nythicalnorm.planetshine.mixin.daynightcycle;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.SleepStatus;
@@ -42,7 +44,7 @@ public class ServerLevelMixin implements PlanetTimeAccessor {
         }
     }
 
-    @Inject(method = "tick", at = @At("TAIL"))
+    @Inject(method = "tick", at = @At("RETURN"))
     public void tickEnd(BooleanSupplier pHasTimeLeft, CallbackInfo ci) {
         if (ps$daylightData != null) {
             ps$daylightData.tickEnd();
@@ -56,7 +58,7 @@ public class ServerLevelMixin implements PlanetTimeAccessor {
 
     @Override
     public float ps$getSunAngle(double x, double z) {
-        if (ps$daylightData != null) {
+        if (ps$DaylightDataExists()) {
             return ps$daylightData.getOrCalculateRegionAt(x, z).getSunAngle();
         } else {
             ServerLevel serverLevel = (ServerLevel) (Object) this;
@@ -66,7 +68,7 @@ public class ServerLevelMixin implements PlanetTimeAccessor {
 
     @Override
     public int ps$getDarknessAmount(double x, double z) {
-        if (ps$daylightData != null) {
+        if (ps$DaylightDataExists()) {
             return ps$daylightData.getOrCalculateRegionAt(x, z).getDarknessAmount();
         } else {
             ServerLevel serverLevel = (ServerLevel) (Object) this;
@@ -75,8 +77,18 @@ public class ServerLevelMixin implements PlanetTimeAccessor {
     }
 
     @Override
+    public long ps$getDayTime(double x, double z) {
+        if (ps$DaylightDataExists()) {
+            return DayNightCycleCalc.getDayTime(this.ps$getSunAngle(x, z), ((CelestialBodyAccessor) this).ps$getCelestialBody(), PSServer.get().getCurrentTime());
+        } else {
+            ServerLevel serverLevel = (ServerLevel) (Object) this;
+            return serverLevel.getLevelData().getDayTime();
+        }
+    }
+
+    @Override
     public boolean ps$isDay(double x, double z) {
-        if (ps$daylightData != null) {
+        if (ps$DaylightDataExists()) {
             return ps$daylightData.getOrCalculateRegionAt(x, z).isDay();
         } else {
             ServerLevel serverLevel = (ServerLevel) (Object) this;
@@ -89,31 +101,30 @@ public class ServerLevelMixin implements PlanetTimeAccessor {
         this.ps$daylightData = daylightData;
     }
 
-    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;wakeUpAllPlayers()V"))
-    public void wakeUpAllPlayers(ServerLevel instance, Operation<Void> original) {
-        if (((PlanetTimeAccessor)instance).ps$DaylightDataExists()) {
+    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughDeepSleeping(ILjava/util/List;)Z"))
+    private boolean wakeUpAllPlayers(SleepStatus instance, int pRequiredSleepPercentage, List<ServerPlayer> pSleepingPlayers, Operation<Boolean> original) {
+        if (this.ps$DaylightDataExists()) {
             boolean isDayAtAnyPlayerPos = false;
             for(Player player : players) {
                 if (player.isSleeping() && ps$isDay(player.position().x(), player.position().z())) {
                     isDayAtAnyPlayerPos = true;
                 }
             }
-            PSServer.get().setSleepTimeWarping(!isDayAtAnyPlayerPos);
-            if (isDayAtAnyPlayerPos) {
-                original.call(instance);
-            }
+
+            PSServer.get().getTimeWarpManager().setSleepTimeWarping(!isDayAtAnyPlayerPos);
+            return isDayAtAnyPlayerPos;
         } else {
-            original.call(instance);
+            return original.call(instance, pRequiredSleepPercentage, pSleepingPlayers);
         }
     }
 
-    @Inject(method = "updateSleepingPlayerList", at = @At(value = "TAIL"))
+    @Inject(method = "updateSleepingPlayerList", at = @At(value = "RETURN"))
     public void updatePlayerSleep(CallbackInfo ci) {
         ServerLevel level = (ServerLevel) (Object) this;
-        if (((PlanetTimeAccessor)level).ps$DaylightDataExists()) {
+        if (this.ps$DaylightDataExists()) {
             int i = level.getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
             if (!sleepStatus.areEnoughSleeping(i)) {
-                PSServer.get().setSleepTimeWarping(false);
+                PSServer.get().getTimeWarpManager().setSleepTimeWarping(false);
             }
         }
     }

@@ -5,12 +5,14 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.LoadedServerShip;
 import org.valkyrienskies.core.api.ships.LoadedShip;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -46,22 +48,28 @@ public class PSTeleportCommand {
                                 double semiMajorAxisInput, double eccentricity, double inclination) {
         PSServer.getInstance().ifPresent(psServer -> {
             CelestialBody planet = psServer.getSolarSystem().getPlanet(body);
+            long startingTime = psServer.getCurrentTime() + TimeCalc.timeDoubleToLong(0.0f);
+
             for(Entity entity : pTargets) {
                 if (entity instanceof ServerPlayer && planet != null) {
+                    startingTime = startingTime + TimeCalc.timeDoubleToLong(10000.0f);
                     double semiMajorAxis = (semiMajorAxisInput*1000d) + planet.getRadius();
                     if (semiMajorAxisInput < 0) {
                         semiMajorAxis = (semiMajorAxisInput*1000d) - planet.getRadius();
-                        //return 0;
                     }
-                    long startingAnomaly = psServer.getCurrentTime(); // + TimeCalc.timeDoubleToLong(12000f);
-                    OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingAnomaly, inclination, 0d, 0d, planet.getMass());
+                    OrbitalElements orbitalElement = new OrbitalElements(semiMajorAxis, eccentricity, startingTime, inclination, 0d, 0d, planet.getMass());
+                    Vector3d relativePosition = new Vector3d();
+                    Vector3d relativeVelocity = new Vector3d();
+
+                    orbitalElement.ToCartesian(startingTime, relativePosition, relativeVelocity);
 
                     LoadedShip shipMountedTo = VSGameUtilsKt.getShipMountedTo(entity);
 
                     if (shipMountedTo == null) {
                         psServer.playerTeleportToOrbit(planet, (ServerPlayer) entity, orbitalElement);
                     } else {
-                        psServer.shipTeleportToOrbit(planet, (LoadedServerShip) shipMountedTo, orbitalElement, shipMountedTo.getTransform().getRotation(), shipMountedTo.getAngularVelocity());
+                        psServer.shipTeleportToOrbit(planet, (LoadedServerShip) shipMountedTo, orbitalElement,
+                                relativePosition, relativeVelocity, shipMountedTo.getTransform().getRotation(), shipMountedTo.getAngularVelocity());
                     }
                 }
             }

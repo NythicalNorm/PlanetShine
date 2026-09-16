@@ -24,7 +24,11 @@ public class LivingEntitySpaceMixin {
         LivingEntity livingEntity = ((LivingEntity)(Object) this);
         float frictionVal = constant;
 
-        if (livingEntity.level() != null && SpaceUtils.isSpaceLevel(livingEntity.level()) && !livingEntity.onGround()) {
+        if (livingEntity.level() == null) {
+            return frictionVal;
+        }
+
+        if (SpaceUtils.isSpaceLevel(livingEntity.level()) && !livingEntity.onGround()) {
             frictionVal = 1.0F;
             if (livingEntity instanceof Player player && player.getAbilities().flying) {
                 frictionVal = constant;

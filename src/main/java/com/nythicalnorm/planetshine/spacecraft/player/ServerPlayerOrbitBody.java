@@ -14,11 +14,6 @@ public class ServerPlayerOrbitBody extends AbstractPlayerOrbitBody {
     }
 
     @Override
-    public boolean isPlayerLoggedIn() {
-        return this.player != null;
-    }
-
-    @Override
     public OrbitHostAccessor getHostSpaceAccess() {
         return this.orbitHostSpace.get();
     }
@@ -26,8 +21,8 @@ public class ServerPlayerOrbitBody extends AbstractPlayerOrbitBody {
     @Override
     public void OnRemove() {
         super.OnRemove();
-        if (this.player != null) {
-            PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), (ServerPlayer) this.player);
+        if (this.body != null) {
+            PacketHandler.sendToPlayer(new ClientboundHostOrbitSet(null, null), (ServerPlayer) this.body);
         }
     }
 }

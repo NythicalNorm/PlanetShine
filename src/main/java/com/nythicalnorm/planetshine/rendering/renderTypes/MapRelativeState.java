@@ -9,5 +9,5 @@ public enum MapRelativeState {
     RelativePos,
     AbsolutePos,
     FocusedBodyParent,
-    AlwaysParentRelative
+    SameParent,
 }

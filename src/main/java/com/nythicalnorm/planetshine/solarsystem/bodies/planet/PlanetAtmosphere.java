@@ -1,35 +1,47 @@
 package com.nythicalnorm.planetshine.solarsystem.bodies.planet;
 
+import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
+
 public class PlanetAtmosphere {
     protected final boolean hasAtmosphere;
     protected final int surfaceColor;
     protected final int atmoColor;
     protected final double atmosphereHeight;
+    protected final double atmospherePressureMultiplier;
+    protected double atmosphereDensityAtSeaLevel;
     protected final float atmosphereAlpha;
     protected final float alphaNight;
     protected final float alphaDay;
 
-    public PlanetAtmosphere(boolean hasAtmosphere, int surfaceColor, int atmoColor, double atmosphereHeight, float atmosphereAlpha, float alphaNight, float alphaDay) {
+    public PlanetAtmosphere(boolean hasAtmosphere, int surfaceColor, int atmoColor, double atmosphereHeight,
+                            double atmospherePressureMultiplier, float atmosphereAlpha, float alphaNight, float alphaDay) {
         this.hasAtmosphere = hasAtmosphere;
         this.surfaceColor = surfaceColor;
         this.atmoColor = atmoColor;
         this.atmosphereHeight = atmosphereHeight;
+        this.atmospherePressureMultiplier = atmospherePressureMultiplier;
         this.atmosphereAlpha = atmosphereAlpha;
         this.alphaNight = alphaNight;
         this.alphaDay = alphaDay;
+    }
+
+    public void init(CelestialBody celestialBody) {
+        this.atmosphereDensityAtSeaLevel = AtmosphereCalc.getAirDensity(celestialBody, 0.0d);
     }
 
     public boolean hasAtmosphere() {
         return hasAtmosphere;
     }
 
-    public float[] getOverlayColor(float alpha)
+    public float[] getSurfaceColor(float alpha)
     {
-        return getRGBAFloats(surfaceColor, alpha);
+        return MiscCalc.getRGBAFloats(surfaceColor, alpha);
     }
 
     public float[] getAtmoColor() {
-        return getRGBAFloats(atmoColor, 1.0f);
+        return MiscCalc.getRGBAFloats(atmoColor, 1.0f);
     }
 
     public int getOverlayColorInt()
@@ -45,6 +57,22 @@ public class PlanetAtmosphere {
         return atmosphereHeight;
     }
 
+    public double getSafeAltitude() {
+        if (this.hasAtmosphere()) {
+            return atmosphereHeight + 1000d;
+        } else {
+            return 1000d;
+        }
+    }
+
+    public double getAtmosphericPressureMultiplier() {
+        return atmospherePressureMultiplier;
+    }
+
+    public double getAtmosphereDensityAtSeaLevel() {
+        return atmosphereDensityAtSeaLevel;
+    }
+
     public float getAlphaNight() {
         return alphaNight;
     }
@@ -55,20 +83,5 @@ public class PlanetAtmosphere {
 
     public float getAtmosphereAlpha() {
         return atmosphereAlpha;
-    }
-
-    private float[] getRGBAFloats(int val, float alpha) {
-        float[] rgbaColor = new float[4];
-
-        int red = (val >> 16) & 0xFF;
-        int green = (val >> 8) & 0xFF;
-        int blue = (val >> 0) & 0xFF;
-
-        rgbaColor[0] = ((float)red)/255f;
-        rgbaColor[1] = ((float)green)/255f;
-        rgbaColor[2] = ((float)blue)/255f;
-        rgbaColor[3] = alpha;
-
-        return rgbaColor;
     }
 }

@@ -1,7 +1,7 @@
 package com.nythicalnorm.planetshine.storage;
 
 import com.nythicalnorm.planetshine.PSServer;
-import com.nythicalnorm.planetshine.util.Stage;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -12,7 +12,7 @@ public class PSCommonSaveData extends SavedData {
     private long timeWarp;
 
     public PSCommonSaveData() {
-        currentTime = Stage.WORLD_START_TIME;
+        currentTime = UniverseStage.WORLD_START_TIME;
         timeWarp = TimeCalc.TickToMilliTick;
         if (PSServer.get() != null) {
             currentTime = PSServer.get().getCurrentTime();
@@ -37,7 +37,7 @@ public class PSCommonSaveData extends SavedData {
         long currTime = pCompoundTag.getLong("current_time");
         long currTimeWarp = pCompoundTag.getLong("current_time_warp");
 
-        if (!Stage.timeWarpSettings.contains(TimeCalc.TimePerMilliTickToTick(currTimeWarp))) {
+        if (!UniverseStage.timeWarpSettings.contains(TimeCalc.TimePerMilliTickToTick(currTimeWarp))) {
             currTimeWarp = TimeCalc.TickToMilliTick;
         }
 

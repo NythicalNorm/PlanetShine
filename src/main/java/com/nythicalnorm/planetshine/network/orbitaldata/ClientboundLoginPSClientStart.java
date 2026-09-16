@@ -7,6 +7,7 @@ import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.spacecraft.player.AbstractPlayerOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.player.ServerPlayerOrbitBody;
+import com.nythicalnorm.planetshine.storage.PSCommonConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -23,9 +24,10 @@ public class ClientboundLoginPSClientStart {
     private final AbstractPlayerOrbitBody playerData;
     private final List<CelestialBody> allPlanetaryBodies;
     private final OrbitId playerParentOrbit;
+    private final PSCommonConfig psCommonConfig;
 
     public ClientboundLoginPSClientStart(@Nullable ServerPlayerOrbitBody playerData, List<CelestialBody> allPlanetaryBodies,
-                                         long currentTime, long timeWarp) {
+                                         long currentTime, long timeWarp, PSCommonConfig psCommonConfig) {
         this.currentTime = currentTime;
         this.currentTimeWarp = timeWarp;
         this.playerData = playerData;
@@ -36,8 +38,9 @@ public class ClientboundLoginPSClientStart {
                 parentID = playerData.getParent().getOrbitId();
             }
         }
-        playerParentOrbit = parentID;
+        this.playerParentOrbit = parentID;
         this.allPlanetaryBodies = allPlanetaryBodies;
+        this.psCommonConfig = psCommonConfig;
     }
 
     public ClientboundLoginPSClientStart(FriendlyByteBuf friendlyByteBuf) {
@@ -59,7 +62,8 @@ public class ClientboundLoginPSClientStart {
         this.playerData = playerSpacecraftBody;
         this.playerParentOrbit = playerParent;
 
-        allPlanetaryBodies = NetworkEncoders.readPlanetaryBodyList(friendlyByteBuf);
+        this.allPlanetaryBodies = NetworkEncoders.readPlanetaryBodyList(friendlyByteBuf);
+        this.psCommonConfig = PSCommonConfig.fromByteBuf(friendlyByteBuf);
     }
 
     public void encode(FriendlyByteBuf friendlyByteBuf) {
@@ -78,12 +82,15 @@ public class ClientboundLoginPSClientStart {
             friendlyByteBuf.writeBoolean(false);
         }
         NetworkEncoders.writePlanetaryBodyList(friendlyByteBuf, allPlanetaryBodies);
+        this.psCommonConfig.toByteBuf(friendlyByteBuf);
     }
 
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
         if (contextSupplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
             NetworkEvent.Context context = contextSupplier.get();
-            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientPacketHandler.StartClientPacket(currentTime, currentTimeWarp, playerData, playerParentOrbit, allPlanetaryBodies)));
+            context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                    ClientPacketHandler.StartClientPacket(currentTime, currentTimeWarp, playerData,
+                            playerParentOrbit, allPlanetaryBodies, psCommonConfig)));
             context.setPacketHandled(true);
         }
     }

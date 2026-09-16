@@ -1,6 +1,10 @@
 package com.nythicalnorm.planetshine.mixin.daynightcycle;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -18,8 +22,22 @@ public class FogRendererMixin {
     private static float setupColor(Vector3f instance, Vector3fc v) {
         Vector3d sunPos = PSRenderer.getSunPosOverworld();
         if (sunPos != null) {
+            if (PSClient.get().getDaylightRegion().isOngoingEclipse()) {
+                return -1.0f;
+            }
             return -instance.dot((float) sunPos.x, (float) sunPos.y, (float) sunPos.z);
         }
         return instance.dot(v);
+    }
+
+    @WrapOperation(method = "setupColor", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;getSunriseColor(FF)[F"))
+    private static float[] getSunriseColor(DimensionSpecialEffects instance, float f4, float v, Operation<float[]> original) {
+        if (PSClient.get() != null && PSClient.get().doRender()) {
+            if (PSClient.get().isOnPlanet() && !PSClient.get().getCurrentPlanet().get().getAtmosphere().hasAtmosphere()) {
+                return null;
+            }
+        }
+
+        return original.call(instance, f4, v);
     }
 }

@@ -1,37 +1,34 @@
 package com.nythicalnorm.planetshine.util.calculations;
 
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
-import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
 import org.joml.*;
-import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 
 import java.lang.Math;
 
 public class PlanetCalc {
 
     public static Vector3d getPlanetRelativePosition(Vector3dc pos, CelestialBody celestialBody) {
-        Vec3 vec3Pos = new Vec3(pos.x(), pos.y(), pos.z());
-        return PlanetCalc.getPlanetRelativePosition(vec3Pos, celestialBody.getRadius(), celestialBody.getRotation(), false);
+        return PlanetCalc.getPlanetRotatedPosition(pos.x(), pos.y(), pos.z(), celestialBody.getRadius(), celestialBody.getRotation(), false);
     }
 
-    public static Vector3d getPlanetRelativePosition(Vec3 pos, double planetRadius, Quaternionfc planetRot, boolean isNormalized) {
-        Vector3d quadSpherePos = getPlanetRelativeNonRotatingPosition(pos, planetRadius, isNormalized);
+    public static Vector3d getPlanetRelativePosition(double posX, double posY, double posZ, CelestialBody celestialBody, boolean isNormalized) {
+        return getPlanetRotatedPosition(posX, posY, posZ, celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
+    }
+
+    public static Vector3d getPlanetRotatedPosition(double posX, double posY, double posZ, double planetRadius,
+                                                    Quaternionfc planetRot, boolean isNormalized) {
+        Vector3d quadSpherePos = getPlanetRelativeNonRotatingPosition(posX, posY, posZ, planetRadius, isNormalized);
         quadSpherePos.rotate(new Quaterniond().set(planetRot));
         return quadSpherePos;
     }
 
-    public static Vector3d getPlanetRelativePosition(double x, double y, double z, CelestialBody celestialBody, boolean isNormalized) {
-        return getPlanetRelativePosition(new Vec3(x, y, z), celestialBody.getRadius(), celestialBody.getRotation(), isNormalized);
-    }
-
-    public static Vector3d getPlanetRelativeNonRotatingPosition(Vec3 pos, double planetRadius, boolean isNormalized) {
+    public static Vector3d getPlanetRelativeNonRotatingPosition(double posX, double posY, double posZ, double planetRadius, boolean isNormalized) {
         double cellSize = getSquareCellSize(planetRadius);
         double halfCellSize = cellSize*0.5d;
 
-        int xCell = getCellIndex(cellSize, pos.x);
-        int zCell = getCellIndex(cellSize, pos.z);
+        int xCell = getCellIndex(cellSize, posX);
+        int zCell = getCellIndex(cellSize, posZ);
 
         xCell = Mth.clamp(xCell,-1, 2);
 
@@ -41,26 +38,65 @@ public class PlanetCalc {
         else {
             zCell = 0;
         }
-        double xWithinCell = pos.x - xCell*cellSize;
-        double zWithinCell = pos.z - zCell*cellSize;
+
+        double xWithinCell = posX - xCell*cellSize;
+        double zWithinCell = posZ - zCell*cellSize;
 
         xWithinCell = Mth.clamp(xWithinCell, -halfCellSize, halfCellSize);
         zWithinCell = Mth.clamp(zWithinCell, -halfCellSize, halfCellSize);
 
-        int QuadId = xCell + 1;
-        if (xCell == 0) {
-            if (zCell == 1){
-                QuadId = 4;
-            }
-            else if (zCell == -1) {
-                QuadId = 5;
-            }
-        }
+        int QuadId = getQuadID(xCell, zCell);
+
         double radius = 0.5d;
         if (!isNormalized) {
-            radius = planetRadius + pos.y; // + 10000000
+            radius = planetRadius + posY;
         }
         return getQuadPlanettoSquarePos(zWithinCell, xWithinCell, halfCellSize, QuadId, radius);
+    }
+
+    public static int getQuadID(double cellSize, double posX, double posZ) {
+        int xCell = getCellIndex(cellSize, posX);
+        int zCell = getCellIndex(cellSize, posZ);
+
+        return getQuadID(xCell, zCell);
+    }
+
+    public static int getQuadID(int xCell, int zCell) {
+        xCell = Mth.clamp(xCell,-1, 2);
+
+        if (xCell == 0) {
+            zCell = Mth.clamp(zCell,-1, 1);
+        }
+        else {
+            zCell = 0;
+        }
+
+        int quadId = xCell + 1;
+        if (xCell == 0) {
+            if (zCell == 1){
+                quadId = 4;
+            }
+            else if (zCell == -1) {
+                quadId = 5;
+            }
+        }
+        return quadId;
+    }
+
+    public static boolean isPosInsidePlanetBounds(double posX, double posZ, CelestialBody celestialBody) {
+        double cellSize = getSquareCellSize(celestialBody.getRadius());
+        return isPosInsidePlanetBounds(posX, posZ, cellSize);
+    }
+
+    public static boolean isPosInsidePlanetBounds(double posX, double posZ, double cellSize) {
+        int xCell = getCellIndex(cellSize, posX);
+        int zCell = getCellIndex(cellSize, posZ);
+
+        if (xCell == 0) {
+            return (zCell <= 1 && zCell >= -1);
+        } else {
+            return  (xCell >= -1 && xCell <= 2) && zCell == 0;
+        }
     }
 
     public static double getSquareCellSize(double planetRadius) {
@@ -172,41 +208,31 @@ public class PlanetCalc {
         return squarePos.add(squareSideCenterPos);
     }
 
-    // This also gotta go, no idea what i was thinking here.
-    public static Vector3d getUpVectorForPlanetRot(Vector3d playerRelativePos, CelestialBody planet) {
-        Vector3d upDir = new Vector3d(0f,-1f,0f);
-        if (planet instanceof PlanetaryBody planetaryBody) {
-            AxisAngle4f northPole = planetaryBody.getNorthPoleDir();
-            upDir = new Vector3d(northPole.x, northPole.z, northPole.y);
+    public static Quaterniond getPlanetToSpaceRotation(Vector3dc planetDimensionPos, CelestialBody celestialBody) {
+        double cellSize = getSquareCellSize(celestialBody.getRadius());
+        int quadID = getQuadID(cellSize, planetDimensionPos.x(), planetDimensionPos.z());
+        Vector3d upVector = getPlanetRelativeNonRotatingPosition(planetDimensionPos.x(), planetDimensionPos.y(), planetDimensionPos.z(),
+                celestialBody.getRadius(), true);
+        upVector.normalize();
+
+        Vector3d rightVector = new Vector3d();
+        Vector3d forwardVector = new Vector3d();
+
+        switch (quadID) {
+            case 0, 1, 2, 3 -> upVector.cross(0d, 1d, 0d, rightVector);
+            case 4 -> upVector.cross(1d, 0d, 0d, rightVector);
+            case 5 -> upVector.cross(-1d, 0d, 0d, rightVector);
         }
-        upDir.normalize();
-        Quaterniond rot = new Quaterniond(new AxisAngle4d(Math.PI * 0.5d, 1f, 0f, 0f));
 
-        upDir.rotate(rot);
-        return upDir;
-    }
+        forwardVector = rightVector.cross(upVector, forwardVector);
+        forwardVector.normalize();
 
-    // planet dimension pos is in mc coordinates, celestial body is probably not needed but i just put it here for now
-    // celestialbody.getRotation gets the planet's day-night cycle rotation inclined by 23 degree. its for the whole planet,
-    // not relative to anyone on the surface.
-    public static Quaterniond getPlanetToSpaceRotation(Vector3dc planetDimensionPos, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
+        Quaterniond finalRot = new Quaterniond();
+        finalRot.lookAlong(forwardVector, upVector);
 
-        // delete this crap and start over.
-        Quaterniond planetRotation = new Quaterniond(new AxisAngle4d(Math.PI * 0.5d,1f,0f,0f));
-        Vector3d playerRelativePos = new Vector3d(planetRelativePosition);
-        playerRelativePos.normalize();
-        Vector3d upVector = getUpVectorForPlanetRot(new Vector3d(playerRelativePos), celestialBody);
-        planetRotation.lookAlong(playerRelativePos, upVector);
+        finalRot.mul(new Quaterniond(celestialBody.getRotation()).invert());
+        finalRot.normalize();
 
-        return planetRotation;
-    }
-
-    // if you want you can do these functions as well basically its the same thing but ship rotation is a bit different cause it's not rotated up if you know what i mean.
-    public static Quaterniond getShipPlanetToSpaceRotation(ShipTransform shipTransform, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
-        return new Quaterniond();
-    }
-
-    public static Quaterniond getShipSpaceToPlanetRotation(Vector3dc planetDimensionPos, Vector3dc planetRelativePosition, CelestialBody celestialBody) {
-        return new Quaterniond();
+        return finalRot;
     }
 }

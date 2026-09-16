@@ -3,59 +3,72 @@ package com.nythicalnorm.planetshine.spacecraft;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.network.PacketHandler;
-import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundOrbitChange;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundHostSpaceOrbitIDSet;
+import com.nythicalnorm.planetshine.network.orbitaldata.ClientboundSetOrbitIntercept;
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
+import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
-import com.nythicalnorm.planetshine.util.calculations.TimeCalc;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 import org.valkyrienskies.core.api.util.GameTickOnly;
 import org.valkyrienskies.core.api.util.PhysTickOnly;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class EntityOrbitBody extends OrbitalBody {
+public abstract class EntityOrbitBody<T> extends OrbitalBody {
     protected static final float tolerance = 1E-6f;
     protected final AtomicReference<OrbitId> hostSpaceID;
     protected final AtomicReference<OrbitHostSpace> orbitHostSpace;
     protected ConcurrentLinkedQueue<Vector3dc> velocityApplyQueue; // is only initialized on server side orbital bodies
-    protected final boolean isClientSide;
-    // basically whether the next planet intercept of escape or intersection is calculated yet.
-    private @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept = null;
-    private boolean isInterceptsCalculated;
+    protected @Nullable OrbitalCalc.SOIIntercept nextOrbitIntercept;
+    protected double lastCalculatedEccentricAnomaly;
+    protected T body;
+    protected boolean isStateVecControlled;
 
-    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID, boolean isClientSide) {
-        super(orbitalBuilder);
+    // server side only
+    protected boolean isInterceptsCalculated; // basically whether the next planet intercept of escape or intersection is calculated yet.
+    protected OptionalLong nextPeriapsisTime = OptionalLong.empty();
+
+    public EntityOrbitBody(OrbitalBody.Builder<?> orbitalBuilder, @Nullable OrbitId hostSpaceID,
+                           @Nullable OrbitalCalc.SOIIntercept soiIntercept, boolean isClientSide) {
+        super(orbitalBuilder, isClientSide);
         this.hostSpaceID = new AtomicReference<>();
         this.orbitHostSpace = new AtomicReference<>();
         this.hostSpaceID.set(hostSpaceID);
-        this.isClientSide = isClientSide;
         this.isInterceptsCalculated = false;
+        this.nextOrbitIntercept = soiIntercept;
+        this.isStateVecControlled = false;
     }
 
-
     @GameTickOnly
-    public void init() { }
+    public void init() {
+        if (!this.isClientSide) {
+            resetIntercepts(PSServer.get().getCurrentTime());
+        }
+    }
 
     @PhysTickOnly
-    public void simulate(long TimeElapsed, boolean isTimeWarping) {
+    public void simulate(long TimeElapsed, boolean isTimeWarping, float deltaTime) {
         if (this.orbitalElements == null || this.parent == null || this.hostSpaceID.get() == null) {
             // PlanetShine.logError("Entity Orbit of " + this.getDisplayName().getString() + "is Not in a state for Orbital Calculations");
             return;
         }
+
+        if (!isStateVecControlled && !isClientSide && this.nextPeriapsisTime.isPresent() && TimeElapsed > this.nextPeriapsisTime.getAsLong()) {
+            this.completedOneOrbit(TimeElapsed);
+        }
+
         // checking if it's time for the predicted SOI change and doing it
-        if (this.nextOrbitIntercept != null && this.nextOrbitIntercept.timeElapsed() <= TimeElapsed && this.isHostOfItsSpace() && !this.isClientSide) {
-            CelestialBody newParent = this.calculateSOIChange(this.nextOrbitIntercept);
+        if (!isStateVecControlled && this.nextOrbitIntercept != null && this.nextOrbitIntercept.timeElapsed() <= TimeElapsed && this.isHostOfItsSpace() && !this.isClientSide) {
+            CelestialBody newParent = OrbitalCalc.calculateSOIChange(this.nextOrbitIntercept, this.parent, this.orbitalElements, this.orbitalElements);
             this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
 
             OrbitHostSpace hostSpace = this.orbitHostSpace.get();
@@ -66,60 +79,134 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             }
             this.nextOrbitIntercept = null;
         }
+
         // if this isn't the host of its space set the orbit based on the host.
-        if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null && this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
-            Vector3dc originPos = this.getHostSpaceAccess().getOriginPos();
-            this.setStateVectorsFromHostBody(originPos, this.getHostSpaceAccess().getHostBody(), TimeElapsed);
+        if (this.isBodyEntityLoaded() && !this.isHostOfItsSpace()) {
+            OrbitId hostOrbitId = hostSpaceID.get();
+
+            if (this.getHostSpaceAccess() != null && this.getHostSpaceAccess().getHostBody() != null) {
+                this.setStateVectorsFromHostBody(this.getHostSpaceAccess(), TimeElapsed);
+            } else if (hostOrbitId != null) {
+                this.copyOrbitFromHostBody(this.parent.getSolarSystem().getSpacecraftOrbit(hostOrbitId));
+            }
         } else { // if its not accelerating do the normal simulation
             if (velocityApplyQueue == null || velocityApplyQueue.isEmpty()) {
-                this.simulateFromKeplerian(TimeElapsed);
+                if (this.isStateVecControlled) {
+                    this.simulateNonTimeWarp(deltaTime);
+                    PSServer.sendStateUpdateToRelevantPlayers(this);
+                } else {
+                    this.simulateFromKeplerian(TimeElapsed);
+                }
             } else if (!isClientSide) { // if it is accelerating do the special calc for this tick
-                this.simulateNonTimeWarp();
-                this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
-                this.sendOrbitUpdateToRelevantPlayers();
-                this.nextOrbitIntercept = null;
-                this.isInterceptsCalculated = false;
+                this.simulateNonTimeWarp(deltaTime);
+
+                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity,
+                        TimeElapsed);
+                if (this.orbitalElements.isNaN()) {
+                    this.orbitalElements = OrbitalElements.tryParseNonNaNOrbitalElements(this.relativeOrbitalPos, this.relativeVelocity,
+                            TimeElapsed, this.parent.getMass());
+                    if (this.orbitalElements == null) {
+                        PlanetShine.logError("Entity Orbit of " + this.getDisplayName().getString() + " is invalid, no other calculations will occur.");
+                    }
+                }
+
+                if (this.isStateVecControlled) {
+                    PSServer.sendStateUpdateToRelevantPlayers(this);
+                } else {
+                    PSServer.sendOrbitUpdateToRelevantPlayers(this);
+                }
+                this.resetIntercepts(TimeElapsed);
             }
         }
 
         this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
+
+        // updating if its in atmosphere
+        if (!this.isClientSide && this.isHostOfItsSpace() && this.isBodyEntityLoaded()) {
+            boolean isNowInStateVec =
+                    (this.getAltitude() <= this.parent.getAtmosphere().getAtmosphereHeight() && this.parent.getAtmosphere().hasAtmosphere());// ||
+//                    (this.relativeVelocity.length() < (this.parent.getEscapeVelocity()) / 250.0d);
+
+            if (isStateVecControlled && !isNowInStateVec) {
+                // exiting atmosphere
+                this.resetIntercepts(TimeElapsed);
+                this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+                if (this.orbitalElements.getEccentricity() > 0.9999d && !this.orbitalElements.isHyperbolic()) {
+                    isNowInStateVec = true;
+                } else {
+                    PSServer.sendOrbitUpdateToRelevantPlayers(this);
+                }
+            }
+            else if (isNowInStateVec && !isStateVecControlled) {
+                // entering atmosphere
+            }
+            this.isStateVecControlled = isNowInStateVec;
+        }
     }
 
-    protected void simulateFromKeplerian(long timeElapsed) {
-        this.orbitalElements.ToCartesian(timeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
+    public void simulateFromKeplerian(long timeElapsed) {
+        this.lastCalculatedEccentricAnomaly = this.orbitalElements.ToCartesian(timeElapsed, this.relativeOrbitalPos, this.relativeVelocity);
     }
 
-    private void simulateNonTimeWarp() {
+    private void simulateNonTimeWarp(float deltaTime) {
         if (this.parent == null) {
             return;
         }
-        this.applyQueuedVelocity();
+        if (!this.isClientSide) {
+            this.applyQueuedVelocity();
+        }
+
         Vector3dc newtonAcceleration = OrbitalCalc.getNewtonAcceleration(this.parent.getMass(), this.relativeOrbitalPos);
         this.relativeVelocity.add(newtonAcceleration);
-        Vector3d velocityPerTick = this.relativeVelocity.div(TimeCalc.PhysTickPerSec, new Vector3d());
+        Vector3d velocityPerTick = this.relativeVelocity.mul(deltaTime, new Vector3d());
 
         this.relativeOrbitalPos.add(velocityPerTick);
     }
 
-    protected void setStateVectorsFromHostBody(Vector3dc originPos, EntityOrbitBody hostBody, long TimeElapsed) {
+    protected void setStateVectorsFromHostBody(OrbitHostAccessor orbitHostAccessor, long TimeElapsed) {
+        Vector3dc mcVelocity = this.getMcVelocity();
+        Vector3dc mcPosition = this.getMcPosition();
+
+        if (mcVelocity == null || mcPosition == null || this.parent == null || this.orbitalElements == null) {
+            return;
+        }
+
         Vector3d relativePos = new Vector3d();
-        Vector3d relativeVel = new Vector3d(this.getMcVelocity());
-        this.getMcPosition().sub(originPos, relativePos);
+        Vector3d relativeVel = new Vector3d(mcVelocity);
+        mcPosition.sub(orbitHostAccessor.getOriginPos(), relativePos);
 
-        if (relativePos.lengthSquared() > 1 || relativeVel.lengthSquared() > 1) {
-            this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
-            this.relativeVelocity.set(relativeVel.add(this.getHostSpaceAccess().getHostBody().getRelativeVelocity()));
+        EntityOrbitBody<?> hostBody = orbitHostAccessor.isUnloadedHostSpace() ? this.parent.getSolarSystem().getSpacecraftOrbit(this.hostSpaceID.get())
+                : orbitHostAccessor.getHostBody();
 
-            this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+        // need to change this so this isn't as janky.
+        if ((relativePos.lengthSquared() < 1 && relativeVel.lengthSquared() < 1) || orbitHostAccessor.isUnloadedHostSpace()) {
+            this.copyOrbitFromHostBody(hostBody);
         } else {
-            this.relativeOrbitalPos.set(hostBody.getRelativePos());
-            this.relativeVelocity.set(hostBody.getRelativeVelocity());
-            this.orbitalElements.set(hostBody.getOrbitalElements());
+            this.relativeOrbitalPos.set(relativePos.add(hostBody.getRelativePos()));
+            this.relativeVelocity.set(relativeVel.add(hostBody.getRelativeVelocity()));
+            this.isStateVecControlled = hostBody.isStateVecControlled;
+            this.lastCalculatedEccentricAnomaly = this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, TimeElapsed);
+            this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
         }
     }
 
-    protected void sendOrbitUpdateToRelevantPlayers() {
-        PacketHandler.sendToAllClients(new ClientboundOrbitChange(this.id, this.orbitalElements));
+    private void copyOrbitFromHostBody(EntityOrbitBody<?> hostBody) {
+        if (hostBody == null) {
+            return;
+        }
+
+        this.relativeOrbitalPos.set(hostBody.getRelativePos());
+        this.relativeVelocity.set(hostBody.getRelativeVelocity());
+        if (hostBody.getOrbitalElements() != null) {
+            this.orbitalElements.set(hostBody.getOrbitalElements());
+        }
+        this.lastCalculatedEccentricAnomaly = hostBody.getEccentricAnomaly();
+        this.isStateVecControlled = hostBody.isStateVecControlled;
+        this.nextOrbitIntercept = hostBody.getNextOrbitIntercept();
+    }
+
+    public void setStateVecControlled(boolean isAtmo) {
+        this.isStateVecControlled = isAtmo;
     }
 
     private void applyQueuedVelocity() {
@@ -129,6 +216,7 @@ public abstract class EntityOrbitBody extends OrbitalBody {
             this.relativeVelocity.add(impulse);
         }
     }
+    public abstract double getCrossSectionalArea(Vector3d airVelocity);
 
     // need to do this so it works on both client and server
     public abstract OrbitHostAccessor getHostSpaceAccess();
@@ -137,84 +225,81 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         this.hostSpaceID.set(hostSpace);
     }
 
-    public abstract boolean isBodyEntityLoaded();
+    public void setBody(@Nullable T body) {
+        this.body = body;
+    }
+
+    public @Nullable T getBody() {
+        return body;
+    }
+
+    public boolean isBodyEntityLoaded() {
+        return this.body != null;
+    }
+
     public abstract @Nullable Vector3dc getMcPosition();
     public abstract @Nullable Vector3dc getMcVelocity();
     public abstract @Nullable Quaterniondc getMCRotation();
 
-    public void setHostOrbitSpace(OrbitHostSpace playerHostSpace) {
-        if (playerHostSpace != null) {
-            this.hostSpaceID.set(playerHostSpace.getOrbitIdOfHost());
-            this.orbitHostSpace.set(playerHostSpace);
+    public @Nullable OrbitalCalc.SOIIntercept getNextOrbitIntercept() {
+        return nextOrbitIntercept;
+    }
+
+    // server only
+    public void setHostOrbitSpace(OrbitHostSpace hostSpace) {
+        if (hostSpace != null) {
+            this.hostSpaceID.set(hostSpace.getOrbitIdOfHost());
+            this.orbitHostSpace.set(hostSpace);
+            PacketHandler.sendToAllClients(new ClientboundHostSpaceOrbitIDSet(this.id, hostSpace.getOrbitIdOfHost()));
         } else {
             this.hostSpaceID.set(null);
             this.orbitHostSpace.set(null);
+            PacketHandler.sendToAllClients(new ClientboundHostSpaceOrbitIDSet(this.id, null));
         }
     }
 
-    public void removeHostSpaces() {
+    public void removeHostSpace(boolean isTeleporting) {
         if (!this.isClientSide && this.orbitHostSpace.get() != null) {
-            this.orbitHostSpace.get().removeOrbitBody(this);
+            this.orbitHostSpace.get().removeOrbitBody(this, isTeleporting);
         }
         this.hostSpaceID.set(null);
         this.orbitHostSpace.set(null);
     }
 
-    @PhysTickOnly
-    private @Nullable CelestialBody calculateSOIChange(OrbitalCalc.SOIIntercept nextOrbitIntercept) {
-        //this is basically making sure that the change happens in the right place
-        this.simulateFromKeplerian(this.nextOrbitIntercept.timeElapsed());
-
-        if (nextOrbitIntercept.isEscape()) {
-            CelestialBody newParent = this.getParent().getParent();
-            if (newParent != null) {
-                Vector3d escapeRelPos = new Vector3d(this.getParent().getRelativePos()).add(this.getRelativePos());
-                Vector3d escapeRelVel = new Vector3d(this.getParent().getRelativeVelocity()).add(this.getRelativeVelocity());
-                this.orbitalElements = new OrbitalElements(escapeRelPos, escapeRelVel, this.nextOrbitIntercept.timeElapsed(), newParent.getMass());
-                return newParent;
-            } else {
-                // you are going to the end dimension my friend.
-                return null;
-            }
-        } else {
-            CelestialBody newParent = this.getParent().getPlanetChild(nextOrbitIntercept.interceptingBody());
-            if (newParent != null) {
-                Vector3d escapeRelPos = new Vector3d(this.getRelativePos()).sub(newParent.getRelativePos());
-                Vector3d escapeRelVel = new Vector3d(this.getRelativeVelocity()).sub(newParent.getRelativeVelocity());
-                this.orbitalElements = new OrbitalElements(escapeRelPos, escapeRelVel, this.nextOrbitIntercept.timeElapsed(), newParent.getMass());
-            }
-            return newParent;
-        }
+    // function called every time the body completes one revolution around its host body, if a body just started orbiting that orbit doesn't count.
+    protected void completedOneOrbit(long TimeElapsed) {
+        this.resetIntercepts(TimeElapsed);
+        this.calculateIntercepts(TimeElapsed);
+        PSServer.addGameTickRunnable(() ->
+                PacketHandler.sendToAllClients(new ClientboundSetOrbitIntercept(this.getOrbitId(), this.nextOrbitIntercept))
+        );
     }
 
     @PhysTickOnly
-    public void calculateIntercepts(long elapsedTime) {
-        if (this.orbitalElements == null || this.parent == null) {
-            PlanetShine.logError("Invalid state for EntityOrbitBody : " + this.getDisplayName());
-            return;
-        }
-            // first calculate intercept with planets with the same parent
-            if (!this.parent.getPlanetChildren().isEmpty()) {
-                //this.nextOrbitIntercept = OrbitalCalc.findAllRelativePlanetIntercepts(this, elapsedTime, this.parent.getPlanetChildren());
-            }
-
-            // if that fails than start checking that escape Intercepts fail too:
-            if (this.nextOrbitIntercept == null) {
-                this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
-            }
-            this.isInterceptsCalculated = true;
-    }
-
-    //client-side
-    public void calculateEscapeOnly(long elapsedTime) {
-        assert this.orbitalElements != null;
-        assert this.parent != null;
-        this.nextOrbitIntercept = this.orbitalElements.findOrbitEscapeIntercept(this.parent, elapsedTime);
+    public @Nullable OrbitalCalc.SOIIntercept calculateIntercepts(long elapsedTime) {
+        double currentTrueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(this.getEccentricAnomaly(), orbitalElements.getEccentricity());
+        this.nextOrbitIntercept = OrbitalCalc.calculateIntercepts(this.orbitalElements, currentTrueAnomaly, this.parent, elapsedTime);
         this.isInterceptsCalculated = true;
+        return this.nextOrbitIntercept;
+    }
+
+    public void resetIntercepts(long currentTime) {
+        this.isInterceptsCalculated = false;
+        this.nextOrbitIntercept = null;
+        this.nextPeriapsisTime = this.orbitalElements.getNextPeriapsisTime(currentTime);
+    }
+
+    // client-side only
+    public void setIntercept(OrbitalCalc.@Nullable SOIIntercept soiIntercept) {
+        this.nextOrbitIntercept = soiIntercept;
     }
 
     public boolean isOrbitInterceptsCalculated() {
         return isInterceptsCalculated;
+    }
+
+    public double getEccentricAnomaly() {
+        return lastCalculatedEccentricAnomaly;
     }
 
     public Optional<OrbitId> getHostSpaceID() {
@@ -226,6 +311,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         }
     }
 
+    public boolean isClientSide() {
+        return isClientSide;
+    }
+
     public boolean isHostOfItsSpace() {
         OrbitId hostSpace = this.hostSpaceID.get();
         if (hostSpace == null) {
@@ -233,6 +322,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
         } else {
             return hostSpace.equals(this.id);
         }
+    }
+
+    public boolean isChunkLoaded() {
+        return this.orbitHostSpace.get() != null && this.orbitHostSpace.get().hasPlayers();
     }
 
     // Thread safe, don't call this while time warping
@@ -250,13 +343,10 @@ public abstract class EntityOrbitBody extends OrbitalBody {
 
     public abstract OrbitHostSpace createHostSpace(Vector2ic posNew);
 
-    @OnlyIn(Dist.CLIENT) // kinda sus but hey it works without having generics glorp.
-    public boolean drawIcon(GuiGraphics graphics, Vector2i screenPos, int size) {
-        return false;
-    }
-
     // called when the entity is leaving orbit and entering a another dimension
     public void OnRemove() {
 
     }
+
+    public abstract void entityLoadedInSpace(T entity, HostSpaceManager hostSpaceManager);
 }

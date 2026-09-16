@@ -1,5 +1,7 @@
 package com.nythicalnorm.planetshine.planettexgen;
 
+import com.google.gson.JsonObject;
+
 import java.awt.*;
 
 public class BiomeGradient {
@@ -17,6 +19,15 @@ public class BiomeGradient {
         this.maxLatitude = maxLatitude;
         this.biomeColor = biomeColor;
         this.latitudeOpacity = latitudeOpacity;
+    }
+
+    public static BiomeGradient readFromJson(JsonObject biomeGradient) {
+        float min = biomeGradient.get("min").getAsFloat();
+        float max = biomeGradient.get("max").getAsFloat();
+        String colorStr = biomeGradient.get("color").getAsString();
+        Color colorVal = Color.decode(colorStr);
+
+        return new BiomeGradient(min, max, 0.0f, 0.0f, 0.0f, colorVal);
     }
 
     public void adjustMinMaxValBasedOnGroup(float minGroup, float maxGroup) {

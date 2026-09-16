@@ -4,8 +4,10 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.nythicalnorm.planetshine.PSServer;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBodyAccessor;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -35,7 +37,7 @@ public class EntityEvents {
         CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) level;
 
         if (planetAccessor.ps$isPlanet()){
-            double planetAcceleration = planetAccessor.ps$getCelestialBody().getEntityAccelerationDueToGravity();
+            double planetAcceleration = planetAccessor.ps$getCelestialBody().getLivingEntityAccelerationDueToGravity();
 
             if (planetAcceleration <= 0){
                 event.setCanceled(true);
@@ -55,21 +57,24 @@ public class EntityEvents {
             return;
         }
 
-        Entity entity = event.getEntity();
-        if (SpaceUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
-            PSServer.get().getHostSpaceManager().spaceEntitySpawn(entity);
+        if (SpaceUtils.isSpaceLevel((ServerLevel) event.getEntity().level()) && PSServer.get() != null) {
+            PSServer.get().getHostSpaceManager().spaceEntitySpawn(event.getEntity());
         }
 
-        if (entity instanceof LivingEntity) {
-            AttributeMap entityAttributes = ((LivingEntity)entity).getAttributes();
+        if (event.getEntity() instanceof LivingEntity livingEntity) {
+            AttributeMap entityAttributes = livingEntity.getAttributes();
             CelestialBodyAccessor planetAccessor = (CelestialBodyAccessor) event.getLevel();
 
             //Optional<Double> levelGravity = PlanetDimensions.getAccelerationDueToGravityAt(entity.level());
             double tempGravity = 0;
-            boolean applyGravityModifier = planetAccessor.ps$isPlanet();
+            boolean applyGravityModifier = false;
+
+            if (planetAccessor.ps$getCelestialBody() instanceof PlanetaryBody planetaryBody) {
+                applyGravityModifier = planetaryBody.getDimensionalProperties().isAffectEntityGravity();
+            }
 
             if (applyGravityModifier) {
-                tempGravity = planetAccessor.ps$getCelestialBody().getEntityAccelerationDueToGravity();
+                tempGravity = planetAccessor.ps$getCelestialBody().getLivingEntityAccelerationDueToGravity();
             }
 
             AttributeModifier gravityModifier = new AttributeModifier(gravityUUID, "planetshine.planetgravity",
@@ -96,7 +101,7 @@ public class EntityEvents {
         }
 
         Entity entity = event.getEntity();
-        if (SpaceUtils.isSpaceLevel(entity.level()) && PSServer.get() != null) {
+        if (SpaceUtils.isSpaceLevel((ServerLevel) entity.level()) && PSServer.get() != null) {
             PSServer.get().getHostSpaceManager().spaceEntityLeave(entity);
         }
     }

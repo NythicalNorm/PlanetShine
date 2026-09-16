@@ -7,5 +7,7 @@ import org.joml.Vector3d;
 public interface OrbitHostAccessor {
     OrbitId getOrbitIdOfHost();
     Vector3d getOriginPos();
-    EntityOrbitBody getHostBody();
+    EntityOrbitBody<?> getHostBody();
+
+    boolean isUnloadedHostSpace();
 }

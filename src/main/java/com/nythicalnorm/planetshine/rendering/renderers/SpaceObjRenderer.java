@@ -10,6 +10,7 @@ import com.nythicalnorm.planetshine.rendering.renderTypes.RenderablePlanet;
 import com.nythicalnorm.planetshine.solarsystem.SolarSystem;
 import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
@@ -48,8 +49,8 @@ public class SpaceObjRenderer {
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    public static void renderPlanets(SpaceRenderable[] renderPlanets, PSClient css, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
-        Optional<CelestialBody> planetOn = css.getCurrentPlanet();
+    public static void renderPlanets(SpaceRenderable[] renderPlanets, PSClient psClient, PoseStack poseStack, Matrix4f projectionMatrix, float partialTick) {
+        Optional<CelestialBody> planetOn = psClient.getCurrentPlanet();
         float currentAlbedo = 1.0f;
         CelestialBody currentPlanetIn = null;
         Optional<PlanetAtmosphere> atmosphere = Optional.empty();
@@ -58,11 +59,12 @@ public class SpaceObjRenderer {
             currentPlanetIn = planetOn.get();
 
             if (planetOn.get().getAtmosphere().hasAtmosphere()) {
-                currentAlbedo = css.getSunAngleOpacity();
+                currentAlbedo = PSRenderer.getSunAngleOpacity();
                 atmosphere = Optional.of(planetOn.get().getAtmosphere());
             }
-        } else {
-            AtmosphereRenderer.renderSpaceSky(poseStack, projectionMatrix);
+        } else if (psClient.isInsideAtmosphereInSpaceDim() && psClient.getPlayerOrbit().getParent() != null) {
+            currentAlbedo = 1.0f - AtmosphereCalc.getAtmoPercent(psClient.getPlayerOrbit().getParent(),
+                    psClient.getPlayerOrbit().getAltitude());
         }
 
         PSRenderer.drawStarBuffer(poseStack, projectionMatrix, currentAlbedo);
@@ -83,8 +85,8 @@ public class SpaceObjRenderer {
                 plnt.render(atmosphere, poseStack, projectionMatrix, currentAlbedo, isCurrentPlanetOn, opacityEasing);
 
                 if (isCurrentPlanetOn) {
-                    LodTexRenderer.renderLODs(poseStack, projectionMatrix, css.getPlanetTexManager().getLodTexAtlasID(),
-                            opacityEasing, css.getPlanetTexManager().getLodTexBuffer());
+                    LodTexRenderer.renderLODs(poseStack, projectionMatrix, psClient.getPlanetTexManager().getLodTexAtlasID(),
+                            opacityEasing, psClient.getPlanetTexManager().getLodTexBuffer());
                 }
 
                 RenderSystem.disableBlend();
@@ -98,8 +100,12 @@ public class SpaceObjRenderer {
         }
     }
 
+    public static float maxDepthDistance() {
+        return Minecraft.getInstance().gameRenderer.getDepthFar() * 0.5f;
+    }
+
     public static void PerspectiveShift(double PlanetDistance, Vector3d PlanetPos, Quaternionf planetRot, double bodyRadius,PoseStack poseStack){
-        float inWorldPlanetsDistance = Minecraft.getInstance().gameRenderer.getDepthFar() * 0.5f;
+        float inWorldPlanetsDistance = maxDepthDistance();
         //tan amd atan cancel each other out.
         float planetApparentSize = (float) (inWorldPlanetsDistance * 2 * bodyRadius/PlanetDistance);
         PlanetPos.normalize();

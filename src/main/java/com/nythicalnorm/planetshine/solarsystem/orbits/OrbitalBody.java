@@ -2,11 +2,15 @@ package com.nythicalnorm.planetshine.solarsystem.orbits;
 
 import com.nythicalnorm.planetshine.solarsystem.OrbitId;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
+
+import java.util.Objects;
 
 public abstract class OrbitalBody {
     protected final OrbitId id;
@@ -17,9 +21,10 @@ public abstract class OrbitalBody {
 
     protected @Nullable OrbitalElements orbitalElements;
     protected @Nullable CelestialBody parent; // Nullable only in the case of the sun
+    protected final boolean isClientSide;
     protected boolean isStableOrbit;
 
-    public OrbitalBody(OrbitalBody.Builder<?> builder) {
+    public OrbitalBody(OrbitalBody.Builder<?> builder, boolean isClientSide) {
         this.id = builder.id;
         this.displayName = builder.displayName;
         this.relativeOrbitalPos = builder.relativeOrbitalPos;
@@ -27,6 +32,7 @@ public abstract class OrbitalBody {
         this.relativeVelocity = builder.relativeVelocity;
         this.orbitalElements = builder.orbitalElements;
         this.isStableOrbit = builder.isStableOrbit;
+        this.isClientSide = isClientSide;
     }
 
     public Component getDisplayName() {
@@ -41,7 +47,7 @@ public abstract class OrbitalBody {
         return id;
     }
 
-    public abstract OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> getType();
+    public abstract RegistryObject<OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>>> getType();
 
     public boolean isStableOrbit() {
         return isStableOrbit;
@@ -67,6 +73,18 @@ public abstract class OrbitalBody {
         return parent;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        OrbitalBody that = (OrbitalBody) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+
     public void setStableOrbit(boolean stableOrbit) {
         isStableOrbit = stableOrbit;
     }
@@ -78,6 +96,17 @@ public abstract class OrbitalBody {
             this.orbitalElements = new OrbitalElements(orbitalElements);
         } else {
             this.orbitalElements = null;
+        }
+    }
+
+    public void setStateVectors(Vector3dc relativePosition, Vector3dc relativeVelocity, long timeElapsed) {
+        this.relativeOrbitalPos.set(relativePosition);
+        this.relativeVelocity.set(relativeVelocity);
+        if (this.orbitalElements != null) {
+            this.orbitalElements.fromCartesian(this.relativeOrbitalPos, this.relativeVelocity, timeElapsed);
+        }
+        if (this.parent != null) {
+            this.absoluteOrbitalPos.set(this.parent.getAbsolutePos()).add(this.relativeOrbitalPos);
         }
     }
 
@@ -134,6 +163,13 @@ public abstract class OrbitalBody {
 
         public void setOrbitalElements(@Nullable OrbitalElementsc orbitalElements) {
             this.orbitalElements = new OrbitalElements(orbitalElements);
+            Vector3d relativeVelocity = new Vector3d();
+            Vector3d relativePosition = new Vector3d();
+            if (UniverseStage.get() != null) {
+                this.orbitalElements.ToCartesian(UniverseStage.get().getCurrentTime(), relativePosition, relativeVelocity);
+            }
+            this.setRelativeOrbitalPos(relativePosition);
+            this.setRelativeVelocity(relativeVelocity);
         }
 
         public void setParent(@Nullable OrbitalBody parent) {

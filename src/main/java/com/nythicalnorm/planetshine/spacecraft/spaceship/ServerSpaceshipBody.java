@@ -15,12 +15,13 @@ public class ServerSpaceshipBody extends AbstractSpaceshipBody {
 
     @Override
     public void init() {
-        if (this.getShip() != null) {
+        super.init();
+        if (this.getBody() != null) {
             return;
         }
         ServerShipWorld serverShipWorld = ValkyrienSkies.api().getServerShipWorld(PSServer.get().getMCServer());
         if (serverShipWorld != null) {
-            this.setShip(serverShipWorld.getLoadedShips().getById(this.id.getShipID()));
+            this.setBody(serverShipWorld.getLoadedShips().getById(this.id.getShipID()));
         }
     }
 

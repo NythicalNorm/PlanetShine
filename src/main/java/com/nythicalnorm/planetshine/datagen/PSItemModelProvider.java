@@ -18,7 +18,7 @@ public class PSItemModelProvider extends ItemModelProvider {
     protected void registerModels() {
         item3dOnlyinHand(PSItems.HANDHELD_THRUSTER);
 
-        simpleItem(PSItems.SPACESUIT_HELMET);
+        //simpleItem(PSItems.SPACESUIT_HELMET);
     }
 
     private ItemModelBuilder simpleItem(RegistryObject<Item> item) {

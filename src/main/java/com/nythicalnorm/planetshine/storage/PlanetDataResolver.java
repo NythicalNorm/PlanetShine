@@ -4,9 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.nythicalnorm.planetshine.PlanetShine;
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetDimensionProperties;
 import com.nythicalnorm.planetshine.solarsystem.bodies.star.StarBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
@@ -28,7 +29,7 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
     public static final Gson GSON_INSTANCE = Deserializers.createFunctionSerializer().create();
 
     public PlanetDataResolver() {
-        super(GSON_INSTANCE, "vsp_planetary_bodies");
+        super(GSON_INSTANCE, "ps_celestial_bodies");
     }
 
     @Override
@@ -45,7 +46,9 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
                 JsonObject jsonObject = element.getAsJsonObject();
                 String name = jsonObject.get("name").getAsString();
                 String bodyType = jsonObject.get("type").getAsString();
-                OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType = OrbitalBodyTypesHolder.getType(bodyType);
+
+                OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType =
+                        OrbitalBodyTypeRegistry.getType(ResourceLocation.parse(bodyType));
                 if (orbitalBodyType != null) {
                     OrbitalBody.Builder<?> planetBuilder = orbitalBodyType.readCelestialBodyDataPack(name, jsonObject, tempChildPlanetsMap);
                     OrbitalBody readOrbitalBody = planetBuilder.build();
@@ -53,10 +56,10 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
                         tempPlanetaryBodyMap.put(celestialBody.getName(), celestialBody);
                     }
                 } else {
-                    throw new IllegalStateException("Planetary Body is of unknown type: " + bodyType);
+                    throw new IllegalStateException("Celestial Body is of unknown type: " + bodyType);
                 }
             } catch (Exception e) {
-                logger.error("Unable to parse datapack for planetary body {}", key.getPath());
+                logger.error("Unable to parse datapack for Celestial body {}", key.getPath());
                 e.printStackTrace();
             }
         });
@@ -88,23 +91,50 @@ public class PlanetDataResolver extends SimpleJsonResourceReloadListener {
 
     public static PlanetAtmosphere parseAtmosphericData(JsonObject jsonObj) {
         boolean hasAtmosphere = jsonObj.get("has_atmosphere").getAsBoolean();
-        int surfaceColor = 0;
+        int surfaceColor = Integer.parseInt(jsonObj.get("surface_color").getAsString(), 16);
         int atmosphereColor = 0;
         double atmosphereHeight = 0d;
+        double atmospherePressure = 0d;
         float atmosphereAlpha = 0f;
         float alphaNight;
         float alphaDay;
 
         if (hasAtmosphere) {
-            surfaceColor = Integer.parseInt(jsonObj.get("surface_color").getAsString(), 16);
             atmosphereColor = Integer.parseInt(jsonObj.get("atmosphere_color").getAsString(), 16);
             atmosphereHeight = jsonObj.get("atmosphere_height").getAsDouble();
+            atmospherePressure = jsonObj.get("atmosphere_pressure").getAsDouble();
             atmosphereAlpha = jsonObj.get("atmosphere_alpha").getAsFloat();
         }
         alphaNight = jsonObj.get("alpha_night").getAsFloat();
         alphaDay = jsonObj.get("alpha_day").getAsFloat();
 
-        return new PlanetAtmosphere(hasAtmosphere, surfaceColor, atmosphereColor, atmosphereHeight, atmosphereAlpha, alphaNight, alphaDay);
+        return new PlanetAtmosphere(hasAtmosphere, surfaceColor, atmosphereColor, atmosphereHeight, atmospherePressure, atmosphereAlpha, alphaNight, alphaDay);
+    }
+
+    public static PlanetDimensionProperties parseDimensionalProperties(JsonObject jsonObj) {
+        boolean renderCustomSkybox = true;
+        boolean drawOverworldSunriseDisk = false;
+        int default_sky_color = 0;
+        boolean affectEntityGravity = false;
+        boolean affectVsShipGravity = false;
+
+        if (jsonObj.has("render_custom_skybox")) {
+            renderCustomSkybox = jsonObj.get("render_custom_skybox").getAsBoolean();
+        }
+        if (jsonObj.has("draw_sunrise_disk")) {
+            drawOverworldSunriseDisk = jsonObj.get("draw_sunrise_disk").getAsBoolean();
+        }
+        if (jsonObj.has("default_sky_color")) {
+            default_sky_color = Integer.parseInt(jsonObj.get("default_sky_color").getAsString(), 16);
+        }
+        if (jsonObj.has("affect_entity_gravity")) {
+            affectEntityGravity = jsonObj.get("affect_entity_gravity").getAsBoolean();
+        }
+        if (jsonObj.has("affect_vs_ship_gravity")) {
+            affectVsShipGravity = jsonObj.get("affect_vs_ship_gravity").getAsBoolean();
+        }
+
+        return new PlanetDimensionProperties(renderCustomSkybox, drawOverworldSunriseDisk, default_sky_color, affectEntityGravity, affectVsShipGravity);
     }
 
     public record PlanetLoadedData(StarBody rootStar, Map<String, CelestialBody> tempPlanetaryBodyMap, Map<String, String[]> tempChildPlanetsMap) {

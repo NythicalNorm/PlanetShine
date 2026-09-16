@@ -1,29 +1,69 @@
 package com.nythicalnorm.planetshine.spacecraft.spaceship;
 
 import com.nythicalnorm.planetshine.PSClient;
+import com.nythicalnorm.planetshine.rendering.map.IconRenderer;
+import com.nythicalnorm.planetshine.rendering.map.MapIconRenderable;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostAccessor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector2i;
+import org.joml.Vector3dc;
 import org.valkyrienskies.core.api.world.ClientShipWorld;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
-public class ClientSpaceshipBody extends AbstractSpaceshipBody {
+public class ClientSpaceshipBody extends AbstractSpaceshipBody implements MapIconRenderable {
+    private Vector2i mapPos;
+
     public ClientSpaceshipBody(ShipOrbitBuilder shipOrbitBuilder) {
         super(shipOrbitBuilder, true);
     }
 
     @Override
     public void init() {
-        if (this.getShip() != null) {
+        super.init();
+        if (this.getBody() != null) {
             return;
         }
         ClientShipWorld clientShipWorld = ValkyrienSkies.api().getClientShipWorld(Minecraft.getInstance());
         if (clientShipWorld != null) {
-            this.setShip(clientShipWorld.getLoadedShips().getById(this.id.getShipID()));
+            this.setBody(clientShipWorld.getLoadedShips().getById(this.id.getShipID()));
         }
     }
 
     @Override
-    public OrbitHostAccessor getHostSpaceAccess() {
-        return PSClient.get().getCurrentHostSpace();
+    public @Nullable OrbitHostAccessor getHostSpaceAccess() {
+        if (this.getHostSpaceID().isPresent() && this.getHostSpaceID().get().equals(PSClient.get().getPlayerOrbit().getOrbitId())) {
+            return PSClient.get().getCurrentHostSpace();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Vector2i getLatestMapPos() {
+        return mapPos;
+    }
+
+    @Override
+    public void setLatestMapPos(Vector2i pos) {
+        this.mapPos = pos;
+    }
+
+    @Override
+    public void drawIcon(GuiGraphics graphics, Vector2i screenPos, int i) {
+        this.setLatestMapPos(screenPos);
+        IconRenderer.drawIcon(graphics, IconRenderer.DEFAULT_SPACESHIP_ICON, screenPos);
+    }
+
+    @Override
+    public boolean shouldDrawIcon() {
+        OrbitHostAccessor orbitHostAccessor = PSClient.get().getCurrentHostSpace();
+        if (this.isBodyEntityLoaded() && orbitHostAccessor != null && orbitHostAccessor.getOrbitIdOfHost().equals(this.getOrbitId())) {
+            Vector3dc localPlayerPos = PSClient.get().getPlayerOrbit().getMcPosition();
+            return !this.body.getWorldAABB().containsPoint(localPlayerPos);
+        }
+
+        return true;
     }
 }

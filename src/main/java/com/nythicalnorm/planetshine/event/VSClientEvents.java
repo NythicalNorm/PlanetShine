@@ -17,18 +17,18 @@ public class VSClientEvents {
 
     private static void onClientShipLoad(ShipLoadEventClient event) {
         if (PSClient.get() != null) {
-            ClientSpaceshipBody clientSpaceshipBody = (ClientSpaceshipBody) PSClient.get().getSolarSystem().getShipFromVSId(event.getShip().getId());
+            ClientSpaceshipBody clientSpaceshipBody = (ClientSpaceshipBody) PSClient.get().getSolarSystem().getSpaceshipFromVSId(event.getShip().getId());
             if (clientSpaceshipBody != null) {
-                clientSpaceshipBody.setShip(event.getShip());
+                clientSpaceshipBody.setBody(event.getShip());
             }
         }
     }
 
     private static void onClientShipUnload(ShipUnloadEventClient event) {
         if (PSClient.get() != null) {
-            ClientSpaceshipBody clientSpaceshipBody = (ClientSpaceshipBody) PSClient.get().getSolarSystem().getShipFromVSId(event.getShip().getId());
+            ClientSpaceshipBody clientSpaceshipBody = (ClientSpaceshipBody) PSClient.get().getSolarSystem().getSpaceshipFromVSId(event.getShip().getId());
             if (clientSpaceshipBody != null) {
-                clientSpaceshipBody.setShip(null);
+                clientSpaceshipBody.setBody(null);
             }
         }
     }

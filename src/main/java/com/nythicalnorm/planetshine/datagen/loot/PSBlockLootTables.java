@@ -15,7 +15,7 @@ public class PSBlockLootTables extends BlockLootSubProvider {
 
     @Override
     protected void generate() {
-        this.dropSelf(PSBlocks.LUNAR_REGOLITH.get());
+        //this.dropSelf(PSBlocks.LUNAR_REGOLITH.get());
     }
 
     @Override

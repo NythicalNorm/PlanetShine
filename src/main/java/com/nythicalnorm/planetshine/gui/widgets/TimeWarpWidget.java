@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 
@@ -21,8 +22,8 @@ public class TimeWarpWidget extends AbstractWidget {
     private static final ResourceLocation TIME_WARP_TEXTURE = ResourceLocation.fromNamespaceAndPath(PlanetShine.MODID,
             "textures/gui/timewarpwidget.png");
 
-    public TimeWarpWidget(int pX, int pY, int pWidth, int pHeight, Component pMessage) {
-        super(pX, pY, pWidth, pHeight, pMessage);
+    public TimeWarpWidget(int pX, int pY, Component pMessage) {
+        super(pX, pY, 136, 34, pMessage);
     }
 
     @Override
@@ -69,6 +70,6 @@ public class TimeWarpWidget extends AbstractWidget {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput pNarrationElementOutput) {
+    protected void updateWidgetNarration(@NotNull NarrationElementOutput pNarrationElementOutput) {
     }
 }

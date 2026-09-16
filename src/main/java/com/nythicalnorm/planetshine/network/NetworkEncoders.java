@@ -4,10 +4,12 @@ import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.solarsystem.*;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetDimensionProperties;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
@@ -22,16 +24,16 @@ import java.util.*;
 public class NetworkEncoders {
 
     public static void writeOrbitalBody(FriendlyByteBuf friendlyByteBuf, OrbitalBody orbitalBody) {
-        orbitalBody.getType().encodeToBuffer(orbitalBody, friendlyByteBuf);
+        orbitalBody.getType().get().encodeToBuffer(orbitalBody, friendlyByteBuf);
     }
 
     public static OrbitalBody readOrbitalBody(FriendlyByteBuf friendlyByteBuf) {
-        return OrbitalBodyTypesHolder.getType(readASCII(friendlyByteBuf)).decodeFromBuffer(friendlyByteBuf).build();
+        return OrbitalBodyTypeRegistry.getType(friendlyByteBuf.readResourceLocation()).decodeFromBuffer(friendlyByteBuf).build();
     }
 
     @OnlyIn(Dist.CLIENT)
     public static OrbitalBody readOrbitalBodyClient(FriendlyByteBuf friendlyByteBuf) {
-        return OrbitalBodyTypesHolder.getType(readASCII(friendlyByteBuf)).decodeFromBuffer(friendlyByteBuf).buildClientSide();
+        return OrbitalBodyTypeRegistry.getType(friendlyByteBuf.readResourceLocation()).decodeFromBuffer(friendlyByteBuf).buildClientSide();
     }
 
     public static void writePlanetaryBodyList(FriendlyByteBuf friendlyByteBuf, List<CelestialBody> bodyList) {
@@ -84,10 +86,10 @@ public class NetworkEncoders {
         return bodyList;
     }
 
-    public static void writeEntityBodyList(FriendlyByteBuf friendlyByteBuf, List<EntityOrbitBody> bodyList) {
+    public static void writeEntityBodyList(FriendlyByteBuf friendlyByteBuf, List<EntityOrbitBody<?>> bodyList) {
         friendlyByteBuf.writeVarInt(bodyList.size());
 
-        for (EntityOrbitBody orbitBody : bodyList) {
+        for (EntityOrbitBody<?> orbitBody : bodyList) {
             if (orbitBody.getParent() != null) {
                 NetworkEncoders.writeOrbitalBody(friendlyByteBuf, orbitBody);
                 orbitBody.getParent().getOrbitId().encodeToBuffer(friendlyByteBuf);
@@ -100,7 +102,7 @@ public class NetworkEncoders {
         List<TempEntityOrbitHolder> tempEntityOrbitHolder = new ArrayList<>();
 
         for (int i = 0; i < bodyNo; i++) {
-            if (NetworkEncoders.readOrbitalBodyClient(friendlyByteBuf) instanceof EntityOrbitBody entityOrbitBody) {
+            if (NetworkEncoders.readOrbitalBodyClient(friendlyByteBuf) instanceof EntityOrbitBody<?> entityOrbitBody) {
                 OrbitId parentID = new OrbitId(friendlyByteBuf);
                 tempEntityOrbitHolder.add(new TempEntityOrbitHolder(entityOrbitBody, parentID));
             }
@@ -136,6 +138,7 @@ public class NetworkEncoders {
         byteBuf.writeInt(atmosphere.getOverlayColorInt());
         byteBuf.writeInt(atmosphere.getAtmoColorInt());
         byteBuf.writeDouble(atmosphere.getAtmosphereHeight());
+        byteBuf.writeDouble(atmosphere.getAtmosphericPressureMultiplier());
         byteBuf.writeFloat(atmosphere.getAtmosphereAlpha());
         byteBuf.writeFloat(atmosphere.getAlphaNight());
         byteBuf.writeFloat(atmosphere.getAlphaDay());
@@ -147,9 +150,28 @@ public class NetworkEncoders {
                 byteBuf.readInt(),
                 byteBuf.readInt(),
                 byteBuf.readDouble(),
+                byteBuf.readDouble(),
                 byteBuf.readFloat(),
                 byteBuf.readFloat(),
                 byteBuf.readFloat()
+        );
+    }
+
+    public static void writeDimensionalProperties(FriendlyByteBuf byteBuf, PlanetDimensionProperties dimensionalProperties) {
+        byteBuf.writeBoolean(dimensionalProperties.isRenderCustomSkybox());
+        byteBuf.writeBoolean(dimensionalProperties.isDrawSunriseDisk());
+        byteBuf.writeInt(dimensionalProperties.getDefaultSkyColor());
+        byteBuf.writeBoolean(dimensionalProperties.isAffectEntityGravity());
+        byteBuf.writeBoolean(dimensionalProperties.isAffectVSShipGravity());
+    }
+
+    public static PlanetDimensionProperties readDimensionalProperties(FriendlyByteBuf byteBuf) {
+        return new PlanetDimensionProperties(
+                byteBuf.readBoolean(),
+                byteBuf.readBoolean(),
+                byteBuf.readInt(),
+                byteBuf.readBoolean(),
+                byteBuf.readBoolean()
         );
     }
 
@@ -180,7 +202,23 @@ public class NetworkEncoders {
         return friendlyByteBuf.readCharSequence(stringSize, StandardCharsets.US_ASCII).toString();
     }
 
+    public static void writeOrbitIntercept(FriendlyByteBuf friendlyByteBuf, OrbitalCalc.SOIIntercept soiIntercept) {
+        friendlyByteBuf.writeDouble(soiIntercept.trueAnomaly());
+        friendlyByteBuf.writeLong(soiIntercept.timeElapsed());
+        soiIntercept.interceptingBody().encodeToBuffer(friendlyByteBuf);
+        friendlyByteBuf.writeBoolean(soiIntercept.isEscape());
+    }
+
+    public static OrbitalCalc.SOIIntercept readOrbitIntercept(FriendlyByteBuf friendlyByteBuf) {
+        return new OrbitalCalc.SOIIntercept(
+                friendlyByteBuf.readDouble(),
+                friendlyByteBuf.readLong(),
+                new OrbitId(friendlyByteBuf),
+                friendlyByteBuf.readBoolean()
+        );
+    }
+
     private record TempPlanetaryHolder(CelestialBody planetaryBody, List<OrbitId> orbitIdList) {}
 
-    public record TempEntityOrbitHolder(EntityOrbitBody orbitBody, OrbitId parentID) {}
+    public record TempEntityOrbitHolder(EntityOrbitBody<?> orbitBody, OrbitId parentID) {}
 }

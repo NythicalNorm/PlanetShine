@@ -4,6 +4,8 @@ in vec4 vertexColor;
 
 uniform float startTrueAnomaly;
 uniform float endTrueAnomaly;
+uniform float distanceToFoci;
+uniform float semiMinorAxisMultiplier;
 uniform vec4 ColorModulator;
 
 in vec3 vertPos;
@@ -13,25 +15,43 @@ out vec4 fragColor;
 #define h_PI 1.57079632679
 
 float adjustedTrueAnomaly(vec3 vertPos) {
-    float currentAnamoly = atan(vertPos.z, vertPos.x - 2);
-    return currentAnamoly;
+    if (distanceToFoci > 1) {
+        return atan(vertPos.z * semiMinorAxisMultiplier , -(vertPos.x - distanceToFoci));
+    } else {
+        return atan(vertPos.z * semiMinorAxisMultiplier , (vertPos.x - distanceToFoci));
+    }
 }
 
 void main() {
-    vec4 color = vertexColor;
+    vec4 color = vertexColor * ColorModulator;
     if (color.a == 0.0) {
         discard;
     }
-
-    float isVisble = 1.0;
     float anomaly = adjustedTrueAnomaly(vertPos);
 
-    if (startTrueAnomaly >= anomaly) {
-        isVisble = 0.0;
-    }
+//    if (startTrueAnomaly < endTrueAnomaly) {
+//        if (startTrueAnomaly >= anomaly) {
+//            isVisble = 0.0;
+//        }
+//        if (endTrueAnomaly <= anomaly) {
+//            isVisble = 0.0;
+//        }
+//    } else {
+//        isVisble = 0.0;
+//        if (startTrueAnomaly <= anomaly) {
+//            isVisble = 1.0;
+//        }
+//        if (endTrueAnomaly >= anomaly) {
+//            isVisble = 1.0;
+//        }
+//    }
 
-    //isVisble = anomaly / (2 * PI);
+    float normalOrder = step(startTrueAnomaly, endTrueAnomaly);
 
-    fragColor = color * ColorModulator * isVisble;
-    // fragColor = vec4(isVisble, 0.0, 0.0, 1.0);
+    float visNormal  = step(startTrueAnomaly, anomaly) * step(anomaly, endTrueAnomaly);
+    float visWrapped = max(step(startTrueAnomaly, anomaly), step(anomaly, endTrueAnomaly));
+
+    float isVisible = mix(visWrapped, visNormal, normalOrder);
+
+    fragColor = vec4(color.r, color.g, color.b, isVisible);
 }

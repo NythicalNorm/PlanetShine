@@ -1,9 +1,12 @@
 package com.nythicalnorm.planetshine.storage;
 
-import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypesHolder;
+import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.solarsystem.OrbitalBodyTypeRegistry;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
+import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBodyType;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElements;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
@@ -100,10 +103,23 @@ public class NBTEncoders {
     }
 
     public static CompoundTag putOrbitalBody(OrbitalBody orbitalBody) {
-       return orbitalBody.getType().encodeToNBT(orbitalBody);
+       return orbitalBody.getType().get().encodeToNBT(orbitalBody);
     }
 
-    public static OrbitalBody getOrbitalBody(CompoundTag tag) {
-       return OrbitalBodyTypesHolder.getType(tag.getString("type_name")).decodeFromNBT(tag).build();
+    public static @Nullable OrbitalBody getOrbitalBody(CompoundTag tag) {
+       String resourceLoc = tag.getString("type_name");
+        OrbitalBodyType<? extends OrbitalBody, ? extends OrbitalBody.Builder<?>> orbitalBodyType = null;
+
+       if (resourceLoc.contains(":")) {
+           orbitalBodyType = OrbitalBodyTypeRegistry.getType(ResourceLocation.parse(resourceLoc));
+       } else {
+           orbitalBodyType = OrbitalBodyTypeRegistry.getType(PlanetShine.rl(resourceLoc));
+       }
+
+       if (orbitalBodyType != null) {
+           return orbitalBodyType.decodeFromNBT(tag).build();
+       } else {
+           return null;
+       }
     }
 }

@@ -13,7 +13,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
@@ -34,8 +33,8 @@ public class SpaceDimension {
 
     public static void bootstrapType(BootstapContext<DimensionType> context) {
         context.register(SPACE_DIM_TYPE, new DimensionType(
-                OptionalLong.of(0), // fixedTime
-                false, // hasSkylight
+                OptionalLong.empty(), // fixedTime
+                true, // hasSkylight
                 false, // hasCeiling
                 true, // ultraWarm
                 false, // natural
@@ -46,8 +45,8 @@ public class SpaceDimension {
                 256, // height
                 256, // logicalHeight
                 BlockTags.INFINIBURN_OVERWORLD, // infiniburn
-                BuiltinDimensionTypes.END_EFFECTS, // effectsLocation
-                0.5f, // ambientLight
+                PlanetShine.rl("ps_space_dimension_effects"), // effectsLocation
+                0.0f, // ambientLight
                 new DimensionType.MonsterSettings(false, false, ConstantInt.of(0), 0)));
     }
 

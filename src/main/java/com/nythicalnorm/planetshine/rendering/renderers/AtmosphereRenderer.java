@@ -5,10 +5,10 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.nythicalnorm.planetshine.PlanetShine;
+import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetAtmosphere;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
@@ -26,9 +26,9 @@ public class AtmosphereRenderer {
     private static Uniform OverlayAngle;
     private static Uniform AtmoAngle;
 
-    public static void setupShader(VertexBuffer skyBuffer) {
+    public static void setupShader() {
         skyboxShader = PSShaders.getSkyboxShader();
-        skyboxBuffer = skyBuffer;
+        skyboxBuffer = PSRenderer.getSkyboxBuffer();
         if (skyboxShader != null) {
             OverlayColor = skyboxShader.getUniform("nspOverlayColor");
             AtmoColor = skyboxShader.getUniform("nspAtmoColor");
@@ -43,14 +43,15 @@ public class AtmosphereRenderer {
     public static void render(CelestialBody renBody, Vector3f relativeDir, double distance, PlanetAtmosphere atmosphere, PoseStack poseStack, Matrix4f projectionMatrix) {
         poseStack.pushPose();
         RenderSystem.enableBlend();
-
+        float scale = SpaceObjRenderer.maxDepthDistance();
+        poseStack.scale(scale, scale, scale);
         poseStack.mulPose(new Quaternionf().rotateTo(new Vector3f(0f,1f,0f), relativeDir));
 
         //reduce the atmosphere alpha as the player gets further away, only works if the atmosphere's alpha value is less than 1
         //float distDiffAtmo =  1f - (float)((distance - renBody.getRadius())/atmosphere.getAtmosphereHeight());
         float colorAlpha = Mth.clamp(atmosphere.getAtmosphereAlpha(),0f, 1f);// Mth.clamp(distDiffAtmo,0f,1f), 1f);
 
-        float[] overlayColor = atmosphere.getOverlayColor(colorAlpha);
+        float[] overlayColor = atmosphere.getSurfaceColor(colorAlpha);
         float[] atmosphereColor = atmosphere.getAtmoColor();
 
         float planetAnglularSize = cosOfasin(renBody.getRadius()/distance);
@@ -86,12 +87,4 @@ public class AtmosphereRenderer {
 //            }
 //        }
 //    }
-
-    public static void renderSpaceSky(PoseStack poseStack, Matrix4f projectionMatrix) {
-        poseStack.pushPose();
-        skyboxBuffer.bind();
-        skyboxBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());
-        VertexBuffer.unbind();
-        poseStack.popPose();
-    }
 }

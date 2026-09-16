@@ -5,14 +5,15 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.nythicalnorm.planetshine.PlanetShine;
 import com.nythicalnorm.planetshine.rendering.shaders.PSShaders;
-import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalBody;
+import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.solarsystem.orbits.OrbitalElementsc;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -23,12 +24,20 @@ public class OrbitDrawer {
     private static VertexBuffer hyperbolaBuffer;
 
     private static Uniform startTrueAnomaly;
+    private static Uniform distanceToFoci;
+    private static Uniform semiMinorAxisMultiplier;
     private static Uniform endTrueAnomaly;
+
+    public static final float[] PLANET_ORBIT_COLOR = MiscCalc.getRGBAFloats(0xFFFFFF, 1.0f);
+    public static final float[] SHIP_ORBIT_COLOR = MiscCalc.getRGBAFloats(0xbe29ec, 1.0f);
+    public static final float[] FUTURE_SHIP_ORBIT_COLOR = MiscCalc.getRGBAFloats(0xffa500, 1.0f);
 
     public static void setupShader() {
         net.minecraft.client.renderer.ShaderInstance orbitShader = PSShaders.getOrbitShader();
         if (orbitShader != null) {
             startTrueAnomaly = orbitShader.getUniform("startTrueAnomaly");
+            distanceToFoci = orbitShader.getUniform("distanceToFoci");
+            semiMinorAxisMultiplier = orbitShader.getUniform("semiMinorAxisMultiplier");
             endTrueAnomaly = orbitShader.getUniform("endTrueAnomaly");
         }
         else {
@@ -70,16 +79,16 @@ public class OrbitDrawer {
             float angleAround = (float) i/(segments);
             float angleAroundNext = (i+1f)/(segments);
 
-//            angleAround = (angleAround * Mth.PI) + Mth.HALF_PI;
-//            angleAroundNext = (angleAroundNext * Mth.PI) + Mth.HALF_PI;
+            angleAround = (angleAround * Mth.PI) + Mth.HALF_PI + Mth.PI;
+            angleAroundNext = (angleAroundNext * Mth.PI) + Mth.HALF_PI + Mth.PI;
 
-            angleAround = angleAround * Mth.TWO_PI;
-            angleAroundNext = angleAroundNext * Mth.TWO_PI;
+//            angleAround = angleAround * Mth.TWO_PI;
+//            angleAroundNext = angleAroundNext * Mth.TWO_PI;
 
             Vector3f startLine = new Vector3f((float) (1f/Math.cos(angleAround)), 0f,(float) Math.tan(angleAround));
             Vector3f endLine = new Vector3f((float)  (1f/Math.cos(angleAroundNext)), 0f,(float) Math.tan(angleAroundNext));
 
-            if (startLine.isFinite() && endLine.isFinite()) {// && startLine.x < 0 && endLine.x < 0) {
+            if (startLine.isFinite() && endLine.isFinite() && startLine.x > 0 && endLine.x > 0) {
                 bufferbuilder.vertex(startLine.x, startLine.y, startLine.z).color(1.0f,1.0f,1.0f,1.0f).endVertex();
                 bufferbuilder.vertex(endLine.x, endLine.y, endLine.z).color(1.0f,1.0f,1.0f,1.0f).endVertex();
             }
@@ -90,49 +99,83 @@ public class OrbitDrawer {
         VertexBuffer.unbind();
     }
 
-    public static void drawOrbit(OrbitalBody orbitalBody, float scaleFactor, PoseStack poseStack, Matrix4f projectionMatrix) {
-        OrbitalElementsc orbitalElements = orbitalBody.getOrbitalElements();
+    public static void drawCurrentEntityOrbit(EntityOrbitBody<?> orbitalBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+        OrbitalCalc.SOIIntercept soiIntercept = orbitalBody.getNextOrbitIntercept();
+        if (soiIntercept != null && orbitalBody.getOrbitalElements() != null) {
+            double trueAnomaly = OrbitalCalc.getTrueAnomalyFromEccentricAnomaly(orbitalBody.getEccentricAnomaly(),
+                orbitalBody.getOrbitalElements().getEccentricity());
+            drawOrbit(orbitalBody.getOrbitalElements(), trueAnomaly, soiIntercept, poseStack, projectionMatrix, SHIP_ORBIT_COLOR);
+        } else {
+            drawOrbit(orbitalBody.getOrbitalElements(), 0d, null,
+                    poseStack, projectionMatrix, SHIP_ORBIT_COLOR);
+        }
+    }
+
+    public static void drawCelestialBodyOrbit(CelestialBody orbitalBody, PoseStack poseStack, Matrix4f projectionMatrix) {
+        drawOrbit(orbitalBody.getOrbitalElements(), 0d, null,
+                poseStack, projectionMatrix, PLANET_ORBIT_COLOR);
+    }
+
+    public static void drawFutureOrbit(OrbitalElementsc orbitalElements, double trueAnomaly, OrbitalCalc.SOIIntercept soiIntercept,
+                                       PoseStack poseStack, Matrix4f projectionMatrix) {
+        if (soiIntercept != null) {
+            drawOrbit(orbitalElements, trueAnomaly, soiIntercept, poseStack, projectionMatrix, FUTURE_SHIP_ORBIT_COLOR);
+        } else {
+            drawOrbit(orbitalElements, 0d, null,
+                    poseStack, projectionMatrix, FUTURE_SHIP_ORBIT_COLOR);
+        }
+    }
+
+    private static void drawOrbit(OrbitalElementsc orbitalElements, double currentTrueAnomaly, @Nullable OrbitalCalc.SOIIntercept soiIntercept,
+                                  PoseStack poseStack, Matrix4f projectionMatrix, float[] color) {
         if (orbitalElements == null) {
             return;
         }
-        boolean isElliptical = (orbitalElements.getEccentricity() >= 0 && orbitalElements.getEccentricity() < 1);
-        if (!isElliptical) {
-            double trueAnomaly = OrbitalCalc.getTrueAnomalyFromStateVectors(orbitalBody.getRelativePos(),
-                    orbitalBody.getRelativeVelocity(), orbitalBody.getOrbitalElements().getMu());
+        boolean isElliptical = !orbitalElements.isHyperbolic();
 
-//            if (trueAnomaly > Math.PI) {
-//                trueAnomaly = trueAnomaly - (2 * Math.PI);
-//            }
-            trueAnomaly = trueAnomaly - Math.PI;
-            startTrueAnomaly.set((float) trueAnomaly);
-        } else {
-            startTrueAnomaly.set(0.0f);
-        }
         VertexBuffer drawBuffer = isElliptical ? circleBuffer : hyperbolaBuffer;
 
         double a = orbitalElements.getSemiMajorAxis();
-        double b = isElliptical ? a*Math.sqrt(1-(orbitalElements.getEccentricity() * orbitalElements.getEccentricity()))
-                : -a*Math.sqrt((orbitalElements.getEccentricity() * orbitalElements.getEccentricity()) - 1);
+        double b = orbitalElements.getSemiMinorAxis();
 
-        a = a*scaleFactor;
-        b = b*scaleFactor;
-        float distanceFromCenterToFoci =  isElliptical ? (float) Math.sqrt(a*a - b*b) : (float) -Math.sqrt(a*a + b*b);
+        a = a * MapRenderer.SCALE_FACTOR;
+        b = b * MapRenderer.SCALE_FACTOR;
+        float distanceFromCenterToFoci =  isElliptical ? (float) -Math.sqrt(a*a - b*b) : (float) Math.sqrt(a*a + b*b);
+
+        if (soiIntercept != null) {
+            setCullingUniforms(orbitalElements, currentTrueAnomaly, soiIntercept, b / a);
+        } else {
+            distanceToFoci.set(0.0f);
+            startTrueAnomaly.set((float) -Math.PI);
+            semiMinorAxisMultiplier.set(1.0f);
+            endTrueAnomaly.set((float) Math.PI);
+        }
 
         poseStack.pushPose();
         poseStack.mulPose(new Quaternionf().set(orbitalElements.getOrbitRotation()));
 
-        poseStack.translate(-distanceFromCenterToFoci, 0f, 0f);
+        poseStack.translate(distanceFromCenterToFoci, 0f, 0f);
         poseStack.scale((float) a,1f,(float) b);
 
-        if (orbitalBody instanceof EntityOrbitBody) {
-            RenderSystem.setShaderColor(0.0f,0.0f,1.0f,1.0f);
-        } else {
-            RenderSystem.setShaderColor(1.0f,1.0f,1.0f,1.0f);
-        }
+        RenderSystem.setShaderColor(color[0], color[1], color[2], color[3]);
 
         drawBuffer.bind();
-        drawBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, GameRenderer.getPositionColorShader());//PSShaders.getOrbitShader());
+        drawBuffer.drawWithShader(poseStack.last().pose(), projectionMatrix, PSShaders.getOrbitShader());
         VertexBuffer.unbind();
         poseStack.popPose();
+    }
+
+    private static void setCullingUniforms(OrbitalElementsc orbitalElements, double trueAnomaly, OrbitalCalc.SOIIntercept intercept, double baRatio) {
+        if (orbitalElements.isHyperbolic()) {
+            startTrueAnomaly.set((float) trueAnomaly);
+            endTrueAnomaly.set((float) intercept.trueAnomaly());
+            distanceToFoci.set((float) orbitalElements.getEccentricity());
+            semiMinorAxisMultiplier.set((float) baRatio);
+        } else {
+            startTrueAnomaly.set((float) trueAnomaly);
+            endTrueAnomaly.set((float) intercept.trueAnomaly());
+            distanceToFoci.set((float) orbitalElements.getEccentricity());
+            semiMinorAxisMultiplier.set((float) -baRatio);
+        }
     }
 }

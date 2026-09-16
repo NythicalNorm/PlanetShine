@@ -2,12 +2,14 @@ package com.nythicalnorm.planetshine.util;
 
 import com.nythicalnorm.planetshine.dimensions.SpaceDimension;
 import com.nythicalnorm.planetshine.dimensions.SpaceServerLevel;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
+import com.nythicalnorm.planetshine.util.calculations.AtmosphereCalc;
 import com.nythicalnorm.planetshine.util.calculations.PlanetCalc;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.joml.*;
 
 import java.lang.Math;
@@ -30,9 +32,9 @@ public class SpaceUtils {
         return spaceLevelString.equals(chunkClaimDimension);
     }
 
-    public static Vector2dc getLatLongCoordinates(Vec3 pos, CelestialBody planet) {
+    public static Vector2dc getLatLongCoordinates(double xPos, double yPos, double zPos, CelestialBody planet) {
         if (planet != null) {
-            Vector3d planetNonRotPos = PlanetCalc.getPlanetRelativeNonRotatingPosition(pos,
+            Vector3d planetNonRotPos = PlanetCalc.getPlanetRelativeNonRotatingPosition(xPos, yPos, zPos,
                     planet.getRadius(), true);
             double latitude = Math.asin(planetNonRotPos.y);
             double longitude = Math.atan2(-planetNonRotPos.z, planetNonRotPos.x);
@@ -41,17 +43,34 @@ public class SpaceUtils {
         return null;
     }
 
+    public static float getEntityPlanetGravity(float overworldGravity, Level level) {
+        if (SpaceUtils.isSpaceLevel(level)) {
+            return 0.0f;
+        } else if (((CelestialBodyAccessor)level).ps$isPlanet()) {
+            CelestialBody celestialBody = ((CelestialBodyAccessor) level).ps$getCelestialBody();
+            if (celestialBody instanceof PlanetaryBody planetaryBody && planetaryBody.getDimensionalProperties().isAffectEntityGravity()) {
+                double accelerationDueToGravity = celestialBody.getAccelerationDueToGravity() / AtmosphereCalc.g;
+                return (float) (overworldGravity * accelerationDueToGravity);
+            }
+        }
+        return overworldGravity;
+    }
+
     private static final double distanceToSearch = 2000;
 
+    public static String getSpaceLevelString() {
+        return spaceLevelString;
+    }
+
     //don't call this while time warping
-    private HashSet<ShipIntercept> getEntityBodyIntersections(Collection<EntityOrbitBody> childEntityBodies) {
+    private HashSet<ShipIntercept> getEntityBodyIntersections(Collection<EntityOrbitBody<?>> childEntityBodies) {
         double dist = distanceToSearch * distanceToSearch;
         HashSet<ShipIntercept> shipIntercepts = new HashSet<>();
         
         return shipIntercepts;
     }
 
-    public record ShipIntercept(EntityOrbitBody bodyA, EntityOrbitBody bodyB) {
+    public record ShipIntercept(EntityOrbitBody<?> bodyA, EntityOrbitBody<?> bodyB) {
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
