@@ -6,6 +6,7 @@ import com.nythicalnorm.planetshine.PSClient;
 import com.nythicalnorm.planetshine.rendering.PSRenderer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.world.level.material.FogType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -44,6 +45,7 @@ public abstract class LevelRendererMixin {
             if (!pIsFoggy) {
                 FogType fogtype = pCamera.getFluidInCamera();
                 if (fogtype != FogType.POWDER_SNOW && fogtype != FogType.LAVA && !this.doesMobEffectBlockSky(pCamera)) {
+                    FogRenderer.levelFogColor();
                     PSRenderer.renderSkybox(mc, pProjectionMatrix, pPoseStack, pPartialTick, pCamera, skyBuffer, psClient, psClient.getPlayerOrbit());
                     ci.cancel();
                 }

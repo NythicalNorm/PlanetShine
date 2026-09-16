@@ -1,5 +1,7 @@
 package com.nythicalnorm.planetshine.rendering;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
@@ -34,6 +36,7 @@ public class PSRenderer {
     private static VertexBuffer Star_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private static VertexBuffer Skybox_Buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
     private static Vec3 latestSkyColor;
+    private static RenderTarget skyBoxTarget = new TextureTarget(1920, 1080, true, Minecraft.ON_OSX);
 
     public static void setupBuffers() {
         BufferBuilder bufferbuilder =  Tesselator.getInstance().getBuilder();
@@ -57,17 +60,26 @@ public class PSRenderer {
 
     public static void renderSkybox(Minecraft mc, Matrix4f projectionMatrix, PoseStack poseStack, float partialTick, Camera camera, VertexBuffer sky_Buffer, PSClient psClient, ClientPlayerOrbitBody playerOrbit)
     {
-        FogRenderer.levelFogColor();
-
-        if (!SpaceUtils.isSpaceLevel(mc.player.level()) && (
-                mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine()
-        )) {
+        if (!SpaceUtils.isSpaceLevel(mc.player.level()) &&
+                (mc.player.getEyePosition(partialTick).y < mc.level.getMinBuildHeight() || psClient.getScreenManager().isNotDrawPlanetShine())
+        ) {
             return;
         }
+        mc.getMainRenderTarget().unbindWrite();
+        skyBoxTarget.bindWrite(false);
+        RenderSystem.viewport(0, 0, skyBoxTarget.width, skyBoxTarget.height);
+        RenderSystem.clearColor(0, 0, 0, 0);
 
+        RenderSystem.clear(
+                GL11.GL_COLOR_BUFFER_BIT |
+                        GL11.GL_DEPTH_BUFFER_BIT,
+                Minecraft.ON_OSX
+        );
+
+        RenderSystem.enableDepthTest();
+        RenderSystem.depthFunc(GL11.GL_LEQUAL);
+        RenderSystem.depthMask(true);
         GL11.glEnable(0x864F);
-
-        RenderSystem.depthMask(false);
 
         drawAtmosphere(psClient, playerOrbit, sky_Buffer, camera, poseStack, projectionMatrix, partialTick);
 
@@ -77,10 +89,59 @@ public class PSRenderer {
             poseStack.mulPose(new Quaternionf().set(playerOrbit.getPlayerRotation()));
         }
 
-        SpaceObjRenderer.renderPlanetaryBodies(poseStack, psClient.getSpaceRenderables(), psClient, camera, projectionMatrix, partialTick);
         RenderSystem.depthMask(true);
+        RenderSystem.disableDepthTest();
+
+        SpaceObjRenderer.renderPlanetaryBodies(poseStack, psClient.getSpaceRenderables(), psClient, camera, projectionMatrix, partialTick);
         poseStack.popPose();
         GL11.glDisable(0x864F);
+
+        skyBoxTarget.unbindWrite();
+        mc.getMainRenderTarget().bindWrite(true);
+        renderTextureToScreen(skyBoxTarget);
+    }
+
+    public static void renderTextureToScreen(RenderTarget target) {
+        Minecraft mc = Minecraft.getInstance();
+
+        int width = mc.getWindow().getWidth();
+        int height = mc.getWindow().getHeight();
+
+        RenderSystem.enableBlend();
+        //RenderSystem.defaultBlendFunc();
+
+        // Texture produced by the RenderTarget
+        RenderSystem.setShaderTexture(0, target.getColorTextureId());
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        Matrix4f projection = new Matrix4f().ortho(
+                0.0F,
+                width,
+                height,
+                0.0F,
+                -1000.0F,
+                1000.0F
+        );
+
+        RenderSystem.setProjectionMatrix(projection, VertexSorting.ORTHOGRAPHIC_Z);
+        PoseStack modelView = RenderSystem.getModelViewStack();
+        modelView.pushPose();
+        modelView.setIdentity();
+
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+
+        buffer.vertex(0, height, 0).uv(0, 0).endVertex();
+        buffer.vertex(width,  height, 0).uv(1, 0).endVertex();
+        buffer.vertex(width, 0,0).uv(1, 1).endVertex();
+        buffer.vertex(0,0,0).uv(0, 1).endVertex();
+
+        BufferUploader.drawWithShader(buffer.end());
+
+        modelView.popPose();
+
+        //RenderSystem.enableDepthTest();
+        RenderSystem.disableBlend();
     }
 
     public static void close() {
