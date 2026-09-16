@@ -3,9 +3,14 @@ package com.nythicalnorm.planetshine.mixin.daynightcycle;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.nythicalnorm.planetshine.PSClient;
+import com.nythicalnorm.planetshine.PSServer;
+import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
+import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
 import com.nythicalnorm.planetshine.util.SpaceUtils;
+import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,10 +20,14 @@ import org.spongepowered.asm.mixin.Mixin;
 @OnlyIn(Dist.CLIENT)
 @Mixin(ClientLevel.class)
 public class ClientLevelMixin implements PlanetTimeAccessor {
-
     @Override
     public boolean ps$DaylightDataExists() {
-        return PSClient.get() != null && (PSClient.get().isOnPlanet() || PSClient.get().weInSpaceDim());
+        PSClient psClient = PSClient.get();
+        if (((CelestialBodyAccessor) this).ps$getCelestialBody() instanceof PlanetaryBody planetaryBody &&
+                !planetaryBody.getDimensionalProperties().isRenderCustomSkybox()) {
+            return false;
+        }
+        return psClient != null && psClient.getDaylightRegion() != null && (psClient.isOnPlanet() || psClient.weInSpaceDim());
     }
 
     @Override
@@ -48,6 +57,16 @@ public class ClientLevelMixin implements PlanetTimeAccessor {
         } else {
             ClientLevel clientLevel = (ClientLevel) (Object) this;
             return clientLevel.isDay();
+        }
+    }
+
+    @Override
+    public long ps$getDayTime(double x, double z) {
+        if (ps$DaylightDataExists()) {
+            return DayNightCycleCalc.getDayTime(this.ps$getSunAngle(x, z), ((CelestialBodyAccessor) this).ps$getCelestialBody(), PSServer.get().getCurrentTime());
+        } else {
+            ServerLevel serverLevel = (ServerLevel) (Object) this;
+            return serverLevel.getLevelData().getDayTime();
         }
     }
 

@@ -1,7 +1,8 @@
-package com.nythicalnorm.planetshine.mixin.daynightcycle.isDay;
+package com.nythicalnorm.planetshine.mixin.daynightcycle.is_day;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.FleeSunGoal;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Final;
@@ -16,15 +17,13 @@ public class FleeSunGoalMixin {
     private Level level;
 
     @Shadow
-    private double wantedX;
-
-    @Shadow
-    private double wantedZ;
+    @Final
+    protected PathfinderMob mob;
 
     @ModifyExpressionValue(method = "canUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;isDay()Z"))
     public boolean isDay(boolean original) {
         if (level instanceof PlanetTimeAccessor planetTimeAccessor && planetTimeAccessor.ps$DaylightDataExists()) {
-            return planetTimeAccessor.ps$isDay(wantedX, wantedZ);
+            return planetTimeAccessor.ps$isDay(mob.getX(), mob.getZ());
         }
         return original;
     }

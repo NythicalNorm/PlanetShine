@@ -42,10 +42,15 @@ public class DayNightCycleCalc {
         long extraTime = 0;
 
         if (clst instanceof PlanetaryBody planetaryBody) {
-            extraTime =  TimeElapsed / planetaryBody.getRotationPeriod();
+            extraTime = TimeElapsed / planetaryBody.getRotationPeriod();
         }
 
-        return (long) (angle * 24000f) + (extraTime * 24000L);
+        float dayPercent = angle - 0.75f;
+        if (dayPercent < 0.0f) {
+            dayPercent = angle + 0.25f;
+        }
+
+        return (long) (dayPercent * 24000f) + (extraTime * 24000L);
     }
 
     public static float getSunOcclusionForPlanet(CelestialBody planet, Vector3dc perspectivePos) {

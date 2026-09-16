@@ -1,14 +1,15 @@
 package com.nythicalnorm.planetshine.mixin.core;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import com.nythicalnorm.planetshine.PSServer;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.nythicalnorm.planetshine.mixinducks.PlanetWorldBorder;
 import com.nythicalnorm.planetshine.solarsystem.bodies.CelestialBody;
 import com.nythicalnorm.planetshine.mixinducks.CelestialBodyAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.DaylightData;
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import com.nythicalnorm.planetshine.solarsystem.bodies.planet.PlanetaryBody;
-import com.nythicalnorm.planetshine.util.calculations.DayNightCycleCalc;
+import com.nythicalnorm.planetshine.util.UniverseStage;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -60,12 +61,21 @@ public abstract class LevelMixin implements CelestialBodyAccessor {
     @ModifyReturnValue(method = "getDayTime", at= @At(value = "RETURN"))
     public long getDayTime(long original) {
         if (this instanceof PlanetTimeAccessor planetTimeAccessor && planetTimeAccessor.ps$DaylightDataExists() && ps$isPlanet()) {
-            if (PSServer.get() != null) {
-                float sunAngle = planetTimeAccessor.ps$getSunAngle(0d, 0d);
-                return DayNightCycleCalc.getDayTime(sunAngle, this.ps$celestialBody, PSServer.get().getCurrentTime());
+            if (UniverseStage.get() != null && UniverseStage.get().getPsCommonConfig().doChangeMCDayTimeValue()) {
+                return planetTimeAccessor.ps$getDayTime(0.0d, 0.0d);
             }
         }
 
         return original;
+    }
+
+    @WrapMethod(method = "getSunAngle")
+    private float getSpaceSkyDarken(float pPartialTick, Operation<Float> original) {
+        if (this instanceof PlanetTimeAccessor planetTimeAccessor && planetTimeAccessor.ps$DaylightDataExists() && ps$isPlanet()) {
+            float sunAngle = planetTimeAccessor.ps$getSunAngle(0.0d, 0.0d);
+            return sunAngle * ((float)Math.PI * 2F);
+        }
+
+        return original.call(pPartialTick);
     }
 }

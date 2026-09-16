@@ -14,7 +14,7 @@ public class EntitySpaceMixin {
     @Shadow
     private Level level;
 
-    @ModifyReturnValue(method = "isNoGravity", at = @At(value = "TAIL"))
+    @ModifyReturnValue(method = "isNoGravity", at = @At(value = "RETURN"))
     public boolean isNoGravity(boolean original) {
         if (SpaceUtils.isSpaceLevel(level)) {
             return true;

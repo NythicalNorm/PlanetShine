@@ -149,6 +149,11 @@ public class SpaceServerLevel extends ServerLevel implements PlanetTimeAccessor 
     }
 
     @Override
+    public long ps$getDayTime(double x, double z) {
+        return this.levelData.getDayTime();
+    }
+
+    @Override
     public boolean ps$isDay(double x, double z) {
         return this.ps$getDarknessAmount(x, z) < 4;
     }

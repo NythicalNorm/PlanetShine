@@ -1,19 +1,19 @@
-package com.nythicalnorm.planetshine.mixin.daynightcycle.isDay;
+package com.nythicalnorm.planetshine.mixin.daynightcycle.is_day;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.goal.StrollThroughVillageGoal;
+import net.minecraft.world.entity.ai.goal.MoveThroughVillageGoal;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(StrollThroughVillageGoal.class)
-public class StrollThroughVillageGoalMixin {
+@Mixin(MoveThroughVillageGoal.class)
+public class MoveThroughVillageGoalMixin {
     @Shadow
     @Final
-    private PathfinderMob mob;
+    protected PathfinderMob mob;
 
     @ModifyExpressionValue(method = "canUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;isDay()Z"))
     public boolean isDay(boolean original) {

@@ -15,20 +15,20 @@ import java.util.UUID;
 
 @Mixin(PlayerSocialManager.class)
 public class PlayerSocialManagerMixin {
-    @Inject(method = "addPlayer", at = @At(value = "TAIL"))
+    @Inject(method = "addPlayer", at = @At(value = "RETURN"))
     public void playerJoined(PlayerInfo pPlayerInfo, CallbackInfo ci) {
         if (PSClient.get() != null) {
-            EntityOrbitBody entityOrbitBody = PSClient.get().getSolarSystem().getSpacecraftOrbit(new OrbitId(pPlayerInfo.getProfile().getId()));
+            EntityOrbitBody<?> entityOrbitBody = PSClient.get().getSolarSystem().getSpacecraftOrbit(new OrbitId(pPlayerInfo.getProfile().getId()));
             if (entityOrbitBody instanceof ClientPlayerOrbitBody clientPlayerOrbitBody) {
                 clientPlayerOrbitBody.playerJoined(pPlayerInfo);
             }
         }
     }
 
-    @Inject(method = "removePlayer", at = @At(value = "TAIL"))
+    @Inject(method = "removePlayer", at = @At(value = "RETURN"))
     public void removePlayer(UUID pId, CallbackInfo ci) {
         if (PSClient.get() != null) {
-            EntityOrbitBody entityOrbitBody = PSClient.get().getSolarSystem().getSpacecraftOrbit(new OrbitId(pId));
+            EntityOrbitBody<?> entityOrbitBody = PSClient.get().getSolarSystem().getSpacecraftOrbit(new OrbitId(pId));
             if (entityOrbitBody instanceof ClientPlayerOrbitBody clientPlayerOrbitBody) {
                 clientPlayerOrbitBody.playerLeft();
             }

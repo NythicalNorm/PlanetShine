@@ -28,12 +28,9 @@ public interface LevelReaderMixin extends BlockAndTintGetter, CollisionGetter, S
     default int getMaxLocalRawBrightness(BlockPos pPos) {
         Integer darkLevelFromPlanet = null;
 
-        if (this instanceof Level) {
-            if (this instanceof PlanetTimeAccessor planetTimeAccessor) {
-               darkLevelFromPlanet = planetTimeAccessor.ps$getDarknessAmount(pPos.getX(), pPos.getZ());
-            }
-        }
-        else if (this instanceof WorldGenRegion worldGenRegion) {
+        if (this instanceof PlanetTimeAccessor planetTimeAccessor) {
+           darkLevelFromPlanet = planetTimeAccessor.ps$getDarknessAmount(pPos.getX(), pPos.getZ());
+        } else if (this instanceof WorldGenRegion worldGenRegion) {
             Level level = worldGenRegion.getLevel();
             if (level instanceof PlanetTimeAccessor planetTimeAccessor) {
                 darkLevelFromPlanet = planetTimeAccessor.ps$getDarknessAmount(pPos.getX(), pPos.getZ());

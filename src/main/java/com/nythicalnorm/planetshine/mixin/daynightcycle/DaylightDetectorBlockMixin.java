@@ -15,7 +15,8 @@ public class DaylightDetectorBlockMixin {
     @WrapOperation(method = "updateSignalStrength", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getSunAngle(F)F"))
     private static float getSunAngle(Level level, float pPartialTicks, Operation<Float> original, @Local(argsOnly = true) BlockPos blockPos) {
         if (level instanceof PlanetTimeAccessor planetTimeAccessor && planetTimeAccessor.ps$DaylightDataExists()) {
-            return planetTimeAccessor.ps$getSunAngle(blockPos.getX(), blockPos.getZ());
+            float time = planetTimeAccessor.ps$getSunAngle(blockPos.getX(), blockPos.getZ());
+            return time * ((float)Math.PI * 2F);
         }
         return original.call(level, pPartialTicks);
     }

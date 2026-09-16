@@ -13,6 +13,7 @@ public class PlanetShineConfig {
     private static ForgeConfigSpec.ConfigValue<Boolean> OverrideVanillaWorldBorder;
     private static ForgeConfigSpec.ConfigValue<Boolean> allowTimeWarpOnPlanets;
     private static ForgeConfigSpec.ConfigValue<Boolean> DoFastShipPosUpdates;
+    private static ForgeConfigSpec.ConfigValue<Boolean> doChangeMCDayTimeValue;
 
     public static double getTeleportToGroundHeight() {
         try {
@@ -78,6 +79,14 @@ public class PlanetShineConfig {
         }
     }
 
+    public static boolean doChangeMCDayTimeValue() {
+        try {
+            return doChangeMCDayTimeValue.get();
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
     private static ForgeConfigSpec buildConfig() {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
         TeleportToGroundHeight = builder.define("TeleportToGroundHeight", 350.0d);
@@ -89,6 +98,7 @@ public class PlanetShineConfig {
         OverrideVanillaWorldBorder = builder.define("OverrideVanillaWorldBorder", true);
         DoFastShipPosUpdates = builder.define("DoFastShipPosUpdates", true);
         allowTimeWarpOnPlanets = builder.define("allowTimeWarpOnPlanets", true);
+        doChangeMCDayTimeValue = builder.define("doChangeMCDayTimeValue", true);
         return builder.build();
     }
 }

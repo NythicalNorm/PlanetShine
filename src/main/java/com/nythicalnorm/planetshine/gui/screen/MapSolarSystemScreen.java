@@ -117,8 +117,11 @@ public class MapSolarSystemScreen extends MouseLookScreen {
 
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
+        PSClient psClient = PSClient.get();
         mapRenderer.renderMapObjects(graphics, mapPosestack, projectionMatrix, focusableBodies[currentFocusedBodyIndex]);
-        mapRenderer.renderManeuverNodes(graphics, mapPosestack, projectionMatrix, mouseX, mouseY, PSClient.get().getControllingBody());
+        if (psClient.getControllingBody() != null) {
+            mapRenderer.renderManeuverNodes(graphics, mapPosestack, projectionMatrix, mouseX, mouseY, psClient.getControllingBody());
+        }
         RenderSystem.depthMask(false);
         RenderSystem.disableDepthTest();
         mapPosestack.popPose();

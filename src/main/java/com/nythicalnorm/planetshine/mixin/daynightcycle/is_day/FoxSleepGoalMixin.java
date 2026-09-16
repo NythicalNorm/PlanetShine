@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin.daynightcycle.isDay;
+package com.nythicalnorm.planetshine.mixin.daynightcycle.is_day;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;

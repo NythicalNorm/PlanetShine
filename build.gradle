@@ -138,6 +138,11 @@ repositories {
     maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" } // ForgeConfigAPIPort
 
     maven {
+        name = "ParchmentMC"
+        url = "https://maven.parchmentmc.org"
+    }
+
+    maven {
         name = 'MinecraftForge'
         url = 'https://maven.minecraftforge.net/'
     }

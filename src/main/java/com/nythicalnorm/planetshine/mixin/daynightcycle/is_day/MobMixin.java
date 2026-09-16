@@ -1,4 +1,4 @@
-package com.nythicalnorm.planetshine.mixin.daynightcycle.isDay;
+package com.nythicalnorm.planetshine.mixin.daynightcycle.is_day;
 
 import com.nythicalnorm.planetshine.mixinducks.PlanetTimeAccessor;
 import net.minecraft.world.entity.Mob;
