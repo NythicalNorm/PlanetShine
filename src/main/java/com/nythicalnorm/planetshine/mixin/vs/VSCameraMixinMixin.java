@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.valkyrienskies.core.api.ships.properties.ShipTransform;
 
 @Mixin(value = Camera.class, priority = 1500)
@@ -69,18 +68,6 @@ public abstract class VSCameraMixinMixin { // Yes I am going to name all mixin^2
         return original.call(instance, pPartialTicks);
     }
 
-    @TargetHandler(mixin = "org.valkyrienskies.mod.mixin.client.MixinCamera", name = "getMaxZoomIgnoringMountedShip")
-    @ModifyVariable(
-            method = "@MixinSquared:Handler",
-            at = @At("HEAD"),
-            require = 0, argsOnly = true)
-    public double modifyMaxZoom(double original) {
-        if (Minecraft.getInstance().screen instanceof MouseLookScreen spacecraftScreen && spacecraftScreen.movePlayerCamera()) {
-            return spacecraftScreen.getCameraZoomLevel(original);
-        }
-        return original;
-    }
-
     @TargetHandler(mixin = "org.valkyrienskies.mod.mixin.client.MixinCamera", name = "setRotationWithShipTransform")
     @WrapMethod(method = "@MixinSquared:Handler")
     private void setSurfaceDownRotation(float yaw, float pitch, ShipTransform renderTransform, Operation<Void> original) {
@@ -100,15 +87,4 @@ public abstract class VSCameraMixinMixin { // Yes I am going to name all mixin^2
             original.call(yaw, pitch, renderTransform);
         }
     }
-
-//    @TargetHandler(mixin = "org.valkyrienskies.mod.mixin.client.MixinCamera", name = "setupWithShipMounted")
-//    @WrapOperation(method = "@MixinSquared:Handler", at = @At(value = "INVOKE", target = "Lorg/valkyrienskies/core/api/ships/properties/ShipTransform;getShipCoordinatesToWorldCoordinatesRotation()Lorg/joml/Quaterniondc;"))
-//    private Quaterniondc setSurfaceDownRotForShip(ShipTransform instance, Operation<Quaterniondc> original) {
-//        if (Minecraft.getInstance().screen instanceof MouseLookScreen screen && screen.movePlayerCamera() &&
-//                screen.getViewMode() == MouseLookScreen.ViewMode.SURFACE_DOWN) {
-//            return new Quaterniond(); //new Quaterniond(PSClient.get().getPlayerOrbit().getSurfaceDownRot());
-//        } else {
-//            return original.call(instance);
-//        }
-//    }
 }

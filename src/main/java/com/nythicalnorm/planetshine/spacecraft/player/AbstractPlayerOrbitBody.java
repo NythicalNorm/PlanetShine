@@ -11,7 +11,7 @@ import com.nythicalnorm.planetshine.spacecraft.EntityOrbitBody;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.HostSpaceManager;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.OrbitHostSpace;
 import com.nythicalnorm.planetshine.spacecraft.hostspace.PlayerHostSpace;
-import com.nythicalnorm.planetshine.util.Calc;
+import com.nythicalnorm.planetshine.util.calculations.MiscCalc;
 import com.nythicalnorm.planetshine.util.calculations.OrbitalCalc;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -103,7 +103,7 @@ public abstract class AbstractPlayerOrbitBody extends EntityOrbitBody<Player> {
         if (this.body != null) {
             LoadedShip ship = VSGameUtilsKt.getShipMountedTo(this.body);
             if (ship == null) {
-                return Calc.mcRotationToQuaterniond(this.body.getYRot(), this.body.getXRot());
+                return MiscCalc.mcRotationToQuaterniond(this.body.getYRot(), this.body.getXRot());
             } else {
                 return ship.getKinematics().getRotation();
             }
